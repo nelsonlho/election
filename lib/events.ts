@@ -361,6 +361,8 @@ function commonBad(info: DayInfo, event: EventKey): Reason[] {
     out.push({ kind: "凶", text: "紅沙日，婚事大忌" });
   if (ZANG_EVENTS.includes(event) && (info.dayZhi === "巳" || info.dayZhi === "亥"))
     out.push({ kind: "凶", text: "重日（巳亥日），葬事忌之，恐犯重喪" });
+  if (ZANG_EVENTS.includes(event) && CHONG_SANG[info.monthZhi] === info.dayGan)
+    out.push({ kind: "凶", text: `重喪日（${info.monthZhi}月${info.dayGan}日），葬事大忌（原書：安葬日家凶神訣）` });
   return out;
 }
 
@@ -452,15 +454,16 @@ export const RULE_LAYERS: RuleLayer[] = [
   { key: "caiyiji", name: "裁衣忌例", desc: "長星、短星、天賊、白虎、朱雀、正四廢（原書 92-93）", events: ["caiyi"] },
   { key: "anchuang", name: "安牀忌例", desc: "臥尸、死別、醞巢、天賊、木馬、箭頭、刀砧、天嗣犯沖（原書 109-111）", events: ["anchuang"] },
   { key: "tuwang", name: "土王用事", desc: "四立前十八日忌動土破土", events: ["dongtu", "potu"] },
-  { key: "shan", name: "沖山三殺", desc: "日支沖座山、流年三殺占山（須入座山）", events: ["ruzhai", "dongtu", "xiuzao", "shangliang"] },
+  { key: "shan", name: "沖山三殺", desc: "日支沖座山、流年三殺占山（須入座山；造葬以墓之坐山論）", events: ["ruzhai", "dongtu", "xiuzao", "shangliang", "anzang", "potu"] },
 ];
 
 export function layersForEvent(event: EventKey): RuleLayer[] {
   return RULE_LAYERS.filter((l) => !l.events || l.events.includes(event));
 }
 
-// 造作事類（沖山、三殺以山向論——原書第六期 392-393 頁）
-const ZAO_ZUO_EVENTS: EventKey[] = ["dongtu", "xiuzao", "shangliang", "ruzhai"];
+// 造作造葬事類（沖山、三殺以山向論——原書第六期 392-393 頁，
+// 註：「利用甚廣，如豎造、入宅、安葬、修墳、造廟」）
+const ZAO_ZUO_EVENTS: EventKey[] = ["dongtu", "xiuzao", "shangliang", "ruzhai", "anzang", "potu"];
 
 // 流年三殺方（依年支三合局）：申子辰年煞南、寅午戌年煞北、巳酉丑年煞東、亥卯未年煞西
 const SAN_SHA_FANG: Record<string, string[]> = {
@@ -473,12 +476,22 @@ const SAN_SHA_FANG: Record<string, string[]> = {
 function zaoZuoShan(info: DayInfo, mountainZhi: string): Reason[] {
   const out: Reason[] = [];
   if (ZHI_CHONG[mountainZhi] === info.dayZhi)
-    out.push({ kind: "凶", text: `日支${info.dayZhi}沖山（宅坐${mountainZhi}山），造作忌之（原書：沖山例）` });
+    out.push({ kind: "凶", text: `日支${info.dayZhi}沖山（坐${mountainZhi}山），造作葬事忌之（原書：沖山例）` });
   const yearZhi = info.yearGanZhi.charAt(1);
   if (SAN_SHA_FANG[yearZhi]?.includes(mountainZhi))
-    out.push({ kind: "凶", text: `流年${info.yearGanZhi}三殺占山（${mountainZhi}山），歲內造作大忌（原書：三殺例）` });
+    out.push({ kind: "凶", text: `流年${info.yearGanZhi}三殺占山（${mountainZhi}山），歲內造作葬事大忌（原書：三殺例）` });
+  // 歲破沖山（原書第八期安葬山家凶神訣：歲破沖山年家大忌）
+  if (ZHI_CHONG[yearZhi] === mountainZhi)
+    out.push({ kind: "凶", text: `歲破占山（流年${info.yearGanZhi}沖${mountainZhi}山），歲內大忌（原書：安葬山家凶神訣）` });
   return out;
 }
+
+// 重喪日（原書第八期安葬日家凶神訣：重日重喪並三喪）——月家干日
+// 寅月甲、卯月乙、巳月丙、午月丁、申月庚、酉月辛、亥月壬、子月癸、四季月（辰未戌丑）己
+const CHONG_SANG: Record<string, string> = {
+  寅: "甲", 卯: "乙", 巳: "丙", 午: "丁", 申: "庚", 酉: "辛",
+  亥: "壬", 子: "癸", 辰: "己", 未: "己", 戌: "己", 丑: "己",
+};
 
 export function evaluateDay(info: DayInfo, event: EventKey, opts: EvalOptions = {}): Evaluation {
   const reasons: Reason[] = [];

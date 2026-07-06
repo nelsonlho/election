@@ -262,7 +262,7 @@ function SearchTab() {
   const [mountain, setMountain] = useStoredState("mountain", "");
   const { off, toggle } = useDisabledLayers();
   const ming = eventDef(event).mingInput;
-  const isZaoZuo = ["dongtu", "xiuzao", "shangliang", "ruzhai"].includes(event);
+  const isZaoZuo = ["dongtu", "xiuzao", "shangliang", "ruzhai", "anzang", "potu"].includes(event);
 
   const run = () => {
     setError("");
@@ -368,7 +368,7 @@ function SearchTab() {
           <div className="mt-2 grid gap-3 sm:grid-cols-2">
             {isZaoZuo && (
               <label className="block text-sm">
-                <span className="mb-1 block font-medium">宅舍座山（可留空）</span>
+                <span className="mb-1 block font-medium">座山——宅舍或墳塋（可留空）</span>
                 <select
                   className="w-full rounded border border-stone-300 bg-white px-3 py-2 dark:border-stone-600 dark:bg-stone-900"
                   value={mountain}
