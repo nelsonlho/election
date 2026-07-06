@@ -95,6 +95,30 @@ const JIAN_TOU = ["辰", "未", "戌", "丑"];
 // 刀砧殺（俗忌）：春亥子 夏寅卯 秋巳午 冬申酉
 const DAO_ZHEN: [string, string][] = [["亥", "子"], ["寅", "卯"], ["巳", "午"], ["申", "酉"]];
 
+// ── 安床忌例續（原書 112-113 頁） ──────────────────────────
+// 火星日：正月乙丑起，逐月退一位，每隔九位一日，每月五日。
+// 碎金賦：「月破火星與受死，此三條凶神不可犯」——凶。
+const JIAZI_GAN = ["甲", "乙", "丙", "丁", "戊", "己", "庚", "辛", "壬", "癸"];
+const JIAZI_ZHI = ["子", "丑", "寅", "卯", "辰", "巳", "午", "未", "申", "酉", "戌", "亥"];
+function jiaZiName(n: number): string {
+  const i = ((n % 60) + 60) % 60;
+  return JIAZI_GAN[i % 10] + JIAZI_ZHI[i % 12];
+}
+export function isHuoXing(monthZhi: string, dayGanZhi: string): boolean {
+  const m = MONTH_ORDER.indexOf(monthZhi); // 0=正月
+  const start = ((1 - m) % 60 + 60) % 60; // 正月起乙丑（序1）
+  for (let k = 0; k < 5; k++) if (jiaZiName(start + 9 * k) === dayGanZhi) return true;
+  return false;
+}
+// 陰錯、陽差日（逐月，原書 112 頁）
+const YIN_CUO = ["庚戌", "辛酉", "庚申", "丁未", "丙午", "丁巳", "甲辰", "乙卯", "甲寅", "癸丑", "壬子", "癸亥"];
+const YANG_CHA = ["甲寅", "乙卯", "甲辰", "丁巳", "丙午", "丁未", "庚申", "辛酉", "庚戌", "癸亥", "壬子", "癸丑"];
+// 白虎中、朱雀中（月不易之干支，符制可解）；白虎日、朱雀日六支循環（同裁衣例）
+const BAI_HU_ZHONG = ["戊辰", "丁丑", "丙戌", "乙未", "甲辰", "癸丑", "壬戌"];
+const ZHU_QUE_ZHONG = ["丙寅", "乙亥"];
+const BH_CYCLE = ["午", "申", "戌", "子", "寅", "辰"];
+const ZQ_CYCLE = ["卯", "巳", "未", "酉", "亥", "丑"];
+
 export interface AnChuangHit {
   name: string;
   kind: "凶" | "注";
@@ -122,6 +146,24 @@ export function getAnChuangJi(info: DayInfo): AnChuangHit[] {
     out.push({ name: "箭頭殺", kind: "注", note: "安牀俗忌" });
   if (DAO_ZHEN[s].includes(dz))
     out.push({ name: "刀砧殺", kind: "注", note: "安牀俗忌" });
+  // 續表（原書 112-113 頁）
+  const mi = MONTH_ORDER.indexOf(mz);
+  if (isHuoXing(mz, info.dayGanZhi))
+    out.push({ name: "火星日", kind: "凶", note: "安牀凶神不可犯（碎金賦：月破火星與受死）" });
+  if (YIN_CUO[mi] === info.dayGanZhi)
+    out.push({ name: "陰錯日", kind: "注", note: "安牀俗忌勿用（原書 112 頁）" });
+  if (YANG_CHA[mi] === info.dayGanZhi)
+    out.push({ name: "陽差日", kind: "注", note: "安牀俗忌勿用（原書 112 頁）" });
+  if (info.dayGanZhi === "己酉")
+    out.push({ name: "人民離日", kind: "注", note: "安牀訛俗勿用（原書姑錄）" });
+  if (BH_CYCLE[mi % 6] === dz)
+    out.push({ name: "白虎日", kind: "注", note: "安牀忌之，麟符制之則吉" });
+  if (BAI_HU_ZHONG.includes(info.dayGanZhi))
+    out.push({ name: "白虎中日", kind: "注", note: "安牀忌之，麟符制之則吉" });
+  if (ZQ_CYCLE[mi % 6] === dz)
+    out.push({ name: "朱雀日", kind: "注", note: "安牀忌之，鳳凰符制之則吉" });
+  if (ZHU_QUE_ZHONG.includes(info.dayGanZhi))
+    out.push({ name: "朱雀中日", kind: "注", note: "安牀忌之，鳳凰符制之則吉" });
   return out;
 }
 
