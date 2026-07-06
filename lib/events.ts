@@ -8,7 +8,7 @@ export type EventKey =
   | "jiaqu" | "nacai" | "anchuang" | "qiusi" | "caiyi"
   | "ruzhai" | "dongtu" | "xiuzao" | "shangliang"
   | "chuxing" | "kaishi" | "liquan" | "furen" | "qiuming"
-  | "jisi" | "jinxiang" | "kaiguang" | "qiuyi"
+  | "jisi" | "jinxiang" | "kaiguang" | "qiuyi" | "anxiang"
   | "anzang" | "potu";
 export type Rating = "吉" | "平" | "凶";
 
@@ -30,6 +30,7 @@ export const EVENT_NAMES: Record<EventKey, string> = {
   jisi: "祭祀",
   jinxiang: "進香",
   kaiguang: "開光",
+  anxiang: "安香",
   qiuyi: "求醫治病",
   anzang: "安葬",
   potu: "破土",
@@ -79,6 +80,7 @@ export const EVENT_CATEGORIES: { category: string; events: EventDef[] }[] = [
       { key: "jisi", name: "祭祀", mingInput: "self" },
       { key: "jinxiang", name: "進香", mingInput: "self" },
       { key: "kaiguang", name: "開光", mingInput: "self" },
+      { key: "anxiang", name: "安香", mingInput: "self" },
       { key: "qiuyi", name: "求醫治病", mingInput: "self" },
     ],
   },
@@ -333,6 +335,33 @@ function hunShenSha(info: DayInfo, fGan: string | undefined, fZhi: string): Reas
   return out;
 }
 
+// ── 入宅、安香周堂（原書第七期 459-460 頁，大小月圈點互證） ──
+// 入宅周堂十六位環（大月初一起首位順行、小月初一起「王」位逆行）；
+// 凶位恆為第 4、6、10、14、16（健？亡歸？離？刑——名有漫漶處，圈點兩表互證無誤）
+const RUZHAI_ZT = ["清", "遮", "陽", "健", "盛", "亡", "福", "麗", "福", "歸", "武", "民", "王", "離", "財", "刑"];
+const RUZHAI_BAD = new Set([3, 5, 9, 13, 15]);
+
+function ruZhaiZhouTang(lunarDay: number, monthDayCount: number): { name: string; bad: boolean } {
+  const idx =
+    monthDayCount >= 30
+      ? (lunarDay - 1) % 16
+      : (((12 - (lunarDay - 1)) % 16) + 16) % 16;
+  return { name: RUZHAI_ZT[idx], bad: RUZHAI_BAD.has(idx) };
+}
+
+// 安香周堂八位環：安利天害殺富師災（害殺災凶）；大月初一起安順行、小月初一起天逆行
+const ANXIANG_ZT = ["安", "利", "天", "害", "殺", "富", "師", "災"];
+const ANXIANG_BAD = new Set(["害", "殺", "災"]);
+
+function anXiangZhouTang(lunarDay: number, monthDayCount: number): { name: string; bad: boolean } {
+  const idx =
+    monthDayCount >= 30
+      ? (lunarDay - 1) % 8
+      : (((2 - (lunarDay - 1)) % 8) + 8) % 8;
+  const name = ANXIANG_ZT[idx];
+  return { name, bad: ANXIANG_BAD.has(name) };
+}
+
 // ── 共同凶煞 ──────────────────────────────────────────────
 // 各神煞所忌之事類
 const WANG_WANG_EVENTS: EventKey[] = ["chuxing", "jiaqu", "ruzhai", "furen", "qiuming"]; // 往亡忌出行、嫁娶、移徙、上任求名
@@ -398,6 +427,7 @@ const EVENT_TERMS: Record<EventKey, string[]> = {
   jisi: ["祭祀"],
   jinxiang: ["祈福", "齋醮"],
   kaiguang: ["開光"],
+  anxiang: ["安香"],
   qiuyi: ["治病", "療病", "求醫療病"],
   anzang: ["安葬"],
   potu: ["破土"],
@@ -457,6 +487,7 @@ export const RULE_LAYERS: RuleLayer[] = [
   { key: "anchuang", name: "安牀忌例", desc: "臥尸、死別、醞巢、天賊、木馬、箭頭、刀砧、天嗣犯沖（原書 109-111）", events: ["anchuang"] },
   { key: "tuwang", name: "土王用事", desc: "四立前十八日忌動土破土", events: ["dongtu", "potu"] },
   { key: "shan", name: "沖山三殺", desc: "日支沖座山、流年三殺占山（須入座山；造葬以墓之坐山論）", events: ["ruzhai", "dongtu", "xiuzao", "shangliang", "anzang", "potu"] },
+  { key: "zhaizhou", name: "入宅安香周堂", desc: "十六位／八位周堂環，值凶位忌（原書 459-460 圈點）", events: ["ruzhai", "anxiang"] },
   { key: "xianming", name: "仙命諸忌", desc: "日沖仙命、三殺、三刑、旬空（須入亡者生年——原書第八期）", events: ["anzang", "potu"] },
 ];
 
@@ -619,6 +650,21 @@ export function evaluateDay(info: DayInfo, event: EventKey, opts: EvalOptions = 
   // 仙命諸忌（原書第八期）：葬事有亡命則判
   if (on("xianming") && ZANG_EVENTS.includes(event) && opts.xianMingZhi) {
     reasons.push(...xianMingJi(info, opts.xianMingGan, opts.xianMingZhi));
+  }
+
+  // 入宅、安香周堂（原書 459-460 頁）
+  if (on("zhaizhou") && (event === "ruzhai" || event === "anxiang")) {
+    const zt =
+      event === "ruzhai"
+        ? ruZhaiZhouTang(info.lunarDay, info.lunarMonthDayCount)
+        : anXiangZhouTang(info.lunarDay, info.lunarMonthDayCount);
+    if (zt.bad)
+      reasons.push({ kind: "凶", text: `${EVENT_NAMES[event]}周堂值「${zt.name}」（原書圈點凶位），忌用` });
+    else
+      reasons.push({ kind: "吉", text: `${EVENT_NAMES[event]}周堂值「${zt.name}」，吉` });
+    // 歸火入宅忌例：二分二至之日忌
+    if (["春分", "秋分", "夏至", "冬至"].includes(info.jieQi))
+      reasons.push({ kind: "凶", text: `二分二至日（${info.jieQi}），忌入宅歸火安香（原書：歸火入宅忌例）` });
   }
 
   // 婚神煞（原書第四期六十女總局歸納）：胎元、夫星、天嗣、桃花、天狗

@@ -100,7 +100,7 @@ export type JianChuEventKey =
   | "jiaqu" | "nacai" | "anchuang" | "qiusi" | "caiyi"
   | "ruzhai" | "dongtu" | "xiuzao" | "shangliang"
   | "chuxing" | "kaishi" | "liquan" | "furen" | "qiuming"
-  | "jisi" | "jinxiang" | "kaiguang" | "qiuyi"
+  | "jisi" | "jinxiang" | "kaiguang" | "qiuyi" | "anxiang"
   | "anzang" | "potu";
 
 export const JIANCHU_BY_EVENT: Record<
@@ -139,6 +139,8 @@ export const JIANCHU_BY_EVENT: Record<
   jisi: { good: ["除", "滿", "定", "危", "成", "開"], bad: ["破"] },
   // 進香祈福：同祭祀之例
   jinxiang: { good: ["除", "滿", "定", "危", "成", "開"], bad: ["破"] },
+  // 安香：同祭祀之例
+  anxiang: { good: ["除", "滿", "定", "危", "成", "開"], bad: ["破"] },
   // 開光：除危成開吉；破閉忌
   kaiguang: { good: ["除", "危", "成", "開"], bad: ["破", "閉"] },
   // 求醫治病：除日驅邪治病，破日反宜求醫（破屋壞垣、求醫治病）；平收黑道忌
