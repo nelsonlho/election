@@ -1,7 +1,7 @@
 // 事類評日 — 嫁娶、安牀、出行（依《剋擇講義》起例）
 
 import { DayInfo, ZHI_CHONG, isTuWang } from "./almanac";
-import { getShenSha, getAnChuangJi, getCaiYiJi, getTianSiChong, getJiangShen, isPoSui, isChongMing, isSiFei } from "./shensha";
+import { getShenSha, getAnChuangJi, getCaiYiJi, getDongTuJi, getTianSiChong, getJiangShen, isPoSui, isChongMing, isSiFei } from "./shensha";
 import { JIANCHU, JIANCHU_BY_EVENT, JianChuName } from "./jianchu";
 
 export type EventKey =
@@ -487,6 +487,7 @@ export const RULE_LAYERS: RuleLayer[] = [
   { key: "anchuang", name: "安牀忌例", desc: "臥尸、死別、醞巢、天賊、木馬、箭頭、刀砧、天嗣犯沖（原書 109-111）", events: ["anchuang"] },
   { key: "tuwang", name: "土王用事", desc: "四立前十八日忌動土破土", events: ["dongtu", "potu"] },
   { key: "shan", name: "沖山三殺", desc: "日支沖座山、流年三殺占山（須入座山；造葬以墓之坐山論）", events: ["ruzhai", "dongtu", "xiuzao", "shangliang", "anzang", "potu"] },
+  { key: "dongtuji", name: "動土忌例", desc: "土符、土瘟、天瘟、重日、白虎朱雀（原書 548）", events: ["dongtu"] },
   { key: "zhaizhou", name: "入宅安香周堂", desc: "十六位／八位周堂環，值凶位忌（原書 459-460 圈點）", events: ["ruzhai", "anxiang"] },
   { key: "xianming", name: "仙命諸忌", desc: "日沖仙命、三殺、三刑、旬空（須入亡者生年——原書第八期）", events: ["anzang", "potu"] },
 ];
@@ -636,6 +637,11 @@ export function evaluateDay(info: DayInfo, event: EventKey, opts: EvalOptions = 
   if (on("nvming") && (event === "jiaqu" || event === "nacai") && opts.femaleBirthZhi) {
     const v = nvMingDayVerdict(opts.femaleBirthZhi, info.dayZhi);
     if (v) reasons.push(v);
+  }
+
+  // 動土忌例（原書第八期 548 頁）：土符、土瘟、天瘟、重日、白虎朱雀
+  if (event === "dongtu" && on("dongtuji")) {
+    reasons.push(...getDongTuJi(info));
   }
 
   // 土王用事（原書：動土平基碎金賦）：四立前十八日，忌動土破土

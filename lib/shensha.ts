@@ -215,6 +215,31 @@ export function getCaiYiJi(info: DayInfo): { kind: "凶" | "注"; text: string }
   return out;
 }
 
+// ── 動土忌例（原書第八期 548 頁，逐月以月建取） ──────────
+// 土符（大忌）、土瘟（俗忌）、天瘟、重日巳亥、白虎朱雀（符制）
+const TU_FU = ["丑", "巳", "酉", "寅", "午", "戌", "卯", "未", "亥", "辰", "申", "子"];
+const TU_WEN = ["辰", "巳", "午", "未", "申", "酉", "戌", "亥", "子", "丑", "寅", "卯"];
+const TIAN_WEN = ["未", "戌", "辰", "寅", "午", "子", "酉", "申", "巳", "亥", "丑", "卯"];
+
+export function getDongTuJi(info: DayInfo): { kind: "凶" | "注"; text: string }[] {
+  const out: { kind: "凶" | "注"; text: string }[] = [];
+  const mi = MONTH_ORDER.indexOf(info.monthZhi);
+  const dz = info.dayZhi;
+  if (TU_FU[mi] === dz)
+    out.push({ kind: "凶", text: "土符日，動土大忌勿用（原書：動土忌例）" });
+  if (TU_WEN[mi] === dz)
+    out.push({ kind: "注", text: "土瘟日，動土俗忌勿用（原書：動土忌例）" });
+  if (TIAN_WEN[mi] === dz)
+    out.push({ kind: "注", text: "天瘟日，動土忌之（原書：動土忌例）" });
+  if (dz === "巳" || dz === "亥")
+    out.push({ kind: "凶", text: "重日（巳亥日），動土大忌（原書：動土忌例）" });
+  if (BH_CYCLE[mi % 6] === dz)
+    out.push({ kind: "注", text: "白虎日，動土忌之，麟符制之則吉" });
+  if (ZQ_CYCLE[mi % 6] === dz)
+    out.push({ kind: "注", text: "朱雀日，動土忌之，鳳凰符制之則吉" });
+  return out;
+}
+
 // ── 陰陽不將（原書 211-221 頁「每月將神名目」，依表歸納起例） ──
 // 月厭：正月（寅月）在戌，逐月逆行。厭對＝沖厭。
 // 支對厭：厭後五支為「後」，厭前五支為「前」。
