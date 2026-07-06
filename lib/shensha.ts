@@ -125,6 +125,48 @@ export function getAnChuangJi(info: DayInfo): AnChuangHit[] {
   return out;
 }
 
+// ── 裁衣合帳忌例（原書 92-93 頁） ──────────────────────────
+// 白虎日（麟符制）、朱雀日（鳳凰符制）：六支循環，以月建取
+const BAI_HU_CYCLE = ["午", "申", "戌", "子", "寅", "辰"];
+const ZHU_QUE_CYCLE = ["卯", "巳", "未", "酉", "亥", "丑"];
+// 長星、短星（俗忌裁衣，以農曆月、日號取）
+const CHANG_XING: Record<number, number[]> = {
+  1: [7], 2: [4], 3: [1], 4: [9], 5: [15], 6: [10],
+  7: [8], 8: [2, 5], 9: [3, 4], 10: [1], 11: [12], 12: [9],
+};
+const DUAN_XING: Record<number, number[]> = {
+  1: [21], 2: [19], 3: [16], 4: [25], 5: [25], 6: [20],
+  7: [22], 8: [18, 19], 9: [16, 17], 10: [14], 11: [22], 12: [25],
+};
+// 正四廢（季之干支對，日干支全同者忌）
+const SI_FEI: [string, string][][] = [
+  [["庚", "申"], ["辛", "酉"]], // 春
+  [["壬", "子"], ["癸", "亥"]], // 夏
+  [["甲", "寅"], ["乙", "卯"]], // 秋
+  [["丙", "午"], ["丁", "巳"]], // 冬
+];
+
+export function getCaiYiJi(info: DayInfo): { kind: "凶" | "注"; text: string }[] {
+  const out: { kind: "凶" | "注"; text: string }[] = [];
+  const mi = MONTH_ORDER.indexOf(info.monthZhi);
+  const dz = info.dayZhi;
+  if (BAI_HU_CYCLE[mi % 6] === dz)
+    out.push({ kind: "注", text: "白虎日，裁衣合帳忌之（麟符制之則吉——原書）" });
+  if (ZHU_QUE_CYCLE[mi % 6] === dz)
+    out.push({ kind: "注", text: "朱雀日，裁衣合帳忌之（鳳凰符制之則吉——原書）" });
+  if (byMonth(TIAN_ZEI, info.monthZhi) === dz)
+    out.push({ kind: "凶", text: "天賊日，裁衣忌之（原書：裁衣合帳忌例）" });
+  const lm = Math.abs(info.lunarMonth);
+  if (CHANG_XING[lm]?.includes(info.lunarDay))
+    out.push({ kind: "凶", text: "長星日（俗忌裁衣），忌用" });
+  if (DUAN_XING[lm]?.includes(info.lunarDay))
+    out.push({ kind: "凶", text: "短星日（俗忌裁衣），忌用" });
+  const fei = SI_FEI[season(info.monthZhi)];
+  if (fei.some(([g, z]) => info.dayGan === g && dz === z))
+    out.push({ kind: "凶", text: "正四廢日，俗忌勿用（原書：裁衣合帳忌例）" });
+  return out;
+}
+
 // ── 陰陽不將（原書 211-221 頁「每月將神名目」，依表歸納起例） ──
 // 月厭：正月（寅月）在戌，逐月逆行。厭對＝沖厭。
 // 支對厭：厭後五支為「後」，厭前五支為「前」。

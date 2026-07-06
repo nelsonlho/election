@@ -97,7 +97,7 @@ export const JIANCHU: Record<JianChuName, JianChuInfo> = {
 
 // 事類建除吉凶（依上表宜忌歸納）
 export type JianChuEventKey =
-  | "jiaqu" | "nacai" | "anchuang" | "qiusi"
+  | "jiaqu" | "nacai" | "anchuang" | "qiusi" | "caiyi"
   | "ruzhai" | "dongtu" | "xiuzao" | "shangliang"
   | "chuxing" | "kaishi" | "liquan" | "furen" | "qiuming"
   | "jisi" | "jinxiang" | "kaiguang" | "qiuyi"
@@ -125,6 +125,8 @@ export const JIANCHU_BY_EVENT: Record<
   chuxing: { good: ["建", "成", "開"], bad: ["破", "危", "閉", "收", "執", "定"] },
   // 開市：開成滿吉；破閉執收忌
   kaishi: { good: ["開", "成", "滿"], bad: ["破", "閉", "執", "收"] },
+  // 裁衣合帳：定成開滿吉；破閉忌
+  caiyi: { good: ["定", "成", "開", "滿"], bad: ["破", "閉"] },
   // 求嗣：滿日祈福求嗣，定成開亦吉；破閉平忌
   qiusi: { good: ["滿", "定", "成", "開"], bad: ["破", "閉", "平"] },
   // 立券交易：定執成開吉；破閉平收忌

@@ -1,11 +1,11 @@
 // 事類評日 — 嫁娶、安牀、出行（依《剋擇講義》起例）
 
 import { DayInfo, ZHI_CHONG, isTuWang } from "./almanac";
-import { getShenSha, getAnChuangJi, getTianSiChong, getJiangShen, isPoSui, isChongMing } from "./shensha";
+import { getShenSha, getAnChuangJi, getCaiYiJi, getTianSiChong, getJiangShen, isPoSui, isChongMing } from "./shensha";
 import { JIANCHU, JIANCHU_BY_EVENT, JianChuName } from "./jianchu";
 
 export type EventKey =
-  | "jiaqu" | "nacai" | "anchuang" | "qiusi"
+  | "jiaqu" | "nacai" | "anchuang" | "qiusi" | "caiyi"
   | "ruzhai" | "dongtu" | "xiuzao" | "shangliang"
   | "chuxing" | "kaishi" | "liquan" | "furen" | "qiuming"
   | "jisi" | "jinxiang" | "kaiguang" | "qiuyi"
@@ -17,6 +17,7 @@ export const EVENT_NAMES: Record<EventKey, string> = {
   nacai: "納采",
   anchuang: "安牀",
   qiusi: "求嗣",
+  caiyi: "裁衣合帳",
   ruzhai: "入宅",
   dongtu: "動土",
   xiuzao: "修造",
@@ -50,6 +51,7 @@ export const EVENT_CATEGORIES: { category: string; events: EventDef[] }[] = [
       { key: "jiaqu", name: "嫁娶", mingInput: "female" },
       { key: "anchuang", name: "安牀", mingInput: "self" },
       { key: "qiusi", name: "求嗣", mingInput: "self" },
+      { key: "caiyi", name: "裁衣合帳", mingInput: "self" },
     ],
   },
   {
@@ -353,6 +355,7 @@ const EVENT_TERMS: Record<EventKey, string[]> = {
   nacai: ["納采", "訂盟"],
   anchuang: ["安牀"],
   qiusi: ["求嗣"],
+  caiyi: ["裁衣", "合帳", "裁衣合帳"],
   ruzhai: ["入宅", "移徙"],
   dongtu: ["動土"],
   xiuzao: ["修造", "修造動土"],
@@ -411,6 +414,7 @@ export const RULE_LAYERS: RuleLayer[] = [
   { key: "nvming", name: "女命日吉凶", desc: "正檳榔殺、檳榔三殺、盤隔山殺、清吉取用（原書 86-89）", events: HUN_EVENTS },
   { key: "bujiang", name: "陰陽不將", desc: "不將大吉；月厭、厭對、俱將忌（原書將神名目）", events: HUN_EVENTS },
   { key: "hunsha", name: "婚神煞", desc: "沖胎元、沖夫星、沖天嗣、桃花、天狗（原書六十女總局）", events: HUN_EVENTS },
+  { key: "caiyiji", name: "裁衣忌例", desc: "長星、短星、天賊、白虎、朱雀、正四廢（原書 92-93）", events: ["caiyi"] },
   { key: "anchuang", name: "安牀忌例", desc: "臥尸、死別、醞巢、天賊、木馬、箭頭、刀砧、天嗣犯沖（原書 109-111）", events: ["anchuang"] },
   { key: "tuwang", name: "土王用事", desc: "四立前十八日忌動土破土", events: ["dongtu", "potu"] },
   { key: "shan", name: "沖山三殺", desc: "日支沖座山、流年三殺占山（須入座山）", events: ["ruzhai", "dongtu", "xiuzao", "shangliang"] },
@@ -453,6 +457,11 @@ export function evaluateDay(info: DayInfo, event: EventKey, opts: EvalOptions = 
     reasons.push({ kind: "凶", text: "彭祖百忌：亥不行嫁，必主分張" });
   if (on("pengzu") && event === "anchuang" && info.dayZhi === "申")
     reasons.push({ kind: "凶", text: "彭祖百忌：申不安牀，鬼祟入房（原書：十二月皆忌申日）" });
+
+  // 裁衣合帳忌例（原書 92-93 頁）
+  if (event === "caiyi" && on("caiyiji")) {
+    reasons.push(...getCaiYiJi(info));
+  }
 
   // 安牀忌例（原書 111 頁定局）
   if (event === "anchuang" && on("anchuang")) {

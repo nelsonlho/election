@@ -193,6 +193,7 @@ function DayCard({ result }: { result: DayResult }) {
             </div>
           )}
           <div>彭祖百忌：{info.pengZu}</div>
+          <div>胎神占方：{info.taiShen}</div>
           <div>沖：{info.chongDesc}</div>
           <div>通書宜：<Terms list={info.yi} kind="宜" /></div>
           <div>通書忌：<Terms list={info.ji} kind="忌" /></div>
@@ -445,6 +446,7 @@ function DayTab() {
             <div>干支：{info.yearGanZhi}年 {info.monthGanZhi}月 {info.dayGanZhi}日</div>
             <div>二十八宿：{info.xiu}宿</div>
             <div>彭祖百忌：{info.pengZu}</div>
+            <div>胎神占方：{info.taiShen}</div>
             <div>沖：{info.chongDesc}</div>
             <div className="sm:col-span-2">通書宜：<Terms list={info.yi} kind="宜" /></div>
             <div className="sm:col-span-2">通書忌：<Terms list={info.ji} kind="忌" /></div>
