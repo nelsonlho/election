@@ -47,6 +47,33 @@ const HEXAGRAM: Record<Gua, Record<Gua, string>> = {
   坤: { 乾: "地天泰", 兌: "地澤臨", 離: "地火明夷", 震: "地雷復", 巽: "地風升", 坎: "地水師", 艮: "地山謙", 坤: "坤為地" },
 };
 
+// 一卦管三山（書 147 註、202 頁）：女命地支取用卦之上卦
+const ZHI_GUA: Record<string, Gua> = {
+  子: "坎", 丑: "艮", 寅: "艮", 卯: "震", 辰: "巽", 巳: "巽",
+  午: "離", 未: "坤", 申: "坤", 酉: "兌", 戌: "乾", 亥: "乾",
+};
+
+// 京房八宮卦管局（書 143）：六十四卦所屬之宮
+const PALACE_OF: Record<string, Gua> = {};
+const PALACE_LIST: [Gua, string[]][] = [
+  ["乾", ["乾為天", "天風姤", "天山遯", "天地否", "風地觀", "山地剝", "火地晉", "火天大有"]],
+  ["坎", ["坎為水", "水澤節", "水雷屯", "水火既濟", "澤火革", "雷火豐", "地火明夷", "地水師"]],
+  ["艮", ["艮為山", "山火賁", "山天大畜", "山澤損", "火澤睽", "天澤履", "風澤中孚", "風山漸"]],
+  ["震", ["震為雷", "雷地豫", "雷水解", "雷風恆", "地風升", "水風井", "澤風大過", "澤雷隨"]],
+  ["巽", ["巽為風", "風天小畜", "風火家人", "風雷益", "天雷无妄", "火雷噬嗑", "山雷頤", "山風蠱"]],
+  ["離", ["離為火", "火山旅", "火風鼎", "火水未濟", "山水蒙", "風水渙", "天水訟", "天火同人"]],
+  ["坤", ["坤為地", "地雷復", "地澤臨", "地天泰", "雷天大壯", "澤天夬", "水天需", "水地比"]],
+  ["兌", ["兌為澤", "澤水困", "澤地萃", "澤山咸", "水山蹇", "地山謙", "雷山小過", "雷澤歸妹"]],
+];
+for (const [palace, names] of PALACE_LIST) for (const n of names) PALACE_OF[n] = palace;
+
+// 八宮五行
+const GUA_WU_XING: Record<Gua, string> = {
+  乾: "金", 兌: "金", 離: "火", 震: "木", 巽: "木", 坎: "水", 艮: "土", 坤: "土",
+};
+const SHENG: Record<string, string> = { 木: "火", 火: "土", 土: "金", 金: "水", 水: "木" };
+const KE: Record<string, string> = { 木: "土", 土: "水", 水: "火", 火: "金", 金: "木" };
+
 export interface HeGuaResult {
   femaleGua: Gua; // 女卦（上）
   maleGua: Gua; // 男卦（下）
@@ -79,5 +106,82 @@ export function heGua(
     maleGua,
     malePalace: palace === "中" ? "中宮" : `${palace}宮`,
     tiGua: HEXAGRAM[femaleGua][maleGua],
+  };
+}
+
+// ── 合婚總判（書 148-149）──────────────────────────────
+// 體卦管前三十年、用卦管後三十年（一爻五年，共六十年）。
+// 用卦生體卦吉；體卦生用卦凶（洩暴），取日辰生體可解；比和吉。
+// 生剋以卦所屬宮（京房八宮）之五行論——原書自證：
+// 山雷頤係巽宮第七卦、風雷益係巽宮第四卦。
+export interface HeHunResult {
+  tiGua: string; // 體卦（前三十年）
+  tiPalace: Gua;
+  tiWuXing: string;
+  yongGua: string; // 用卦（後三十年）
+  yongPalace: Gua;
+  yongWuXing: string;
+  femaleGua: Gua;
+  yongUpper: Gua;
+  maleGua: Gua;
+  malePalace: string;
+  relation: "用生體" | "比和" | "用剋體" | "體生用" | "體剋用";
+  verdict: "吉" | "凶" | "平";
+  text: string;
+}
+
+export function heHun(
+  femaleGan: string,
+  femaleZhi: string,
+  maleGan: string,
+  maleZhi: string,
+): HeHunResult | null {
+  const base = heGua(femaleGan, femaleZhi, maleGan, maleZhi);
+  if (!base) return null;
+  const yongUpper = ZHI_GUA[femaleZhi];
+  if (!yongUpper) return null;
+  const yongGua = HEXAGRAM[yongUpper][base.maleGua];
+  const tiPalace = PALACE_OF[base.tiGua];
+  const yongPalace = PALACE_OF[yongGua];
+  const ti = GUA_WU_XING[tiPalace];
+  const yong = GUA_WU_XING[yongPalace];
+  let relation: HeHunResult["relation"];
+  let verdict: HeHunResult["verdict"];
+  let text: string;
+  if (yong === ti) {
+    relation = "比和";
+    verdict = "吉";
+    text = "體用比和，同氣相扶，前後運一貫，吉。";
+  } else if (SHENG[yong] === ti) {
+    relation = "用生體";
+    verdict = "吉";
+    text = "用卦生體卦，後運滋養前運，原書謂吉。";
+  } else if (SHENG[ti] === yong) {
+    relation = "體生用";
+    verdict = "凶";
+    text = "體卦生用卦，謂之洩暴，凶——原書：須取日辰來生體卦則吉（擇日吊合可解）。";
+  } else if (KE[yong] === ti) {
+    relation = "用剋體";
+    verdict = "凶";
+    text = "用卦剋體卦，後運剋前運，凶——宜擇日辰生扶體卦以解。";
+  } else {
+    relation = "體剋用";
+    verdict = "平";
+    text = "體卦剋用卦——原書未明言吉凶，從權作平，仍宜擇吉日吊合。";
+  }
+  return {
+    tiGua: base.tiGua,
+    tiPalace,
+    tiWuXing: ti,
+    yongGua,
+    yongPalace,
+    yongWuXing: yong,
+    femaleGua: base.femaleGua,
+    yongUpper,
+    maleGua: base.maleGua,
+    malePalace: base.malePalace,
+    relation,
+    verdict,
+    text,
   };
 }

@@ -5,8 +5,9 @@ import { findAuspiciousDays, queryDay, personsOfYears, DayResult } from "@/lib/e
 import { EventKey, EVENT_NAMES, EVENT_CATEGORIES, eventDef, layersForEvent, Rating } from "@/lib/events";
 import { JIANCHU, JIANCHU_ORDER } from "@/lib/jianchu";
 import { yearZhiOfBirthYear, yearGanOfBirthYear } from "@/lib/almanac";
+import { heHun } from "@/lib/hehun";
 
-type Tab = "search" | "day" | "theory";
+type Tab = "search" | "day" | "hehun" | "theory";
 
 const RATING_STYLE: Record<Rating, string> = {
   吉: "bg-red-600 text-white",
@@ -545,6 +546,110 @@ function DayTab() {
   );
 }
 
+// 合婚（原書第二期）：排山掌起體用二卦，體管前三十年、用管後三十年
+function HehunTab() {
+  const [femaleYear, setFemaleYear] = useStoredState("femaleYear", "");
+  const [maleYear, setMaleYear] = useStoredState("hehunMale", "");
+  const fy = /^\d{4}$/.test(femaleYear) ? Number(femaleYear) : undefined;
+  const my = /^\d{4}$/.test(maleYear) ? Number(maleYear) : undefined;
+  const result =
+    fy && my
+      ? heHun(yearGanOfBirthYear(fy), yearZhiOfBirthYear(fy), yearGanOfBirthYear(my), yearZhiOfBirthYear(my))
+      : null;
+  return (
+    <div className="space-y-4">
+      <div className="rounded-lg border border-stone-200 bg-white p-4 shadow-sm dark:border-stone-700 dark:bg-stone-800">
+        <div className="grid gap-3 sm:grid-cols-2">
+          <label className="block text-sm">
+            <span className="mb-1 block font-medium">
+              女命生年（西元）
+              {fy && (
+                <span className="ml-2 text-red-600 dark:text-red-400">
+                  {yearGanOfBirthYear(fy)}{yearZhiOfBirthYear(fy)}命
+                </span>
+              )}
+            </span>
+            <input
+              className="w-full rounded border border-stone-300 bg-white px-3 py-2 dark:border-stone-600 dark:bg-stone-900"
+              placeholder="例：1998"
+              inputMode="numeric"
+              value={femaleYear}
+              onChange={(e) => setFemaleYear(e.target.value)}
+            />
+          </label>
+          <label className="block text-sm">
+            <span className="mb-1 block font-medium">
+              男命生年（西元）
+              {my && (
+                <span className="ml-2 text-red-600 dark:text-red-400">
+                  {yearGanOfBirthYear(my)}{yearZhiOfBirthYear(my)}命
+                </span>
+              )}
+            </span>
+            <input
+              className="w-full rounded border border-stone-300 bg-white px-3 py-2 dark:border-stone-600 dark:bg-stone-900"
+              placeholder="例：1996"
+              inputMode="numeric"
+              value={maleYear}
+              onChange={(e) => setMaleYear(e.target.value)}
+            />
+          </label>
+        </div>
+      </div>
+
+      {result && (
+        <>
+          <div
+            className={`rounded-lg border p-5 ${
+              result.verdict === "吉"
+                ? "border-red-200 bg-red-50 dark:border-red-900 dark:bg-red-950/40"
+                : result.verdict === "凶"
+                  ? "border-stone-400 bg-stone-100 dark:border-stone-600 dark:bg-stone-800"
+                  : "border-amber-300 bg-amber-50 dark:border-amber-800 dark:bg-amber-950/40"
+            }`}
+          >
+            <div className="flex items-center gap-2">
+              <span className={`rounded px-2 py-0.5 text-sm font-bold ${RATING_STYLE[result.verdict]}`}>
+                {result.verdict}
+              </span>
+              <span className="text-lg font-bold">{result.relation}</span>
+            </div>
+            <p className="mt-2 text-sm text-stone-700 dark:text-stone-300">{result.text}</p>
+          </div>
+          <div className="grid gap-3 sm:grid-cols-2">
+            <div className="rounded-lg border border-stone-200 bg-white p-4 shadow-sm dark:border-stone-700 dark:bg-stone-800">
+              <div className="text-sm text-stone-500">體卦（過門後前三十年之運）</div>
+              <div className="mt-1 font-serif text-2xl font-bold">{result.tiGua}</div>
+              <div className="mt-1 text-sm text-stone-600 dark:text-stone-400">
+                {result.tiPalace}宮・{result.tiWuXing}　｜　女{result.femaleGua}上・男{result.maleGua}下
+                （男命泊{result.malePalace}）
+              </div>
+            </div>
+            <div className="rounded-lg border border-stone-200 bg-white p-4 shadow-sm dark:border-stone-700 dark:bg-stone-800">
+              <div className="text-sm text-stone-500">用卦（後三十年之運）</div>
+              <div className="mt-1 font-serif text-2xl font-bold">{result.yongGua}</div>
+              <div className="mt-1 text-sm text-stone-600 dark:text-stone-400">
+                {result.yongPalace}宮・{result.yongWuXing}　｜　女支{result.yongUpper}上・男{result.maleGua}下
+                （一卦管三山）
+              </div>
+            </div>
+          </div>
+          <p className="rounded-lg border border-stone-200 bg-white p-4 text-sm text-stone-600 shadow-sm dark:border-stone-700 dark:bg-stone-800 dark:text-stone-400">
+            原書斷法（書 149）：體用二卦共管六十年，一爻管五年。查官子二爻受病何處，
+            選日吊合以解救補助——遇祿、馬、貴人則吉；白虎、沖、刑、刃、空亡則凶。
+            婚期請至「尋吉日」以女命入嫁娶並參。
+          </p>
+        </>
+      )}
+      {!result && (
+        <p className="rounded-lg border border-stone-200 bg-white p-6 text-center text-stone-500 dark:border-stone-700 dark:bg-stone-800">
+          入男女二命生年，依《剋擇講義》排山掌起體用二卦。
+        </p>
+      )}
+    </div>
+  );
+}
+
 function TheoryTab() {
   return (
     <div className="space-y-4">
@@ -600,6 +705,7 @@ export default function Home() {
   const tabs: { key: Tab; label: string }[] = [
     { key: "search", label: "尋吉日" },
     { key: "day", label: "單日查" },
+    { key: "hehun", label: "合婚" },
     { key: "theory", label: "建除理論" },
   ];
   return (
@@ -627,6 +733,7 @@ export default function Home() {
       </nav>
       {tab === "search" && <SearchTab />}
       {tab === "day" && <DayTab />}
+      {tab === "hehun" && <HehunTab />}
       {tab === "theory" && <TheoryTab />}
       <footer className="mt-10 text-center text-xs text-stone-400">
         擇日之法門派多有異同，本檢僅供參考。
