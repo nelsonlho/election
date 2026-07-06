@@ -383,7 +383,7 @@ function SearchTab() {
           )}
           <label className="block text-sm">
             <span className="mb-1 block font-medium">
-              {ming === "female" ? "男方等生年（可多人，可留空）" : "本命生年（可多人，可留空）"}
+              {ming === "female" ? "男方等生年（可多人，可留空）" : "本命生年（可多人）"}
               {parseYears(birthYear).length > 1 && (
                 <span className="ml-2 text-red-600 dark:text-red-400">
                   {parseYears(birthYear).length}命合參
@@ -401,7 +401,7 @@ function SearchTab() {
           {isZang && (
             <label className="block text-sm">
               <span className="mb-1 block font-medium">
-                仙命——亡者生年（可留空）
+                仙命（亡者生年，可留空）
                 {/^\d{4}$/.test(xianMing) && (
                   <span className="ml-2 text-red-600 dark:text-red-400">
                     {yearGanOfBirthYear(Number(xianMing))}{yearZhiOfBirthYear(Number(xianMing))}命
@@ -616,7 +616,7 @@ function DayTab() {
           </label>
           {showFemale && (
             <label className="block text-sm">
-              <span className="mb-1 block font-medium">女命生年（婚事，可留空）</span>
+              <span className="mb-1 block font-medium">女命生年（婚事）</span>
               <input
                 className="w-full rounded border border-stone-300 bg-white px-3 py-2 dark:border-stone-600 dark:bg-stone-900"
                 placeholder="例：1998"
@@ -627,7 +627,7 @@ function DayTab() {
             </label>
           )}
           <label className="block text-sm">
-            <span className="mb-1 block font-medium">本命生年（可多人，可留空）</span>
+            <span className="mb-1 block font-medium">本命生年（可多人）</span>
             <input
               className="w-full rounded border border-stone-300 bg-white px-3 py-2 dark:border-stone-600 dark:bg-stone-900"
               placeholder="例：1990、1965"
@@ -638,7 +638,7 @@ function DayTab() {
           </label>
           {showXian && (
             <label className="block text-sm">
-              <span className="mb-1 block font-medium">仙命——亡者生年（葬事，可留空）</span>
+              <span className="mb-1 block font-medium">仙命（亡者生年，可留空）</span>
               <input
                 className="w-full rounded border border-stone-300 bg-white px-3 py-2 dark:border-stone-600 dark:bg-stone-900"
                 placeholder="例：1938"
