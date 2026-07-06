@@ -40,6 +40,7 @@ export interface DayInfo {
   zhiXing: string; // 建除十二神（繁體）
   xiu: string; // 二十八宿
   pengZu: string; // 彭祖百忌
+  taiShen: string; // 胎神占方（原書 104-105 頁六十甲子日胎神，與庫表對勘全合）
   chongDesc: string; // 日沖
   yi: string[]; // 通書宜
   ji: string[]; // 通書忌
@@ -68,6 +69,7 @@ export function getDayInfo(y: number, m: number, d: number): DayInfo {
     zhiXing: toTraditional(lunar.getZhiXing()),
     xiu: toTraditional(lunar.getXiu()),
     pengZu: toTraditional(`${lunar.getPengZuGan()}　${lunar.getPengZuZhi()}`),
+    taiShen: toTraditional(lunar.getDayPositionTai()),
     chongDesc: toTraditional(lunar.getDayChongDesc()),
     yi: lunar.getDayYi().map(toTraditional),
     ji: lunar.getDayJi().map(toTraditional),
