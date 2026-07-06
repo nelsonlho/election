@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { findAuspiciousDays, queryDay, DayResult } from "@/lib/engine";
+import { findAuspiciousDays, queryDay, personsOfYears, DayResult } from "@/lib/engine";
 import { EventKey, EVENT_NAMES, EVENT_CATEGORIES, eventDef, layersForEvent, Rating } from "@/lib/events";
 import { JIANCHU, JIANCHU_ORDER } from "@/lib/jianchu";
 import { yearZhiOfBirthYear, yearGanOfBirthYear } from "@/lib/almanac";
@@ -59,6 +59,11 @@ function todayStr(): string {
   const d = new Date();
   const p = (n: number) => String(n).padStart(2, "0");
   return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`;
+}
+
+// 多命合參：自由文字中取西元四位年（頓號、逗號、空格皆可分隔）
+function parseYears(s: string): number[] {
+  return (s.match(/\d{4}/g) ?? []).map(Number);
 }
 
 // 偏好記存（綱領五）：localStorage、kezhai: 前綴、SSR 安全
@@ -232,7 +237,7 @@ function SearchTab() {
         days,
         event,
         femaleBirthYear: femaleYear ? Number(femaleYear) : undefined,
-        birthYear: birthYear ? Number(birthYear) : undefined,
+        birthYears: parseYears(birthYear),
         mountainZhi: isZaoZuo && mountain ? mountain : undefined,
         disabledLayers: off,
       }),
@@ -255,7 +260,7 @@ function SearchTab() {
             <span className="mb-1 block font-medium">事類</span>
             <EventSelect value={event} onChange={(k) => setEventStr(k)} />
           </label>
-          {ming === "female" ? (
+          {ming === "female" && (
             <label className="block text-sm">
               <span className="mb-1 block font-medium">
                 女命生年（西元）
@@ -273,18 +278,23 @@ function SearchTab() {
                 onChange={(e) => setFemaleYear(e.target.value)}
               />
             </label>
-          ) : (
-            <label className="block text-sm">
-              <span className="mb-1 block font-medium">本命生年（西元，可留空）</span>
-              <input
-                className="w-full rounded border border-stone-300 bg-white px-3 py-2 dark:border-stone-600 dark:bg-stone-900"
-                placeholder="例：1990"
-                inputMode="numeric"
-                value={birthYear}
-                onChange={(e) => setBirthYear(e.target.value)}
-              />
-            </label>
           )}
+          <label className="block text-sm">
+            <span className="mb-1 block font-medium">
+              {ming === "female" ? "男方等生年（可多人，可留空）" : "本命生年（可多人，可留空）"}
+              {parseYears(birthYear).length > 1 && (
+                <span className="ml-2 text-red-600 dark:text-red-400">
+                  {parseYears(birthYear).length}命合參
+                </span>
+              )}
+            </span>
+            <input
+              className="w-full rounded border border-stone-300 bg-white px-3 py-2 dark:border-stone-600 dark:bg-stone-900"
+              placeholder="例：1990、1965（多命以頓號或空格分隔）"
+              value={birthYear}
+              onChange={(e) => setBirthYear(e.target.value)}
+            />
+          </label>
           <label className="block text-sm">
             <span className="mb-1 block font-medium">起始日</span>
             <input
@@ -385,13 +395,14 @@ function DayTab() {
     const [y, m, d] = date.split("-").map(Number);
     if (!y || !m || !d) return null;
     const fy = /^\d{4}$/.test(femaleYear) ? Number(femaleYear) : undefined;
-    const by = /^\d{4}$/.test(birthYear) ? Number(birthYear) : undefined;
+    const persons = personsOfYears(parseYears(birthYear));
     return (Object.keys(EVENT_NAMES) as EventKey[]).map((ev) =>
       queryDay(y, m, d, ev, {
         femaleBirthZhi: fy ? yearZhiOfBirthYear(fy) : undefined,
         femaleBirthGan: fy ? yearGanOfBirthYear(fy) : undefined,
-        birthZhi: by ? yearZhiOfBirthYear(by) : undefined,
-        birthGan: by ? yearGanOfBirthYear(by) : undefined,
+        birthZhi: persons[0]?.zhi,
+        birthGan: persons[0]?.gan,
+        persons,
         disabledLayers: off,
       }),
     );
@@ -424,11 +435,10 @@ function DayTab() {
             />
           </label>
           <label className="block text-sm">
-            <span className="mb-1 block font-medium">本命生年（可留空）</span>
+            <span className="mb-1 block font-medium">本命生年（可多人，可留空）</span>
             <input
               className="w-full rounded border border-stone-300 bg-white px-3 py-2 dark:border-stone-600 dark:bg-stone-900"
-              placeholder="例：1990"
-              inputMode="numeric"
+              placeholder="例：1990、1965"
               value={birthYear}
               onChange={(e) => setBirthYear(e.target.value)}
             />

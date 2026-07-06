@@ -230,27 +230,27 @@ const XING_PAIRS: [string, string][] = [
   ["辰", "辰"], ["午", "午"], ["酉", "酉"], ["亥", "亥"],
 ];
 
-function jiXiongShen(info: DayInfo, mingGan: string | undefined, mingZhi: string): Reason[] {
+function jiXiongShen(info: DayInfo, mingGan: string | undefined, mingZhi: string, label = "本命"): Reason[] {
   const out: Reason[] = [];
   const dz = info.dayZhi;
   const dg = info.dayGan;
   const group = SAN_HE_GROUPS.find((g) => g.includes(mingZhi));
   if (group && group.includes(dz) && dz !== mingZhi)
-    out.push({ kind: "吉", text: "日支與本命三合（原書：吉凶神定局）" });
+    out.push({ kind: "吉", text: `日支與${label}三合（原書：吉凶神定局）` });
   if (LIU_HE[mingZhi] === dz)
-    out.push({ kind: "吉", text: "日支與本命六合（原書：吉凶神定局）" });
+    out.push({ kind: "吉", text: `日支與${label}六合（原書：吉凶神定局）` });
   if (mingGan && TIAN_YI[mingGan]?.includes(dz))
-    out.push({ kind: "吉", text: "堆貴：日支為本命天乙貴人" });
+    out.push({ kind: "吉", text: `堆貴：日支為${label}天乙貴人` });
   if (TIAN_YI[dg]?.includes(mingZhi))
-    out.push({ kind: "吉", text: "進貴：日干天乙貴人臨本命" });
+    out.push({ kind: "吉", text: `進貴：日干天乙貴人臨${label}` });
   if (mingGan && LU[mingGan] === dz)
-    out.push({ kind: "吉", text: "堆祿：日支為本命祿位" });
+    out.push({ kind: "吉", text: `堆祿：日支為${label}祿位` });
   if (LU[dg] === mingZhi)
-    out.push({ kind: "吉", text: "進祿：日干祿臨本命" });
+    out.push({ kind: "吉", text: `進祿：日干祿臨${label}` });
   if (YI_MA[mingZhi] === dz)
-    out.push({ kind: "吉", text: "堆馬：日支為本命驛馬" });
+    out.push({ kind: "吉", text: `堆馬：日支為${label}驛馬` });
   if (XING_PAIRS.some(([a, b]) => a === mingZhi && b === dz))
-    out.push({ kind: "注", text: "日支刑本命，慎用（原書：吉凶神定局列刑為忌）" });
+    out.push({ kind: "注", text: `日支刑${label}，慎用（原書：吉凶神定局列刑為忌）` });
   return out;
 }
 
@@ -389,11 +389,18 @@ function tongShuReason(info: DayInfo, event: EventKey): Reason | null {
 }
 
 // ── 各事評日 ──────────────────────────────────────────────
+export interface MingPerson {
+  year?: number; // 西元生年（標示用）
+  zhi: string; // 年支
+  gan?: string; // 年干
+}
+
 export interface EvalOptions {
   femaleBirthZhi?: string; // 女命年支（婚事用）
   femaleBirthGan?: string; // 女命年干（吉神定局用）
-  birthZhi?: string; // 本命年支（沖命、破碎用）
-  birthGan?: string; // 本命年干（吉神定局用）
+  birthZhi?: string; // 本命年支（沖命、破碎用；多命時為首命）
+  birthGan?: string; // 本命年干（吉神定局用；多命時為首命）
+  persons?: MingPerson[]; // 多命合參（如開市數東家、婚事乾造），逐命判沖破吉凶
   mountainZhi?: string; // 宅舍座山（十二支山，造作事用）
   disabledLayers?: string[]; // 停用之法度層（鍵見 RULE_LAYERS）
 }
@@ -496,21 +503,25 @@ export function evaluateDay(info: DayInfo, event: EventKey, opts: EvalOptions = 
   if (on("pengzu") && event === "qiuyi" && info.dayZhi === "未")
     reasons.push({ kind: "凶", text: "彭祖百忌：未不服藥，毒氣入腸" });
 
-  // 本命沖煞（婚事以女命論，餘以本命論）
+  // 本命沖煞（婚事以女命為主，另可多命合參——如開市數東家、婚事乾造）
   const useFemale = eventDef(event).mingInput === "female";
-  const ming = useFemale ? opts.femaleBirthZhi : opts.birthZhi;
-  if (ming) {
-    const who = useFemale ? "女命" : "本命";
-    if (on("chongming") && isChongMing(ming, info.dayZhi))
-      reasons.push({ kind: "凶", text: `日支${info.dayZhi}正沖${who}${ming}，犯沖大凶` });
+  const persons: { label: string; zhi: string; gan?: string }[] = [];
+  if (useFemale && opts.femaleBirthZhi)
+    persons.push({ label: `女命${opts.femaleBirthZhi}`, zhi: opts.femaleBirthZhi, gan: opts.femaleBirthGan });
+  if (opts.persons?.length) {
+    for (const p of opts.persons)
+      persons.push({ label: p.year ? `${p.year}（${p.zhi}）命` : `本命${p.zhi}`, zhi: p.zhi, gan: p.gan });
+  } else if (!useFemale && opts.birthZhi) {
+    persons.push({ label: `本命${opts.birthZhi}`, zhi: opts.birthZhi, gan: opts.birthGan });
+  }
+  for (const p of persons) {
+    if (on("chongming") && isChongMing(p.zhi, info.dayZhi))
+      reasons.push({ kind: "凶", text: `日支${info.dayZhi}正沖${p.label}，犯沖大凶` });
     // 破碎日：通書公例；嫁娶另依原書女命日吉凶表，不重複計
-    if (on("chongming") && event !== "jiaqu" && isPoSui(ming, info.dayZhi))
-      reasons.push({ kind: "凶", text: `破碎日（${who}${ming}見${info.dayZhi}日），忌用` });
+    if (on("chongming") && event !== "jiaqu" && isPoSui(p.zhi, info.dayZhi))
+      reasons.push({ kind: "凶", text: `破碎日（${p.label}見${info.dayZhi}日），忌用` });
     // 吉凶神定局（原書 59 頁起）
-    if (on("jixiong")) {
-      const mingGan = useFemale ? opts.femaleBirthGan : opts.birthGan;
-      reasons.push(...jiXiongShen(info, mingGan, ming));
-    }
+    if (on("jixiong")) reasons.push(...jiXiongShen(info, p.gan, p.zhi, p.label));
   }
 
   // 女命十二地支日吉凶（《剋擇講義》書 86-89 頁）：婚事以女命三合局斷日

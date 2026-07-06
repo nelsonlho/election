@@ -1,7 +1,11 @@
 // 擇日引擎：單日查與範圍尋吉日
 
 import { getDayInfo, DayInfo, yearZhiOfBirthYear, yearGanOfBirthYear } from "./almanac";
-import { evaluateDay, eventDef, Evaluation, EventKey, EvalOptions } from "./events";
+import { evaluateDay, eventDef, Evaluation, EventKey, EvalOptions, MingPerson } from "./events";
+
+export function personsOfYears(years: number[]): MingPerson[] {
+  return years.map((y) => ({ year: y, zhi: yearZhiOfBirthYear(y), gan: yearGanOfBirthYear(y) }));
+}
 
 export interface DayResult {
   info: DayInfo;
@@ -18,7 +22,8 @@ export interface RangeQuery {
   days: number; // 尋日範圍（上限 366）
   event: EventKey;
   femaleBirthYear?: number; // 婚事：女命生年（西元）
-  birthYear?: number; // 餘事：本命生年（西元，可缺）
+  birthYear?: number; // 本命生年（西元，可缺）
+  birthYears?: number[]; // 多命合參（如開市數東家、婚事乾造），優先於 birthYear
   mountainZhi?: string; // 宅舍座山（十二支山，造作事用，可缺）
   disabledLayers?: string[]; // 停用之法度層
 }
@@ -30,9 +35,13 @@ export function findAuspiciousDays(q: RangeQuery): DayResult[] {
     opts.femaleBirthZhi = yearZhiOfBirthYear(q.femaleBirthYear);
     opts.femaleBirthGan = yearGanOfBirthYear(q.femaleBirthYear);
   }
-  if (!useFemale && q.birthYear) {
-    opts.birthZhi = yearZhiOfBirthYear(q.birthYear);
-    opts.birthGan = yearGanOfBirthYear(q.birthYear);
+  const years = q.birthYears?.length ? q.birthYears : q.birthYear ? [q.birthYear] : [];
+  if (years.length) {
+    opts.persons = personsOfYears(years);
+    if (!useFemale) {
+      opts.birthZhi = opts.persons[0].zhi;
+      opts.birthGan = opts.persons[0].gan;
+    }
   }
   if (q.mountainZhi) opts.mountainZhi = q.mountainZhi;
   if (q.disabledLayers?.length) opts.disabledLayers = q.disabledLayers;
