@@ -64,6 +64,19 @@ function todayStr(): string {
   return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`;
 }
 
+// 日期工具：ISO 字串加天數、二日相距（含首尾）
+function addDaysStr(iso: string, n: number): string {
+  const [y, m, d] = iso.split("-").map(Number);
+  const dt = new Date(y, m - 1, d + n);
+  const p2 = (x: number) => String(x).padStart(2, "0");
+  return `${dt.getFullYear()}-${p2(dt.getMonth() + 1)}-${p2(dt.getDate())}`;
+}
+function spanDays(a: string, b: string): number {
+  const [y1, m1, d1] = a.split("-").map(Number);
+  const [y2, m2, d2] = b.split("-").map(Number);
+  return Math.round((new Date(y2, m2 - 1, d2).getTime() - new Date(y1, m1 - 1, d1).getTime()) / 86400000) + 1;
+}
+
 // 多命合參：自由文字中取西元四位年（頓號、逗號、空格皆可分隔）
 function parseYears(s: string): number[] {
   return (s.match(/\d{4}/g) ?? []).map(Number);
@@ -432,18 +445,39 @@ function SearchTab() {
             />
           </label>
           <label className="block text-sm">
-            <span className="mb-1 block font-medium">尋日範圍</span>
-            <select
+            <span className="mb-1 block font-medium">
+              終止日
+              <span className="ml-2 text-xs font-normal text-stone-400">共{days}日</span>
+            </span>
+            <input
+              type="date"
               className="w-full rounded border border-stone-300 bg-white px-3 py-2 dark:border-stone-600 dark:bg-stone-900"
-              value={days}
-              onChange={(e) => setDaysStr(e.target.value)}
-            >
-              <option value={30}>三十日</option>
-              <option value={60}>六十日</option>
-              <option value={90}>九十日</option>
-              <option value={180}>一百八十日</option>
-              <option value={366}>一年</option>
-            </select>
+              min={start}
+              value={addDaysStr(start, days - 1)}
+              onChange={(e) => {
+                if (!e.target.value) return;
+                const n = spanDays(start, e.target.value);
+                setDaysStr(String(Math.min(366, Math.max(1, n))));
+              }}
+            />
+            <div className="mt-1.5 flex flex-wrap gap-1">
+              {([["卅日", 30], ["六十日", 60], ["九十日", 90], ["半年", 180], ["一年", 366]] as [string, number][]).map(
+                ([label, n]) => (
+                  <button
+                    key={n}
+                    type="button"
+                    className={`rounded-full px-2 py-0.5 text-xs transition-colors ${
+                      days === n
+                        ? "bg-red-700 text-white"
+                        : "bg-stone-100 text-stone-600 ring-1 ring-stone-200 hover:bg-stone-200 dark:bg-stone-700 dark:text-stone-300 dark:ring-stone-600"
+                    }`}
+                    onClick={() => setDaysStr(String(n))}
+                  >
+                    {label}
+                  </button>
+                ),
+              )}
+            </div>
           </label>
         </div>
         {/* 進階摺疊（綱領二）：宅舍座山（造作事）＋法度取捨 */}
