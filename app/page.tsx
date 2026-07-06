@@ -634,6 +634,41 @@ function HehunTab() {
               </div>
             </div>
           </div>
+          <div className="rounded-lg border border-stone-200 bg-white p-4 shadow-sm dark:border-stone-700 dark:bg-stone-800">
+            <div className="text-sm font-medium">體卦六爻（渾天甲子，自初而上，一爻管五年）</div>
+            <div className="mt-2 flex flex-wrap gap-1.5">
+              {result.yaos.map((y, i) => (
+                <span
+                  key={i}
+                  className={`rounded px-2 py-0.5 text-xs ring-1 ${
+                    y.liuQin === "官鬼" || y.liuQin === "子孫"
+                      ? "bg-amber-50 text-amber-900 ring-amber-300 dark:bg-amber-950/60 dark:text-amber-300 dark:ring-amber-800"
+                      : "bg-stone-100 text-stone-600 ring-stone-200 dark:bg-stone-700 dark:text-stone-300 dark:ring-stone-600"
+                  }`}
+                >
+                  {i + 1}爻 {y.ganZhi}・{y.liuQin}
+                </span>
+              ))}
+            </div>
+            <p className="mt-2 text-sm text-stone-600 dark:text-stone-400">
+              {result.guanYao.length || result.ziYao.length ? (
+                <>
+                  官鬼爻{result.guanYao.length ? `（${result.guanYao.join("、")}）` : "不現"}、
+                  子孫爻{result.ziYao.length ? `（${result.ziYao.join("、")}）` : "不現"}——
+                  原書例五：婚日勿沖刑此二爻。
+                  {result.jiChongZhi.length > 0 && (
+                    <>
+                      故婚期<span className="font-medium text-red-700 dark:text-red-400">
+                        忌{result.jiChongZhi.join("、")}日
+                      </span>（沖爻之支）。
+                    </>
+                  )}
+                </>
+              ) : (
+                "官鬼、子孫二爻不現於卦，選日依常法。"
+              )}
+            </p>
+          </div>
           <p className="rounded-lg border border-stone-200 bg-white p-4 text-sm text-stone-600 shadow-sm dark:border-stone-700 dark:bg-stone-800 dark:text-stone-400">
             原書斷法（書 149）：體用二卦共管六十年，一爻管五年。查官子二爻受病何處，
             選日吊合以解救補助——遇祿、馬、貴人則吉；白虎、沖、刑、刃、空亡則凶。

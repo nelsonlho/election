@@ -114,6 +114,45 @@ export function heGua(
 // 用卦生體卦吉；體卦生用卦凶（洩暴），取日辰生體可解；比和吉。
 // 生剋以卦所屬宮（京房八宮）之五行論——原書自證：
 // 山雷頤係巽宮第七卦、風雷益係巽宮第四卦。
+// ── 渾天甲子（納甲）與六親（書 144-146、152 例五） ──────────
+// 內卦（下）三爻、外卦（上）三爻，自初而上
+const NA_JIA: Record<Gua, { inner: string[]; outer: string[] }> = {
+  乾: { inner: ["甲子", "甲寅", "甲辰"], outer: ["壬午", "壬申", "壬戌"] },
+  坤: { inner: ["乙未", "乙巳", "乙卯"], outer: ["癸丑", "癸亥", "癸酉"] },
+  震: { inner: ["庚子", "庚寅", "庚辰"], outer: ["庚午", "庚申", "庚戌"] },
+  巽: { inner: ["辛丑", "辛亥", "辛酉"], outer: ["辛未", "辛巳", "辛卯"] },
+  坎: { inner: ["戊寅", "戊辰", "戊午"], outer: ["戊申", "戊戌", "戊子"] },
+  離: { inner: ["己卯", "己丑", "己亥"], outer: ["己酉", "己未", "己巳"] },
+  艮: { inner: ["丙辰", "丙午", "丙申"], outer: ["丙戌", "丙子", "丙寅"] },
+  兌: { inner: ["丁巳", "丁卯", "丁丑"], outer: ["丁亥", "丁酉", "丁未"] },
+};
+const ZHI_WX: Record<string, string> = {
+  子: "水", 丑: "土", 寅: "木", 卯: "木", 辰: "土", 巳: "火",
+  午: "火", 未: "土", 申: "金", 酉: "金", 戌: "土", 亥: "水",
+};
+
+export interface Yao {
+  ganZhi: string;
+  liuQin: "父母" | "兄弟" | "子孫" | "妻財" | "官鬼";
+}
+
+// 六親：以卦宮五行為我——生我父母、我生子孫、剋我官鬼、我剋妻財、比和兄弟
+function liuQinOf(palaceWx: string, zhi: string): Yao["liuQin"] {
+  const w = ZHI_WX[zhi];
+  if (w === palaceWx) return "兄弟";
+  if (SHENG[w] === palaceWx) return "父母";
+  if (SHENG[palaceWx] === w) return "子孫";
+  if (KE[w] === palaceWx) return "官鬼";
+  return "妻財";
+}
+
+// 體卦六爻（自初而上）：下卦（男）內三爻＋上卦（女）外三爻，依體卦所屬宮五行起六親
+export function tiGuaYaos(upper: Gua, lower: Gua, tiGuaName: string): Yao[] {
+  const palaceWx = GUA_WU_XING[PALACE_OF[tiGuaName]];
+  const list = [...NA_JIA[lower].inner, ...NA_JIA[upper].outer];
+  return list.map((gz) => ({ ganZhi: gz, liuQin: liuQinOf(palaceWx, gz.charAt(1)) }));
+}
+
 export interface HeHunResult {
   tiGua: string; // 體卦（前三十年）
   tiPalace: Gua;
@@ -128,7 +167,16 @@ export interface HeHunResult {
   relation: "用生體" | "比和" | "用剋體" | "體生用" | "體剋用";
   verdict: "吉" | "凶" | "平";
   text: string;
+  yaos: Yao[]; // 體卦六爻（自初而上），一爻管五年
+  guanYao: string[]; // 官鬼爻支（選日勿沖刑）
+  ziYao: string[]; // 子孫爻支（選日勿沖刑）
+  jiChongZhi: string[]; // 忌沖之日支（沖官子二爻者）
 }
+
+const CHONG: Record<string, string> = {
+  子: "午", 丑: "未", 寅: "申", 卯: "酉", 辰: "戌", 巳: "亥",
+  午: "子", 未: "丑", 申: "寅", 酉: "卯", 戌: "辰", 亥: "巳",
+};
 
 export function heHun(
   femaleGan: string,
@@ -167,9 +215,17 @@ export function heHun(
   } else {
     relation = "體剋用";
     verdict = "平";
-    text = "體卦剋用卦——原書未明言吉凶，從權作平，仍宜擇吉日吊合。";
+    text = "體卦剋用卦——原書例四：爻有比和則不言凶，宜查爻神細斷，並擇吉日吊合。";
   }
+  const yaos = tiGuaYaos(base.femaleGua, base.maleGua, base.tiGua);
+  const guanYao = yaos.filter((y) => y.liuQin === "官鬼").map((y) => y.ganZhi.charAt(1));
+  const ziYao = yaos.filter((y) => y.liuQin === "子孫").map((y) => y.ganZhi.charAt(1));
+  const jiChongZhi = [...new Set([...guanYao, ...ziYao].map((z) => CHONG[z]))];
   return {
+    yaos,
+    guanYao,
+    ziYao,
+    jiChongZhi,
     tiGua: base.tiGua,
     tiPalace,
     tiWuXing: ti,
