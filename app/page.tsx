@@ -320,6 +320,45 @@ function DayCard({
   );
 }
 
+
+function Pager({
+  page,
+  pageCount,
+  onPage,
+  children,
+}: {
+  page: number;
+  pageCount: number;
+  onPage: (p: number) => void;
+  children?: React.ReactNode;
+}) {
+  if (pageCount <= 1) return null;
+  return (
+    <div className="flex flex-wrap items-center justify-center gap-2 py-1 text-sm">
+      <button
+        type="button"
+        disabled={page === 0}
+        className="rounded border border-stone-300 px-3 py-1 disabled:opacity-40 dark:border-stone-600"
+        onClick={() => onPage(page - 1)}
+      >
+        ‹ 上一頁
+      </button>
+      <span className="text-stone-500">
+        第 {page + 1} / {pageCount} 頁
+      </span>
+      <button
+        type="button"
+        disabled={page >= pageCount - 1}
+        className="rounded border border-stone-300 px-3 py-1 disabled:opacity-40 dark:border-stone-600"
+        onClick={() => onPage(page + 1)}
+      >
+        下一頁 ›
+      </button>
+      {children}
+    </div>
+  );
+}
+
 function SearchTab() {
   const [eventStr, setEventStr] = useStoredState("event", "jiaqu");
   const event = (eventStr in EVENT_NAMES ? eventStr : "jiaqu") as EventKey;
@@ -553,6 +592,7 @@ function SearchTab() {
               範圍之內無吉日。可展範圍再尋。
             </p>
           )}
+          <Pager page={page} pageCount={pageCount} onPage={setPage} />
           <div className="space-y-3">
             {pageItems.map((r) => (
               <DayCard
@@ -573,46 +613,25 @@ function SearchTab() {
               />
             ))}
           </div>
-          {(pageCount > 1 || shown.length > 10) && (
-            <div className="flex flex-wrap items-center justify-center gap-2 pt-1 text-sm">
-              <button
-                type="button"
-                disabled={page === 0}
-                className="rounded border border-stone-300 px-3 py-1 disabled:opacity-40 dark:border-stone-600"
-                onClick={() => setPage(page - 1)}
-              >
-                ‹ 上一頁
-              </button>
-              <span className="text-stone-500">
-                第 {page + 1} / {pageCount} 頁
-              </span>
-              <button
-                type="button"
-                disabled={page >= pageCount - 1}
-                className="rounded border border-stone-300 px-3 py-1 disabled:opacity-40 dark:border-stone-600"
-                onClick={() => setPage(page + 1)}
-              >
-                下一頁 ›
-              </button>
-              <span className="ml-2 flex items-center gap-1 text-xs text-stone-400">
-                每頁
-                {[10, 20, 50].map((n) => (
-                  <button
-                    key={n}
-                    type="button"
-                    className={`rounded-full px-2 py-0.5 transition-colors ${
-                      pageSize === n
-                        ? "bg-red-700 text-white"
-                        : "bg-stone-100 text-stone-600 ring-1 ring-stone-200 hover:bg-stone-200 dark:bg-stone-700 dark:text-stone-300 dark:ring-stone-600"
-                    }`}
-                    onClick={() => setPageSizeStr(String(n))}
-                  >
-                    {n}
-                  </button>
-                ))}
-              </span>
-            </div>
-          )}
+          <Pager page={page} pageCount={pageCount} onPage={setPage}>
+            <span className="ml-2 flex items-center gap-1 text-xs text-stone-400">
+              每頁
+              {[10, 20, 50].map((n) => (
+                <button
+                  key={n}
+                  type="button"
+                  className={`rounded-full px-2 py-0.5 transition-colors ${
+                    pageSize === n
+                      ? "bg-red-700 text-white"
+                      : "bg-stone-100 text-stone-600 ring-1 ring-stone-200 hover:bg-stone-200 dark:bg-stone-700 dark:text-stone-300 dark:ring-stone-600"
+                  }`}
+                  onClick={() => setPageSizeStr(String(n))}
+                >
+                  {n}
+                </button>
+              ))}
+            </span>
+          </Pager>
         </>
       )}
     </div>
