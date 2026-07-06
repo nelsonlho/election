@@ -376,11 +376,12 @@ function SearchTab() {
   return (
     <div className="space-y-4">
       <div className="rounded-lg border border-stone-200 bg-white p-4 shadow-sm dark:border-stone-700 dark:bg-stone-800">
-        <div className="grid gap-3 sm:grid-cols-2">
-          <div className="block text-sm sm:col-span-2">
+        <div className="space-y-3">
+          <div className="block text-sm">
             <span className="mb-1 block font-medium">事類</span>
             <EventPicker value={event} onChange={(k) => setEventStr(k)} />
           </div>
+          <div className="grid grid-cols-2 gap-3">
           {ming === "female" && (
             <label className="block text-sm">
               <span className="mb-1 block font-medium">
@@ -436,6 +437,8 @@ function SearchTab() {
               />
             </label>
           )}
+          </div>
+          <div className="grid grid-cols-2 gap-3">
           <label className="block text-sm">
             <span className="mb-1 block font-medium">起始日</span>
             <input
@@ -480,6 +483,7 @@ function SearchTab() {
               )}
             </div>
           </label>
+          </div>
         </div>
         {/* 進階摺疊（綱領二）：宅舍座山（造作事）＋法度取捨 */}
         <details className="mt-3" open={off.length > 0 || (isZaoZuo && !!mountain)}>
