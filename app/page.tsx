@@ -398,10 +398,23 @@ function SearchTab() {
                   onChange={(e) => setMountain(e.target.value)}
                 >
                   <option value="">不指定</option>
-                  {["子", "丑", "寅", "卯", "辰", "巳", "午", "未", "申", "酉", "戌", "亥"].map((z) => (
-                    <option key={z} value={z}>
-                      {z}山
-                    </option>
+                  {([
+                    ["北（壬子癸）", ["壬", "子", "癸"]],
+                    ["東北（丑艮寅）", ["丑", "艮", "寅"]],
+                    ["東（甲卯乙）", ["甲", "卯", "乙"]],
+                    ["東南（辰巽巳）", ["辰", "巽", "巳"]],
+                    ["南（丙午丁）", ["丙", "午", "丁"]],
+                    ["西南（未坤申）", ["未", "坤", "申"]],
+                    ["西（庚酉辛）", ["庚", "酉", "辛"]],
+                    ["西北（戌乾亥）", ["戌", "乾", "亥"]],
+                  ] as [string, string[]][]).map(([label, ms]) => (
+                    <optgroup key={label} label={label}>
+                      {ms.map((z) => (
+                        <option key={z} value={z}>
+                          {z}山
+                        </option>
+                      ))}
+                    </optgroup>
                   ))}
                 </select>
               </label>

@@ -508,16 +508,50 @@ const SAN_SHA_FANG: Record<string, string[]> = {
   亥: ["申", "酉", "戌"], 卯: ["申", "酉", "戌"], 未: ["申", "酉", "戌"],
 };
 
-function zaoZuoShan(info: DayInfo, mountainZhi: string): Reason[] {
+// 廿四山：十二支山＋八干山＋四卦山（原書沖山例遍列之）
+export const MOUNTAINS_24 = [
+  "壬", "子", "癸", "丑", "艮", "寅", "甲", "卯", "乙", "辰", "巽", "巳",
+  "丙", "午", "丁", "未", "坤", "申", "庚", "酉", "辛", "戌", "乾", "亥",
+];
+// 干山之沖（四柱有此干謂之沖山——原書 392 沖山例；日課以日干論）
+const GAN_SHAN_CHONG: Record<string, string> = {
+  甲: "庚", 庚: "甲", 乙: "辛", 辛: "乙", 丙: "壬", 壬: "丙", 丁: "癸", 癸: "丁",
+};
+// 卦山之沖：對宮卦所轄二支（乾戌亥↔巽辰巳、坤未申↔艮丑寅）
+const GUA_SHAN_CHONG: Record<string, string[]> = {
+  乾: ["辰", "巳"], 巽: ["戌", "亥"], 坤: ["丑", "寅"], 艮: ["未", "申"],
+};
+// 干山所附方位組（三殺占方用）：甲乙東（寅卯辰）、丙丁南、庚辛西、壬癸北
+const GAN_SHAN_FANG: Record<string, string[]> = {
+  甲: ["寅", "卯", "辰"], 乙: ["寅", "卯", "辰"],
+  丙: ["巳", "午", "未"], 丁: ["巳", "午", "未"],
+  庚: ["申", "酉", "戌"], 辛: ["申", "酉", "戌"],
+  壬: ["亥", "子", "丑"], 癸: ["亥", "子", "丑"],
+};
+
+function zaoZuoShan(info: DayInfo, m: string): Reason[] {
   const out: Reason[] = [];
-  if (ZHI_CHONG[mountainZhi] === info.dayZhi)
-    out.push({ kind: "凶", text: `日支${info.dayZhi}沖山（坐${mountainZhi}山），造作葬事忌之（原書：沖山例）` });
   const yearZhi = info.yearGanZhi.charAt(1);
-  if (SAN_SHA_FANG[yearZhi]?.includes(mountainZhi))
-    out.push({ kind: "凶", text: `流年${info.yearGanZhi}三殺占山（${mountainZhi}山），歲內造作葬事大忌（原書：三殺例）` });
-  // 歲破沖山（原書第八期安葬山家凶神訣：歲破沖山年家大忌）
-  if (ZHI_CHONG[yearZhi] === mountainZhi)
-    out.push({ kind: "凶", text: `歲破占山（流年${info.yearGanZhi}沖${mountainZhi}山），歲內大忌（原書：安葬山家凶神訣）` });
+  const sha = SAN_SHA_FANG[yearZhi] ?? [];
+  if (ZHI_CHONG[m]) {
+    // 支山
+    if (ZHI_CHONG[m] === info.dayZhi)
+      out.push({ kind: "凶", text: `日支${info.dayZhi}沖山（坐${m}山），造作葬事忌之（原書：沖山例）` });
+    if (sha.includes(m))
+      out.push({ kind: "凶", text: `流年${info.yearGanZhi}三殺占山（${m}山），歲內造作葬事大忌（原書：三殺例）` });
+    if (ZHI_CHONG[yearZhi] === m)
+      out.push({ kind: "凶", text: `歲破占山（流年${info.yearGanZhi}沖${m}山），歲內大忌（原書：安葬山家凶神訣）` });
+  } else if (GAN_SHAN_CHONG[m]) {
+    // 干山
+    if (info.dayGan === GAN_SHAN_CHONG[m])
+      out.push({ kind: "凶", text: `日干${info.dayGan}沖山（坐${m}山，${m}${GAN_SHAN_CHONG[m]}對沖），忌之（原書：沖山例）` });
+    if (GAN_SHAN_FANG[m]?.every((z) => sha.includes(z)))
+      out.push({ kind: "凶", text: `流年${info.yearGanZhi}三殺占方（${m}山附焉），歲內造作葬事大忌（原書：三殺例）` });
+  } else if (GUA_SHAN_CHONG[m]) {
+    // 卦山
+    if (GUA_SHAN_CHONG[m].includes(info.dayZhi))
+      out.push({ kind: "凶", text: `日支${info.dayZhi}沖山（坐${m}山，對宮${GUA_SHAN_CHONG[m].join("")}之沖），忌之（原書：沖山例）` });
+  }
   return out;
 }
 
