@@ -10,7 +10,11 @@ export type EventKey =
   | "chuxing" | "kaishi" | "liquan" | "furen" | "qiuming" | "nacaifu" | "zaizhong" | "nachu"
   | "jisi" | "jinxiang" | "kaiguang" | "qiuyi" | "anxiang" | "jiechu"
   | "anzang" | "potu" | "qizan" | "xiufen"
-  | "rulian" | "yijiu" | "chengfu" | "chufu" | "xietu" | "libei" | "kaishengfen" | "heshoumu";
+  | "rulian" | "yijiu" | "chengfu" | "chufu" | "xietu" | "libei" | "kaishengfen" | "heshoumu"
+  | "wenming" | "naxu" | "guining" | "jinrenkou" | "huiqinyou"
+  | "yixi" | "qiji" | "gaiwu" | "chuhuo" | "zaocang" | "buyuan" | "famu"
+  | "kaicang" | "zhichan" | "yunniang" | "jingluo" | "buzhuo" | "quyu"
+  | "suhui" | "choushen" | "muyu" | "titou";
 export type Rating = "吉" | "平" | "凶";
 
 export const EVENT_NAMES: Record<EventKey, string> = {
@@ -54,6 +58,28 @@ export const EVENT_NAMES: Record<EventKey, string> = {
   libei: "立碑",
   kaishengfen: "開生墳",
   heshoumu: "合壽木",
+  wenming: "問名",
+  naxu: "納婿",
+  guining: "歸寧",
+  jinrenkou: "進人口",
+  huiqinyou: "會親友",
+  yixi: "移徙",
+  qiji: "起基定磉",
+  gaiwu: "蓋屋合脊",
+  chuhuo: "出火遷神",
+  zaocang: "造倉庫",
+  buyuan: "補垣塞穴",
+  famu: "伐木",
+  kaicang: "開倉出貨",
+  zhichan: "置產",
+  yunniang: "醞釀",
+  jingluo: "經絡安機",
+  buzhuo: "捕捉畋獵",
+  quyu: "取漁結網",
+  suhui: "塑繪",
+  choushen: "酬神",
+  muyu: "沐浴",
+  titou: "剃頭整甲",
 };
 
 // 事類分科（UI 選單自動生成；新事類入既有科，首層以四五科為限）
@@ -74,6 +100,11 @@ export const EVENT_CATEGORIES: { category: string; events: EventDef[] }[] = [
       { key: "qiusi", name: "求嗣", mingInput: "self" },
       { key: "caiyi", name: "裁衣合帳", mingInput: "self" },
       { key: "guanji", name: "冠笄", mingInput: "self" },
+      { key: "wenming", name: "問名", mingInput: "female" },
+      { key: "naxu", name: "納婿", mingInput: "female" },
+      { key: "guining", name: "歸寧", mingInput: "self" },
+      { key: "jinrenkou", name: "進人口", mingInput: "self" },
+      { key: "huiqinyou", name: "會親友", mingInput: "self" },
     ],
   },
   {
@@ -87,6 +118,13 @@ export const EVENT_CATEGORIES: { category: string; events: EventDef[] }[] = [
       { key: "anmen", name: "安門", mingInput: "self" },
       { key: "chaixie", name: "拆卸", mingInput: "self" },
       { key: "juejing", name: "掘井開池", mingInput: "self" },
+      { key: "yixi", name: "移徙", mingInput: "self" },
+      { key: "qiji", name: "起基定磉", mingInput: "self" },
+      { key: "gaiwu", name: "蓋屋合脊", mingInput: "self" },
+      { key: "chuhuo", name: "出火遷神", mingInput: "self" },
+      { key: "zaocang", name: "造倉庫", mingInput: "self" },
+      { key: "buyuan", name: "補垣塞穴", mingInput: "self" },
+      { key: "famu", name: "伐木", mingInput: "self" },
     ],
   },
   {
@@ -100,6 +138,12 @@ export const EVENT_CATEGORIES: { category: string; events: EventDef[] }[] = [
       { key: "nacaifu", name: "納財", mingInput: "self" },
       { key: "zaizhong", name: "栽種", mingInput: "self" },
       { key: "nachu", name: "納畜牧養", mingInput: "self" },
+      { key: "kaicang", name: "開倉出貨", mingInput: "self" },
+      { key: "zhichan", name: "置產", mingInput: "self" },
+      { key: "yunniang", name: "醞釀", mingInput: "self" },
+      { key: "jingluo", name: "經絡安機", mingInput: "self" },
+      { key: "buzhuo", name: "捕捉畋獵", mingInput: "self" },
+      { key: "quyu", name: "取漁結網", mingInput: "self" },
     ],
   },
   {
@@ -110,6 +154,10 @@ export const EVENT_CATEGORIES: { category: string; events: EventDef[] }[] = [
       { key: "kaiguang", name: "開光", mingInput: "self" },
       { key: "anxiang", name: "安香", mingInput: "self" },
       { key: "jiechu", name: "解除禳災", mingInput: "self" },
+      { key: "suhui", name: "塑繪", mingInput: "self" },
+      { key: "choushen", name: "酬神", mingInput: "self" },
+      { key: "muyu", name: "沐浴", mingInput: "self" },
+      { key: "titou", name: "剃頭整甲", mingInput: "self" },
       { key: "qiuyi", name: "求醫治病", mingInput: "self" },
     ],
   },
@@ -403,9 +451,9 @@ function anXiangZhouTang(lunarDay: number, monthDayCount: number): { name: strin
 
 // ── 共同凶煞 ──────────────────────────────────────────────
 // 各神煞所忌之事類
-const WANG_WANG_EVENTS: EventKey[] = ["chuxing", "jiaqu", "ruzhai", "furen", "qiuming"]; // 往亡忌出行、嫁娶、移徙、上任求名
-const GUI_JI_EVENTS: EventKey[] = ["chuxing", "ruzhai"]; // 歸忌忌遠行、歸家、移徙
-const HONG_SHA_EVENTS: EventKey[] = ["jiaqu", "nacai"]; // 紅沙忌婚事
+const WANG_WANG_EVENTS: EventKey[] = ["chuxing", "jiaqu", "ruzhai", "furen", "qiuming", "yixi", "guining"]; // 往亡忌出行、嫁娶、移徙、上任求名
+const GUI_JI_EVENTS: EventKey[] = ["chuxing", "ruzhai", "yixi", "guining"]; // 歸忌忌遠行、歸家、移徙
+const HONG_SHA_EVENTS: EventKey[] = ["jiaqu", "nacai", "wenming", "naxu"]; // 紅沙忌婚事
 const SHOU_SI_EXEMPT: EventKey[] = ["anzang", "potu", "qizan", "rulian", "yijiu"]; // 受死日百事忌，惟葬事可用
 const ZANG_EVENTS: EventKey[] = ["anzang", "potu", "qizan", "xiufen", "rulian", "yijiu", "libei", "kaishengfen"]; // 葬事：另忌重日（巳亥）
 const YUE_PO_EXEMPT: EventKey[] = ["qiuyi", "chaixie"]; // 破日反宜求醫治病、破屋壞垣（拆卸）
@@ -455,7 +503,7 @@ const EVENT_TERMS: Record<EventKey, string[]> = {
   qiusi: ["求嗣"],
   caiyi: ["裁衣", "合帳", "裁衣合帳"],
   guanji: ["冠笄"],
-  ruzhai: ["入宅", "移徙"],
+  ruzhai: ["入宅"],
   dongtu: ["動土"],
   xiuzao: ["修造", "修造動土"],
   shangliang: ["豎柱上樑", "上樑"],
@@ -489,6 +537,28 @@ const EVENT_TERMS: Record<EventKey, string[]> = {
   libei: ["立碑"],
   kaishengfen: ["開生墳"],
   heshoumu: ["合壽木"],
+  wenming: ["問名"],
+  naxu: ["納婿"],
+  guining: ["歸寧"],
+  jinrenkou: ["進人口"],
+  huiqinyou: ["會親友"],
+  yixi: ["移徙"],
+  qiji: ["起基", "定磉"],
+  gaiwu: ["蓋屋", "合脊", "蓋屋合脊"],
+  chuhuo: ["出火"],
+  zaocang: ["造倉"],
+  buyuan: ["補垣", "塞穴"],
+  famu: ["伐木"],
+  kaicang: ["開倉", "出貨財"],
+  zhichan: ["置產"],
+  yunniang: ["醞釀"],
+  jingluo: ["經絡"],
+  buzhuo: ["捕捉", "畋獵"],
+  quyu: ["取漁", "結網"],
+  suhui: ["塑繪"],
+  choushen: ["酬神"],
+  muyu: ["沐浴"],
+  titou: ["剃頭", "整手足甲"],
 };
 
 function tongShuReason(info: DayInfo, event: EventKey): Reason | null {
@@ -543,10 +613,10 @@ export const RULE_LAYERS: RuleLayer[] = [
   { key: "hunsha", name: "婚神煞", desc: "沖胎元、沖夫星、沖天嗣、桃花、天狗（原書六十女總局）", events: HUN_EVENTS },
   { key: "caiyiji", name: "裁衣忌例", desc: "長星、短星、天賊、白虎、朱雀、正四廢（原書 92-93）", events: ["caiyi"] },
   { key: "anchuang", name: "安牀忌例", desc: "臥尸、死別、醞巢、天賊、木馬、箭頭、刀砧、天嗣犯沖（原書 109-111）", events: ["anchuang"] },
-  { key: "tuwang", name: "土王用事", desc: "四立前十八日忌動土破土穿井修墳", events: ["dongtu", "potu", "juejing", "xiufen", "kaishengfen"] },
-  { key: "shan", name: "沖山三殺", desc: "日支沖座山、流年三殺占山（須入座山；造葬以墓之坐山論）", events: ["ruzhai", "dongtu", "xiuzao", "shangliang", "anzang", "potu", "qizan", "xiufen", "juejing", "zuozao", "anmen", "libei", "kaishengfen", "xietu"] },
+  { key: "tuwang", name: "土王用事", desc: "四立前十八日忌動土破土穿井修墳", events: ["dongtu", "potu", "juejing", "xiufen", "kaishengfen", "qiji"] },
+  { key: "shan", name: "沖山三殺", desc: "日支沖座山、流年三殺占山（須入座山；造葬以墓之坐山論）", events: ["ruzhai", "dongtu", "xiuzao", "shangliang", "anzang", "potu", "qizan", "xiufen", "juejing", "zuozao", "anmen", "libei", "kaishengfen", "xietu", "yixi", "qiji", "gaiwu"] },
   { key: "dongtuji", name: "動土忌例", desc: "土符、土瘟、天瘟、重日、白虎朱雀（原書 548）", events: ["dongtu"] },
-  { key: "zhaizhou", name: "入宅安香周堂", desc: "十六位／八位周堂環，值凶位忌（原書 459-460 圈點）", events: ["ruzhai", "anxiang"] },
+  { key: "zhaizhou", name: "入宅安香周堂", desc: "十六位／八位周堂環，值凶位忌；出火同忌二分二至（原書 459-460）", events: ["ruzhai", "anxiang", "chuhuo"] },
   { key: "xianming", name: "仙命諸忌", desc: "日沖仙命、三殺、三刑、旬空（須入亡者生年——原書第八期）", events: ["anzang", "potu", "qizan", "xiufen", "rulian", "yijiu", "libei", "kaishengfen"] },
 ];
 
@@ -556,7 +626,7 @@ export function layersForEvent(event: EventKey): RuleLayer[] {
 
 // 造作造葬事類（沖山、三殺以山向論——原書第六期 392-393 頁，
 // 註：「利用甚廣，如豎造、入宅、安葬、修墳、造廟」）
-const ZAO_ZUO_EVENTS: EventKey[] = ["dongtu", "xiuzao", "shangliang", "ruzhai", "anzang", "potu", "qizan", "xiufen", "juejing", "zuozao", "anmen", "libei", "kaishengfen", "xietu"];
+const ZAO_ZUO_EVENTS: EventKey[] = ["dongtu", "xiuzao", "shangliang", "ruzhai", "anzang", "potu", "qizan", "xiufen", "juejing", "zuozao", "anmen", "libei", "kaishengfen", "xietu", "yixi", "qiji", "gaiwu"];
 
 // 流年三殺方（依年支三合局）：申子辰年煞南、寅午戌年煞北、巳酉丑年煞東、亥卯未年煞西
 const SAN_SHA_FANG: Record<string, string[]> = {
@@ -767,7 +837,7 @@ export function evaluateDay(info: DayInfo, event: EventKey, opts: EvalOptions = 
   }
 
   // 土王用事（原書：動土平基碎金賦）：四立前十八日，忌動土破土
-  if (on("tuwang") && ["dongtu", "potu", "juejing", "xiufen", "kaishengfen"].includes(event) && isTuWang(info.solar.y, info.solar.m, info.solar.d))
+  if (on("tuwang") && ["dongtu", "potu", "juejing", "xiufen", "kaishengfen", "qiji"].includes(event) && isTuWang(info.solar.y, info.solar.m, info.solar.d))
     reasons.push({ kind: "凶", text: "土王用事（四立前十八日，土旺），忌動土破土" });
 
   // 造作沖山、三殺（原書第六期）：入宅動土修造上樑，有座向則判
@@ -780,19 +850,21 @@ export function evaluateDay(info: DayInfo, event: EventKey, opts: EvalOptions = 
     reasons.push(...xianMingJi(info, opts.xianMingGan, opts.xianMingZhi));
   }
 
-  // 入宅、安香周堂（原書 459-460 頁）
-  if (on("zhaizhou") && (event === "ruzhai" || event === "anxiang")) {
+  // 入宅、安香周堂（原書 459-460 頁）；出火同忌二分二至
+  if (on("zhaizhou") && (event === "ruzhai" || event === "anxiang" || event === "chuhuo")) {
     const zt =
-      event === "ruzhai"
-        ? ruZhaiZhouTang(info.lunarDay, info.lunarMonthDayCount)
-        : anXiangZhouTang(info.lunarDay, info.lunarMonthDayCount);
-    if (zt.bad)
+      event === "chuhuo"
+        ? null
+        : event === "ruzhai"
+          ? ruZhaiZhouTang(info.lunarDay, info.lunarMonthDayCount)
+          : anXiangZhouTang(info.lunarDay, info.lunarMonthDayCount);
+    if (zt && zt.bad)
       reasons.push({ kind: "凶", text: `${EVENT_NAMES[event]}周堂值「${zt.name}」（原書圈點凶位），忌用` });
-    else
+    else if (zt)
       reasons.push({ kind: "吉", text: `${EVENT_NAMES[event]}周堂值「${zt.name}」，吉` });
     // 歸火入宅忌例：二分二至之日忌
     if (["春分", "秋分", "夏至", "冬至"].includes(info.jieQi))
-      reasons.push({ kind: "凶", text: `二分二至日（${info.jieQi}），忌入宅歸火安香（原書：歸火入宅忌例）` });
+      reasons.push({ kind: "凶", text: `二分二至日（${info.jieQi}），忌入宅歸火出火安香（原書：歸火入宅忌例）` });
   }
 
   // 婚神煞（原書第四期六十女總局歸納）：胎元、夫星、天嗣、桃花、天狗

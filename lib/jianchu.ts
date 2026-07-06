@@ -102,7 +102,11 @@ export type JianChuEventKey =
   | "chuxing" | "kaishi" | "liquan" | "furen" | "qiuming" | "nacaifu" | "zaizhong" | "nachu"
   | "jisi" | "jinxiang" | "kaiguang" | "qiuyi" | "anxiang" | "jiechu"
   | "anzang" | "potu" | "qizan" | "xiufen"
-  | "rulian" | "yijiu" | "chengfu" | "chufu" | "xietu" | "libei" | "kaishengfen" | "heshoumu";
+  | "rulian" | "yijiu" | "chengfu" | "chufu" | "xietu" | "libei" | "kaishengfen" | "heshoumu"
+  | "wenming" | "naxu" | "guining" | "jinrenkou" | "huiqinyou"
+  | "yixi" | "qiji" | "gaiwu" | "chuhuo" | "zaocang" | "buyuan" | "famu"
+  | "kaicang" | "zhichan" | "yunniang" | "jingluo" | "buzhuo" | "quyu"
+  | "suhui" | "choushen" | "muyu" | "titou";
 
 export const JIANCHU_BY_EVENT: Record<
   JianChuEventKey,
@@ -166,6 +170,49 @@ export const JIANCHU_BY_EVENT: Record<
   kaishengfen: { good: ["閉", "成"], bad: ["破", "建", "滿", "開"] },
   // 合壽木（壽材）：定成開吉；破閉忌
   heshoumu: { good: ["定", "成", "開"], bad: ["破", "閉"] },
+  // 問名、納婿：同婚事之例
+  wenming: { good: ["定", "執", "成", "開", "滿"], bad: ["破", "閉", "平"] },
+  naxu: { good: ["定", "執", "成", "開", "滿"], bad: ["破", "閉", "平"] },
+  // 歸寧：出行之屬——除成開吉；破危閉忌
+  guining: { good: ["除", "成", "開"], bad: ["破", "危", "閉"] },
+  // 進人口：滿收成開吉；破閉平忌
+  jinrenkou: { good: ["滿", "收", "成", "開"], bad: ["破", "閉", "平"] },
+  // 會親友：定滿成開吉；破閉忌
+  huiqinyou: { good: ["定", "滿", "成", "開"], bad: ["破", "閉"] },
+  // 移徙：同入宅之例
+  yixi: { good: ["定", "成", "開", "滿"], bad: ["破", "閉", "平", "收"] },
+  // 起基定磉：同動土之例
+  qiji: { good: ["定", "成", "執", "平"], bad: ["破", "閉", "建", "開", "收"] },
+  // 蓋屋合脊：定成滿吉；破閉危忌
+  gaiwu: { good: ["定", "成", "滿"], bad: ["破", "閉", "危"] },
+  // 出火遷神：除定成開吉；破閉忌
+  chuhuo: { good: ["除", "定", "成", "開"], bad: ["破", "閉"] },
+  // 造倉庫：滿收成吉；破閉建忌（建忌開倉）
+  zaocang: { good: ["滿", "收", "成"], bad: ["破", "閉", "建"] },
+  // 補垣塞穴：閉日塞穴正宜，平定亦取；破開忌
+  buyuan: { good: ["閉", "平", "定"], bad: ["破", "開"] },
+  // 伐木：成開收吉；破忌
+  famu: { good: ["成", "開", "收"], bad: ["破"] },
+  // 開倉出貨：滿成開吉；破閉建忌
+  kaicang: { good: ["滿", "成", "開"], bad: ["破", "閉", "建"] },
+  // 置產：定滿成開吉；破閉平除忌（除日忌置產）
+  zhichan: { good: ["定", "滿", "成", "開"], bad: ["破", "閉", "平", "除"] },
+  // 醞釀：滿定成吉；破閉忌
+  yunniang: { good: ["滿", "定", "成"], bad: ["破", "閉"] },
+  // 經絡安機：定成開吉；破閉忌
+  jingluo: { good: ["定", "成", "開"], bad: ["破", "閉"] },
+  // 捕捉畋獵：執收成日正宜；破忌
+  buzhuo: { good: ["執", "收", "成"], bad: ["破"] },
+  // 取漁結網：執收滿成吉；破忌
+  quyu: { good: ["執", "收", "滿", "成"], bad: ["破"] },
+  // 塑繪：同開光之例
+  suhui: { good: ["除", "危", "成", "開"], bad: ["破", "閉"] },
+  // 酬神：同祭祀之例
+  choushen: { good: ["除", "滿", "定", "危", "成", "開"], bad: ["破"] },
+  // 沐浴：除日沐浴正宜；破忌?從寬
+  muyu: { good: ["除", "危", "成", "開"], bad: ["破"] },
+  // 剃頭整甲：除成開吉；破閉忌
+  titou: { good: ["除", "成", "開"], bad: ["破", "閉"] },
   // 求嗣：滿日祈福求嗣，定成開亦吉；破閉平忌
   qiusi: { good: ["滿", "定", "成", "開"], bad: ["破", "閉", "平"] },
   // 立券交易：定執成開吉；破閉平收忌
