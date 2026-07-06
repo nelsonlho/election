@@ -291,8 +291,8 @@ function SearchTab() {
   const [xianMing, setXianMing] = useStoredState("xianMing", "");
   const { off, toggle } = useDisabledLayers();
   const ming = eventDef(event).mingInput;
-  const isZaoZuo = ["dongtu", "xiuzao", "shangliang", "ruzhai", "anzang", "potu"].includes(event);
-  const isZang = event === "anzang" || event === "potu";
+  const isZaoZuo = ["dongtu", "xiuzao", "shangliang", "ruzhai", "anzang", "potu", "qizan", "xiufen", "juejing", "zuozao", "anmen"].includes(event);
+  const isZang = ["anzang", "potu", "qizan", "xiufen"].includes(event);
 
   const run = () => {
     setError("");

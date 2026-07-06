@@ -97,11 +97,11 @@ export const JIANCHU: Record<JianChuName, JianChuInfo> = {
 
 // 事類建除吉凶（依上表宜忌歸納）
 export type JianChuEventKey =
-  | "jiaqu" | "nacai" | "anchuang" | "qiusi" | "caiyi"
-  | "ruzhai" | "dongtu" | "xiuzao" | "shangliang"
-  | "chuxing" | "kaishi" | "liquan" | "furen" | "qiuming"
-  | "jisi" | "jinxiang" | "kaiguang" | "qiuyi" | "anxiang"
-  | "anzang" | "potu";
+  | "jiaqu" | "nacai" | "anchuang" | "qiusi" | "caiyi" | "guanji"
+  | "ruzhai" | "dongtu" | "xiuzao" | "shangliang" | "zuozao" | "anmen" | "chaixie" | "juejing"
+  | "chuxing" | "kaishi" | "liquan" | "furen" | "qiuming" | "nacaifu" | "zaizhong" | "nachu"
+  | "jisi" | "jinxiang" | "kaiguang" | "qiuyi" | "anxiang" | "jiechu"
+  | "anzang" | "potu" | "qizan" | "xiufen";
 
 export const JIANCHU_BY_EVENT: Record<
   JianChuEventKey,
@@ -127,6 +127,28 @@ export const JIANCHU_BY_EVENT: Record<
   kaishi: { good: ["開", "成", "滿"], bad: ["破", "閉", "執", "收"] },
   // 裁衣合帳：定成開滿吉；破閉忌
   caiyi: { good: ["定", "成", "開", "滿"], bad: ["破", "閉"] },
+  // 冠笄：定日冠笄之例，成開亦吉；破閉平忌
+  guanji: { good: ["定", "成", "開"], bad: ["破", "閉", "平"] },
+  // 作灶：定成開吉；破閉危忌
+  zuozao: { good: ["定", "成", "開"], bad: ["破", "閉", "危"] },
+  // 安門：定成滿開吉；破閉忌
+  anmen: { good: ["定", "成", "滿", "開"], bad: ["破", "閉"] },
+  // 拆卸：破日破屋壞垣正宜，除日亦取；建滿忌
+  chaixie: { good: ["破", "除"], bad: ["建", "滿"] },
+  // 掘井開池：定成開吉；建忌掘井，破閉忌
+  juejing: { good: ["定", "成", "開"], bad: ["破", "閉", "建"] },
+  // 納財：收日收納財貨，滿成開亦吉；破閉平忌
+  nacaifu: { good: ["收", "滿", "成", "開"], bad: ["破", "閉", "平"] },
+  // 栽種：滿定成開吉；破閉除忌
+  zaizhong: { good: ["滿", "定", "成", "開"], bad: ["破", "閉", "除"] },
+  // 納畜牧養：收滿成開吉；破閉忌
+  nachu: { good: ["收", "滿", "成", "開"], bad: ["破", "閉"] },
+  // 解除禳災：除日解除正宜，危成開亦取；滿閉忌
+  jiechu: { good: ["除", "危", "成", "開"], bad: ["滿", "閉"] },
+  // 啟攢遷葬：同安葬之例
+  qizan: { good: ["閉", "成", "危"], bad: ["破", "建", "滿", "開"] },
+  // 修墳：同破土之例
+  xiufen: { good: ["閉", "成"], bad: ["破", "建", "滿", "開"] },
   // 求嗣：滿日祈福求嗣，定成開亦吉；破閉平忌
   qiusi: { good: ["滿", "定", "成", "開"], bad: ["破", "閉", "平"] },
   // 立券交易：定執成開吉；破閉平收忌
