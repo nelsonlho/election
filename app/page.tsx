@@ -316,6 +316,7 @@ function SearchTab() {
   const [daysStr, setDaysStr] = useStoredState("days", "90");
   const days = Number(daysStr) || 90;
   const [showPing, setShowPing] = useState(false);
+  const [page, setPage] = useState(0);
   const [results, setResults] = useState<DayResult[] | null>(null);
   const [error, setError] = useState("");
   const [mountain, setMountain] = useStoredState("mountain", "");
@@ -353,6 +354,10 @@ function SearchTab() {
       ),
     [results, showPing],
   );
+  useEffect(() => setPage(0), [results, showPing]);
+  const PAGE_SIZE = 10;
+  const pageCount = Math.max(1, Math.ceil(shown.length / PAGE_SIZE));
+  const pageItems = shown.slice(page * PAGE_SIZE, (page + 1) * PAGE_SIZE);
 
   return (
     <div className="space-y-4">
@@ -510,7 +515,7 @@ function SearchTab() {
             </p>
           )}
           <div className="space-y-3">
-            {shown.map((r) => (
+            {pageItems.map((r) => (
               <DayCard
                 key={`${r.info.solar.y}-${r.info.solar.m}-${r.info.solar.d}`}
                 result={r}
@@ -529,6 +534,29 @@ function SearchTab() {
               />
             ))}
           </div>
+          {pageCount > 1 && (
+            <div className="flex items-center justify-center gap-2 pt-1 text-sm">
+              <button
+                type="button"
+                disabled={page === 0}
+                className="rounded border border-stone-300 px-3 py-1 disabled:opacity-40 dark:border-stone-600"
+                onClick={() => setPage(page - 1)}
+              >
+                ‹ 前十日
+              </button>
+              <span className="text-stone-500">
+                第 {page + 1} / {pageCount} 頁
+              </span>
+              <button
+                type="button"
+                disabled={page >= pageCount - 1}
+                className="rounded border border-stone-300 px-3 py-1 disabled:opacity-40 dark:border-stone-600"
+                onClick={() => setPage(page + 1)}
+              >
+                後十日 ›
+              </button>
+            </div>
+          )}
         </>
       )}
     </div>
