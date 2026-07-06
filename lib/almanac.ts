@@ -78,6 +78,17 @@ export function getDayInfo(y: number, m: number, d: number): DayInfo {
   };
 }
 
+// 月將（太陽躔宮，依中氣）：雨水後亥、春分後戌……大寒後子（原書 224-225 頁貴人登天時表）
+const YUE_JIANG: Record<string, string> = {
+  雨水: "亥", 春分: "戌", 穀雨: "酉", 小滿: "申", 夏至: "未", 大暑: "午",
+  處暑: "巳", 秋分: "辰", 霜降: "卯", 小雪: "寅", 冬至: "丑", 大寒: "子",
+};
+
+export function getYueJiang(y: number, m: number, d: number): string {
+  const qi = toTraditional(Solar.fromYmd(y, m, d).getLunar().getPrevQi(true).getName());
+  return YUE_JIANG[qi] ?? "";
+}
+
 // 由西元生年取生肖年支（以立春為界不易由年號定，此處按農曆年支——擇日通例以生肖屬相論）
 export function yearZhiOfBirthYear(year: number): Zhi {
   // 農曆年支：1984 為甲子（子年）

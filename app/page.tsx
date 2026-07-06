@@ -7,6 +7,7 @@ import { JIANCHU, JIANCHU_ORDER } from "@/lib/jianchu";
 import { yearZhiOfBirthYear, yearGanOfBirthYear } from "@/lib/almanac";
 import { heHun, hexagramLines } from "@/lib/hehun";
 import type { Yao, Gua } from "@/lib/hehun";
+import { evaluateHours } from "@/lib/hours";
 
 type Tab = "search" | "day" | "hehun" | "theory";
 
@@ -547,6 +548,14 @@ function DayTab() {
         </div>
       )}
 
+      {info && (
+        <HoursGrid
+          info={info}
+          femaleZhi={/^\d{4}$/.test(femaleYear) ? yearZhiOfBirthYear(Number(femaleYear)) : undefined}
+          persons={personsOfYears(parseYears(birthYear)).map((p) => ({ label: `${p.year}（${p.zhi}）命`, zhi: p.zhi }))}
+        />
+      )}
+
       <div className="space-y-3">
         {results?.map((r, i) => (
           <div
@@ -740,6 +749,62 @@ function HehunTab() {
           入男女二命生年，依《剋擇講義》排山掌起體用二卦。
         </p>
       )}
+    </div>
+  );
+}
+
+// 十二時辰吉凶（時課之門）：貴登天門、祿貴馬合為吉；時破五不遇沖命埋兒為凶
+function HoursGrid({
+  info,
+  femaleZhi,
+  persons,
+}: {
+  info: ReturnType<typeof queryDay>["info"];
+  femaleZhi?: string;
+  persons: { label: string; zhi: string }[];
+}) {
+  const hours = useMemo(
+    () => evaluateHours(info, { femaleZhi, persons }),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [info.dayGanZhi, info.solar.y, info.solar.m, info.solar.d, femaleZhi, JSON.stringify(persons)],
+  );
+  return (
+    <div className="rounded-lg border border-stone-200 bg-white p-4 shadow-sm dark:border-stone-700 dark:bg-stone-800">
+      <div className="text-sm font-medium">
+        十二時辰吉凶
+        <span className="ml-2 text-xs font-normal text-stone-400">
+          貴登天門為時家最吉（原書 224）；命造欄有入則並判沖命、埋兒凶時
+        </span>
+      </div>
+      <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-3">
+        {hours.map((h) => (
+          <div
+            key={h.zhi}
+            className={`rounded border p-2 text-sm ${
+              h.rating === "吉"
+                ? "border-red-200 bg-red-50 dark:border-red-900 dark:bg-red-950/40"
+                : h.rating === "凶"
+                  ? "border-stone-300 bg-stone-100 dark:border-stone-600 dark:bg-stone-900"
+                  : "border-stone-200 dark:border-stone-700"
+            }`}
+          >
+            <div className="flex items-center justify-between">
+              <span className="font-medium">
+                {h.ganZhi}時
+                <span className="ml-1 text-xs text-stone-400">{h.range}</span>
+              </span>
+              <span className={`rounded px-1.5 text-xs font-bold ${RATING_STYLE[h.rating]}`}>
+                {h.rating}
+              </span>
+            </div>
+            {h.reasons.length > 0 && (
+              <div className="mt-1 text-xs leading-relaxed text-stone-600 dark:text-stone-400">
+                {h.reasons.map((r) => r.text.split("（")[0]).join("・")}
+              </div>
+            )}
+          </div>
+        ))}
+      </div>
     </div>
   );
 }
