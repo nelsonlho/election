@@ -275,6 +275,26 @@ function ganAdd(gan: string, n: number): string {
   return GAN_ORDER[(GAN_ORDER.indexOf(gan) + n + 100) % 10];
 }
 
+// ── 命宮盤（原書 108 頁）：命宮＝女命干祿位，逆行七位夫妻宮、五位男女宮 ──
+// 沖夫妻宮日＝祿支日；沖男女宮日（犯滅子胎）＝祿支＋2 之日
+// 例證：甲女命宮寅、夫妻宮申、男女宮戌（原書 108）；甲子女寅日沖夫宮、
+// 辰日滅子胎（總局 250）；己亥女午日沖夫宮（總局 322）
+const LU_GONG: Record<string, string> = {
+  甲: "寅", 乙: "卯", 丙: "巳", 戊: "巳", 丁: "午", 己: "午",
+  庚: "申", 辛: "酉", 壬: "亥", 癸: "子",
+};
+
+function gongChong(fGan: string, dayZhi: string): Reason[] {
+  const lu = LU_GONG[fGan];
+  if (!lu) return [];
+  const out: Reason[] = [];
+  if (dayZhi === lu)
+    out.push({ kind: "凶", text: "日支沖夫妻宮（原書：命宮盤），忌用" });
+  if (dayZhi === zhiAdd(lu, 2))
+    out.push({ kind: "凶", text: "日支沖男女宮，犯滅子胎（原書 108 頁），忌用" });
+  return out;
+}
+
 function hunShenSha(info: DayInfo, fGan: string | undefined, fZhi: string): Reason[] {
   const out: Reason[] = [];
   const dz = info.dayZhi;
@@ -302,6 +322,8 @@ function hunShenSha(info: DayInfo, fGan: string | undefined, fZhi: string): Reas
   // 天狗
   if (dz === zhiAdd(fZhi, 10))
     out.push({ kind: "注", text: "犯天狗，慎用（原書：麟陽登貴可制）" });
+  // 命宮盤沖（原書 108 頁）
+  if (fGan) out.push(...gongChong(fGan, dz));
   // 紅鸞、天喜（原書 196 頁；註引會海：天喜乃血光之神，紅鸞非吉曜，逢吉神則吉、凶神則凶）
   const hongLuan = ZHI_ORDER_E[((3 - ZHI_ORDER_E.indexOf(fZhi)) % 12 + 12) % 12];
   if (dz === hongLuan)
@@ -489,6 +511,8 @@ export function evaluateDay(info: DayInfo, event: EventKey, opts: EvalOptions = 
       const ts = getTianSiChong(opts.birthGan, info.dayGanZhi, info.dayZhi);
       if (ts) reasons.push(ts);
     }
+    // 命宮盤沖（原書 108 頁：沖男女宮即滅子胎，安床大忌；以女命干推）
+    if (opts.birthGan) reasons.push(...gongChong(opts.birthGan, info.dayZhi));
     // 沖夫星（原書 101 頁：坤造安床忌沖夫星，以女命推）
     if (opts.birthZhi && info.dayZhi === zhiAdd(opts.birthZhi, 1)) {
       if (opts.birthGan && info.dayGan === ganAdd(opts.birthGan, 3))
