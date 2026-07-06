@@ -136,6 +136,23 @@ export interface Yao {
   liuQin: "父母" | "兄弟" | "子孫" | "妻財" | "官鬼";
 }
 
+// 八卦爻畫（自初而上；true＝陽爻實畫，false＝陰爻斷畫）
+export const TRIGRAM_LINES: Record<Gua, [boolean, boolean, boolean]> = {
+  乾: [true, true, true],
+  兌: [true, true, false],
+  離: [true, false, true],
+  震: [true, false, false],
+  巽: [false, true, true],
+  坎: [false, true, false],
+  艮: [false, false, true],
+  坤: [false, false, false],
+};
+
+// 六爻爻畫（自初而上）：下卦三爻＋上卦三爻
+export function hexagramLines(upper: Gua, lower: Gua): boolean[] {
+  return [...TRIGRAM_LINES[lower], ...TRIGRAM_LINES[upper]];
+}
+
 // 六親：以卦宮五行為我——生我父母、我生子孫、剋我官鬼、我剋妻財、比和兄弟
 function liuQinOf(palaceWx: string, zhi: string): Yao["liuQin"] {
   const w = ZHI_WX[zhi];

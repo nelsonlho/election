@@ -5,7 +5,8 @@ import { findAuspiciousDays, queryDay, personsOfYears, DayResult } from "@/lib/e
 import { EventKey, EVENT_NAMES, EVENT_CATEGORIES, eventDef, layersForEvent, Rating } from "@/lib/events";
 import { JIANCHU, JIANCHU_ORDER } from "@/lib/jianchu";
 import { yearZhiOfBirthYear, yearGanOfBirthYear } from "@/lib/almanac";
-import { heHun } from "@/lib/hehun";
+import { heHun, hexagramLines } from "@/lib/hehun";
+import type { Yao, Gua } from "@/lib/hehun";
 
 type Tab = "search" | "day" | "hehun" | "theory";
 
@@ -546,6 +547,45 @@ function DayTab() {
   );
 }
 
+// 卦圖：陽爻實畫、陰爻斷畫，自上而下列六爻（初爻在底）
+const YAO_NAMES = ["初爻", "二爻", "三爻", "四爻", "五爻", "上爻"];
+
+function HexagramFigure({ upper, lower, yaos }: { upper: Gua; lower: Gua; yaos: Yao[] }) {
+  const lines = hexagramLines(upper, lower); // 自初而上
+  return (
+    <div className="space-y-1.5">
+      {[5, 4, 3, 2, 1, 0].map((i) => {
+        const y = yaos[i];
+        const special = y && (y.liuQin === "官鬼" || y.liuQin === "子孫");
+        return (
+          <div key={i} className="flex items-center gap-3">
+            <div className={`flex w-20 shrink-0 gap-1.5 ${special ? "text-amber-600 dark:text-amber-400" : "text-stone-800 dark:text-stone-200"}`}>
+              {lines[i] ? (
+                <span className="h-2 w-full rounded-sm bg-current" />
+              ) : (
+                <>
+                  <span className="h-2 w-1/2 rounded-sm bg-current" style={{ marginRight: "0.35rem" }} />
+                  <span className="h-2 w-1/2 rounded-sm bg-current" />
+                </>
+              )}
+            </div>
+            {yaos.length > 0 && (
+              <>
+                <span className="w-9 shrink-0 text-xs text-stone-400">{YAO_NAMES[i]}</span>
+                {y && (
+                  <span className={`text-sm ${special ? "font-medium text-amber-700 dark:text-amber-400" : "text-stone-600 dark:text-stone-400"}`}>
+                    {y.ganZhi}　{y.liuQin}
+                  </span>
+                )}
+              </>
+            )}
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
 // 合婚（原書第二期）：排山掌起體用二卦，體管前三十年、用管後三十年
 function HehunTab() {
   const [femaleYear, setFemaleYear] = useStoredState("femaleYear", "");
@@ -627,7 +667,10 @@ function HehunTab() {
             </div>
             <div className="rounded-lg border border-stone-200 bg-white p-4 shadow-sm dark:border-stone-700 dark:bg-stone-800">
               <div className="text-sm text-stone-500">用卦（後三十年之運）</div>
-              <div className="mt-1 font-serif text-2xl font-bold">{result.yongGua}</div>
+              <div className="mt-1 flex items-center gap-4">
+                <div className="font-serif text-2xl font-bold">{result.yongGua}</div>
+                <HexagramFigure upper={result.yongUpper} lower={result.maleGua} yaos={[]} />
+              </div>
               <div className="mt-1 text-sm text-stone-600 dark:text-stone-400">
                 {result.yongPalace}宮・{result.yongWuXing}　｜　女支{result.yongUpper}上・男{result.maleGua}下
                 （一卦管三山）
@@ -635,20 +678,14 @@ function HehunTab() {
             </div>
           </div>
           <div className="rounded-lg border border-stone-200 bg-white p-4 shadow-sm dark:border-stone-700 dark:bg-stone-800">
-            <div className="text-sm font-medium">體卦六爻（渾天甲子，自初而上，一爻管五年）</div>
-            <div className="mt-2 flex flex-wrap gap-1.5">
-              {result.yaos.map((y, i) => (
-                <span
-                  key={i}
-                  className={`rounded px-2 py-0.5 text-xs ring-1 ${
-                    y.liuQin === "官鬼" || y.liuQin === "子孫"
-                      ? "bg-amber-50 text-amber-900 ring-amber-300 dark:bg-amber-950/60 dark:text-amber-300 dark:ring-amber-800"
-                      : "bg-stone-100 text-stone-600 ring-stone-200 dark:bg-stone-700 dark:text-stone-300 dark:ring-stone-600"
-                  }`}
-                >
-                  {i + 1}爻 {y.ganZhi}・{y.liuQin}
-                </span>
-              ))}
+            <div className="text-sm font-medium">
+              體卦六爻　<span className="font-serif text-base">{result.tiGua}</span>
+              <span className="ml-2 text-xs font-normal text-stone-400">
+                渾天甲子，初爻在底，一爻管五年
+              </span>
+            </div>
+            <div className="mt-3">
+              <HexagramFigure upper={result.femaleGua} lower={result.maleGua} yaos={result.yaos} />
             </div>
             <p className="mt-2 text-sm text-stone-600 dark:text-stone-400">
               {result.guanYao.length || result.ziYao.length ? (
