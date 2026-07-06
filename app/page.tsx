@@ -66,6 +66,44 @@ function parseYears(s: string): number[] {
   return (s.match(/\d{4}/g) ?? []).map(Number);
 }
 
+// 已輸之命列為籤，點×可除——使「可輸多人」一目瞭然
+function MingChips({ value, onChange }: { value: string; onChange: (v: string) => void }) {
+  const years = parseYears(value);
+  if (years.length === 0) return null;
+  const remove = (idx: number) => {
+    let i = -1;
+    onChange(value.replace(/\d{4}/g, (m) => (++i === idx ? "" : m)).replace(/[、,，\s]+$/, ""));
+  };
+  return (
+    <div className="mt-1.5 flex flex-wrap gap-1.5">
+      {years.map((y, i) => (
+        <span
+          key={`${y}-${i}`}
+          className="inline-flex items-center gap-1 rounded-full bg-red-50 px-2 py-0.5 text-xs text-red-800 ring-1 ring-red-200 dark:bg-red-950/60 dark:text-red-300 dark:ring-red-900"
+        >
+          {y}年　{yearGanOfBirthYear(y)}{yearZhiOfBirthYear(y)}命
+          <button
+            type="button"
+            className="ml-0.5 font-bold text-red-400 hover:text-red-700"
+            onClick={() => remove(i)}
+            aria-label={`移除 ${y}`}
+          >
+            ×
+          </button>
+        </span>
+      ))}
+      <button
+        type="button"
+        className="text-xs text-stone-400 underline decoration-dotted hover:text-stone-600"
+        onClick={() => onChange(value.trim() ? value.trim() + "、" : value)}
+        title="再輸一年即可加人"
+      >
+        ＋再加一人
+      </button>
+    </div>
+  );
+}
+
 // 偏好記存（綱領五）：localStorage、kezhai: 前綴、SSR 安全
 function useStoredState(key: string, initial: string) {
   const [v, setV] = useState(initial);
@@ -290,10 +328,11 @@ function SearchTab() {
             </span>
             <input
               className="w-full rounded border border-stone-300 bg-white px-3 py-2 dark:border-stone-600 dark:bg-stone-900"
-              placeholder="例：1990、1965（多命以頓號或空格分隔）"
+              placeholder={ming === "female" ? "例：1996（男方；東家夥友亦可並列）" : "例：1990、1965（東家數人可並列）"}
               value={birthYear}
               onChange={(e) => setBirthYear(e.target.value)}
             />
+            <MingChips value={birthYear} onChange={setBirthYear} />
           </label>
           <label className="block text-sm">
             <span className="mb-1 block font-medium">起始日</span>
@@ -442,6 +481,7 @@ function DayTab() {
               value={birthYear}
               onChange={(e) => setBirthYear(e.target.value)}
             />
+            <MingChips value={birthYear} onChange={setBirthYear} />
           </label>
         </div>
       </div>
