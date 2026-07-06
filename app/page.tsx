@@ -231,9 +231,20 @@ function ReasonList({ result }: { result: DayResult }) {
   );
 }
 
-function DayCard({ result }: { result: DayResult }) {
+function DayCard({
+  result,
+  hourOpts,
+}: {
+  result: DayResult;
+  hourOpts?: { femaleZhi?: string; persons?: { label: string; zhi: string }[]; xianMingZhi?: string };
+}) {
   const { info, evaluation } = result;
   const [open, setOpen] = useState(false);
+  const goodHours = useMemo(() => {
+    if (!open) return [];
+    return evaluateHours(info, hourOpts ?? {}).filter((h) => h.rating === "吉");
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [open, info.dayGanZhi, JSON.stringify(hourOpts)]);
   return (
     <div className="rounded-lg border border-stone-200 bg-white p-4 shadow-sm dark:border-stone-700 dark:bg-stone-800">
       <button className="flex w-full items-start justify-between gap-3 text-left" onClick={() => setOpen(!open)}>
@@ -270,6 +281,26 @@ function DayCard({ result }: { result: DayResult }) {
           <div>沖：{info.chongDesc}</div>
           <div>通書宜：<Terms list={info.yi} kind="宜" /></div>
           <div>通書忌：<Terms list={info.ji} kind="忌" /></div>
+          <div>
+            吉時：
+            {goodHours.length === 0 ? (
+              <span className="text-stone-400">是日無純吉之時，詳單日查</span>
+            ) : (
+              <span className="inline-flex flex-wrap gap-1 align-middle">
+                {goodHours.map((h) => (
+                  <span
+                    key={h.zhi}
+                    className="rounded bg-red-50 px-1.5 py-0.5 text-xs text-red-700 ring-1 ring-red-200 dark:bg-red-950/60 dark:text-red-300 dark:ring-red-900"
+                    title={h.reasons.map((r) => r.text).join("；")}
+                  >
+                    {h.reasons.some((r) => r.text.includes("登天門")) ? "★" : ""}
+                    {h.ganZhi}時 {h.range}
+                  </span>
+                ))}
+              </span>
+            )}
+            <span className="ml-1 text-xs text-stone-400">（★＝貴人登天門，時家最吉）</span>
+          </div>
         </div>
       )}
     </div>
@@ -480,7 +511,22 @@ function SearchTab() {
           )}
           <div className="space-y-3">
             {shown.map((r) => (
-              <DayCard key={`${r.info.solar.y}-${r.info.solar.m}-${r.info.solar.d}`} result={r} />
+              <DayCard
+                key={`${r.info.solar.y}-${r.info.solar.m}-${r.info.solar.d}`}
+                result={r}
+                hourOpts={{
+                  femaleZhi:
+                    ming === "female" && /^\d{4}$/.test(femaleYear)
+                      ? yearZhiOfBirthYear(Number(femaleYear))
+                      : undefined,
+                  persons: personsOfYears(parseYears(birthYear)).map((p) => ({
+                    label: `${p.year}（${p.zhi}）命`,
+                    zhi: p.zhi,
+                  })),
+                  xianMingZhi:
+                    isZang && /^\d{4}$/.test(xianMing) ? yearZhiOfBirthYear(Number(xianMing)) : undefined,
+                }}
+              />
             ))}
           </div>
         </>
