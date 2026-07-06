@@ -3,13 +3,13 @@
 import { useEffect, useMemo, useState } from "react";
 import { findAuspiciousDays, queryDay, personsOfYears, DayResult } from "@/lib/engine";
 import { EventKey, EVENT_NAMES, EVENT_CATEGORIES, eventDef, layersForEvent, Rating } from "@/lib/events";
-import { JIANCHU, JIANCHU_ORDER } from "@/lib/jianchu";
+import { JIANCHU } from "@/lib/jianchu";
 import { yearZhiOfBirthYear, yearGanOfBirthYear, nianXiongFang } from "@/lib/almanac";
 import { heHun, hexagramLines } from "@/lib/hehun";
 import type { Yao, Gua } from "@/lib/hehun";
 import { evaluateHours } from "@/lib/hours";
 
-type Tab = "search" | "day" | "hehun" | "theory";
+type Tab = "search" | "day" | "hehun";
 
 const RATING_STYLE: Record<Rating, string> = {
   吉: "bg-red-600 text-white",
@@ -541,12 +541,16 @@ function DayTab() {
   const [birthYear, setBirthYear] = useStoredState("birthYear", "");
   const [dayCat, setDayCat] = useStoredState("dayCat", "全部");
   const [dayRating, setDayRating] = useState("全");
+  const [xianMing, setXianMing] = useStoredState("xianMing", "");
   const { off } = useDisabledLayers();
+  const showFemale = dayCat === "全部" || dayCat === "婚嫁家室";
+  const showXian = dayCat === "全部" || dayCat === "造葬";
 
   const results = useMemo(() => {
     const [y, m, d] = date.split("-").map(Number);
     if (!y || !m || !d) return null;
-    const fy = /^\d{4}$/.test(femaleYear) ? Number(femaleYear) : undefined;
+    const fy = showFemale && /^\d{4}$/.test(femaleYear) ? Number(femaleYear) : undefined;
+    const xy = showXian && /^\d{4}$/.test(xianMing) ? Number(xianMing) : undefined;
     const persons = personsOfYears(parseYears(birthYear));
     return (Object.keys(EVENT_NAMES) as EventKey[]).map((ev) =>
       queryDay(y, m, d, ev, {
@@ -555,16 +559,50 @@ function DayTab() {
         birthZhi: persons[0]?.zhi,
         birthGan: persons[0]?.gan,
         persons,
+        xianMingZhi: xy ? yearZhiOfBirthYear(xy) : undefined,
+        xianMingGan: xy ? yearGanOfBirthYear(xy) : undefined,
         disabledLayers: off,
       }),
     );
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [date, femaleYear, birthYear, JSON.stringify(off)]);
+  }, [date, femaleYear, birthYear, xianMing, showFemale, showXian, JSON.stringify(off)]);
 
   const info = results?.[0]?.info;
 
   return (
     <div className="space-y-4">
+      <div className="flex flex-wrap items-center gap-1.5">
+        {["全部", ...EVENT_CATEGORIES.map((c) => c.category)].map((c) => (
+          <button
+            key={c}
+            type="button"
+            className={`rounded-full px-2.5 py-1 text-xs transition-colors ${
+              dayCat === c
+                ? "bg-red-700 font-medium text-white"
+                : "bg-stone-100 text-stone-600 ring-1 ring-stone-200 hover:bg-stone-200 dark:bg-stone-700 dark:text-stone-300 dark:ring-stone-600"
+            }`}
+            onClick={() => setDayCat(c)}
+          >
+            {c}
+          </button>
+        ))}
+        <span className="mx-1 text-stone-300">｜</span>
+        {["全", "吉", "平", "凶"].map((rt) => (
+          <button
+            key={rt}
+            type="button"
+            className={`rounded-full px-2.5 py-1 text-xs transition-colors ${
+              dayRating === rt
+                ? "bg-stone-800 font-medium text-white dark:bg-stone-200 dark:text-stone-900"
+                : "bg-stone-100 text-stone-600 ring-1 ring-stone-200 hover:bg-stone-200 dark:bg-stone-700 dark:text-stone-300 dark:ring-stone-600"
+            }`}
+            onClick={() => setDayRating(rt)}
+          >
+            {rt}
+          </button>
+        ))}
+      </div>
+
       <div className="rounded-lg border border-stone-200 bg-white p-4 shadow-sm dark:border-stone-700 dark:bg-stone-800">
         <div className="grid gap-3 sm:grid-cols-3">
           <label className="block text-sm">
@@ -576,16 +614,18 @@ function DayTab() {
               onChange={(e) => setDate(e.target.value)}
             />
           </label>
-          <label className="block text-sm">
-            <span className="mb-1 block font-medium">女命生年（嫁娶，可留空）</span>
-            <input
-              className="w-full rounded border border-stone-300 bg-white px-3 py-2 dark:border-stone-600 dark:bg-stone-900"
-              placeholder="例：1998"
-              inputMode="numeric"
-              value={femaleYear}
-              onChange={(e) => setFemaleYear(e.target.value)}
-            />
-          </label>
+          {showFemale && (
+            <label className="block text-sm">
+              <span className="mb-1 block font-medium">女命生年（婚事，可留空）</span>
+              <input
+                className="w-full rounded border border-stone-300 bg-white px-3 py-2 dark:border-stone-600 dark:bg-stone-900"
+                placeholder="例：1998"
+                inputMode="numeric"
+                value={femaleYear}
+                onChange={(e) => setFemaleYear(e.target.value)}
+              />
+            </label>
+          )}
           <label className="block text-sm">
             <span className="mb-1 block font-medium">本命生年（可多人，可留空）</span>
             <input
@@ -596,6 +636,18 @@ function DayTab() {
             />
             <MingChips value={birthYear} onChange={setBirthYear} />
           </label>
+          {showXian && (
+            <label className="block text-sm">
+              <span className="mb-1 block font-medium">仙命——亡者生年（葬事，可留空）</span>
+              <input
+                className="w-full rounded border border-stone-300 bg-white px-3 py-2 dark:border-stone-600 dark:bg-stone-900"
+                placeholder="例：1938"
+                inputMode="numeric"
+                value={xianMing}
+                onChange={(e) => setXianMing(e.target.value)}
+              />
+            </label>
+          )}
         </div>
       </div>
 
@@ -646,41 +698,8 @@ function DayTab() {
           info={info}
           femaleZhi={/^\d{4}$/.test(femaleYear) ? yearZhiOfBirthYear(Number(femaleYear)) : undefined}
           persons={personsOfYears(parseYears(birthYear)).map((p) => ({ label: `${p.year}（${p.zhi}）命`, zhi: p.zhi }))}
+          xianMingZhi={showXian && /^\d{4}$/.test(xianMing) ? yearZhiOfBirthYear(Number(xianMing)) : undefined}
         />
-      )}
-
-      {results && (
-        <div className="flex flex-wrap items-center gap-1.5">
-          {["全部", ...EVENT_CATEGORIES.map((c) => c.category)].map((c) => (
-            <button
-              key={c}
-              type="button"
-              className={`rounded-full px-2.5 py-1 text-xs transition-colors ${
-                dayCat === c
-                  ? "bg-red-700 font-medium text-white"
-                  : "bg-stone-100 text-stone-600 ring-1 ring-stone-200 hover:bg-stone-200 dark:bg-stone-700 dark:text-stone-300 dark:ring-stone-600"
-              }`}
-              onClick={() => setDayCat(c)}
-            >
-              {c}
-            </button>
-          ))}
-          <span className="mx-1 text-stone-300">｜</span>
-          {["全", "吉", "平", "凶"].map((rt) => (
-            <button
-              key={rt}
-              type="button"
-              className={`rounded-full px-2.5 py-1 text-xs transition-colors ${
-                dayRating === rt
-                  ? "bg-stone-800 font-medium text-white dark:bg-stone-200 dark:text-stone-900"
-                  : "bg-stone-100 text-stone-600 ring-1 ring-stone-200 hover:bg-stone-200 dark:bg-stone-700 dark:text-stone-300 dark:ring-stone-600"
-              }`}
-              onClick={() => setDayRating(rt)}
-            >
-              {rt}
-            </button>
-          ))}
-        </div>
       )}
 
       <div className="space-y-3">
@@ -890,15 +909,17 @@ function HoursGrid({
   info,
   femaleZhi,
   persons,
+  xianMingZhi,
 }: {
   info: ReturnType<typeof queryDay>["info"];
   femaleZhi?: string;
   persons: { label: string; zhi: string }[];
+  xianMingZhi?: string;
 }) {
   const hours = useMemo(
-    () => evaluateHours(info, { femaleZhi, persons }),
+    () => evaluateHours(info, { femaleZhi, persons, xianMingZhi }),
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [info.dayGanZhi, info.solar.y, info.solar.m, info.solar.d, femaleZhi, JSON.stringify(persons)],
+    [info.dayGanZhi, info.solar.y, info.solar.m, info.solar.d, femaleZhi, xianMingZhi, JSON.stringify(persons)],
   );
   return (
     <div className="rounded-lg border border-stone-200 bg-white p-4 shadow-sm dark:border-stone-700 dark:bg-stone-800">
@@ -941,63 +962,12 @@ function HoursGrid({
   );
 }
 
-function TheoryTab() {
-  return (
-    <div className="space-y-4">
-      <div className="rounded-lg border border-red-200 bg-red-50 p-5 dark:border-red-900 dark:bg-red-950/40">
-        <h2 className="text-lg font-bold">十二建除擇日理論</h2>
-        <p className="mt-2 text-sm leading-relaxed text-stone-700 dark:text-stone-300">
-          建除十二神——建、除、滿、平、定、執、破、危、成、收、開、閉——逐日輪值，隨月建而起：
-          月建之日起「建」，翌日「除」，以次順行；交節之日重複前一神。十二神各司吉凶，為擇日之綱。
-        </p>
-        <p className="mt-3 rounded bg-white/70 p-3 text-center font-serif text-base dark:bg-stone-900/50">
-          建滿平收黑，除危定執黃，
-          <br />
-          成開皆可用，破閉不相當。
-        </p>
-        <p className="mt-2 text-xs text-stone-500 dark:text-stone-400">
-          黑者黑道，用事多凶；黃者黃道，用事多吉；成開百事可行；破閉大事勿用。
-          然一日吉凶仍須合月家神煞、本命沖煞並參，不可執一而斷。
-        </p>
-      </div>
-      <div className="grid gap-3 sm:grid-cols-2">
-        {JIANCHU_ORDER.map((name) => {
-          const jc = JIANCHU[name];
-          const luckColor =
-            jc.luck === "黃" || jc.luck === "可用"
-              ? "bg-amber-400 text-stone-900 dark:bg-amber-500"
-              : "bg-stone-800 text-stone-100 dark:bg-stone-950 dark:text-stone-300";
-          return (
-            <div
-              key={name}
-              className="rounded-lg border border-stone-200 bg-white p-4 shadow-sm dark:border-stone-700 dark:bg-stone-800"
-            >
-              <div className="flex items-center gap-2">
-                <span className="font-serif text-2xl font-bold">{name}</span>
-                <span className={`rounded px-2 py-0.5 text-xs font-bold ${luckColor}`}>{jc.luck}</span>
-              </div>
-              <p className="mt-2 text-sm text-stone-600 dark:text-stone-400">{jc.meaning}</p>
-              <p className="mt-2 text-sm">
-                <span className="font-medium text-red-700 dark:text-red-400">宜</span>　{jc.yi}
-              </p>
-              <p className="mt-1 text-sm">
-                <span className="font-medium text-stone-800 dark:text-stone-200">忌</span>　{jc.ji}
-              </p>
-            </div>
-          );
-        })}
-      </div>
-    </div>
-  );
-}
-
 export default function Home() {
   const [tab, setTab] = useState<Tab>("search");
   const tabs: { key: Tab; label: string }[] = [
     { key: "search", label: "尋吉日" },
     { key: "day", label: "單日查" },
     { key: "hehun", label: "合婚" },
-    { key: "theory", label: "建除理論" },
   ];
   return (
     <main className="mx-auto min-h-screen max-w-3xl px-4 pb-16">
@@ -1025,7 +995,6 @@ export default function Home() {
       {tab === "search" && <SearchTab />}
       {tab === "day" && <DayTab />}
       {tab === "hehun" && <HehunTab />}
-      {tab === "theory" && <TheoryTab />}
       <footer className="mt-10 text-center text-xs text-stone-400">
         擇日之法門派多有異同，本檢僅供參考。
       </footer>
