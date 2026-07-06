@@ -330,6 +330,8 @@ function SearchTab() {
   const days = Number(daysStr) || 90;
   const [showPing, setShowPing] = useState(false);
   const [page, setPage] = useState(0);
+  const [pageSizeStr, setPageSizeStr] = useStoredState("pageSize", "10");
+  const pageSize = [10, 20, 50].includes(Number(pageSizeStr)) ? Number(pageSizeStr) : 10;
   const [results, setResults] = useState<DayResult[] | null>(null);
   const [error, setError] = useState("");
   const [mountain, setMountain] = useStoredState("mountain", "");
@@ -367,10 +369,9 @@ function SearchTab() {
       ),
     [results, showPing],
   );
-  useEffect(() => setPage(0), [results, showPing]);
-  const PAGE_SIZE = 10;
-  const pageCount = Math.max(1, Math.ceil(shown.length / PAGE_SIZE));
-  const pageItems = shown.slice(page * PAGE_SIZE, (page + 1) * PAGE_SIZE);
+  useEffect(() => setPage(0), [results, showPing, pageSize]);
+  const pageCount = Math.max(1, Math.ceil(shown.length / pageSize));
+  const pageItems = shown.slice(page * pageSize, (page + 1) * pageSize);
 
   return (
     <div className="space-y-4">
@@ -568,15 +569,15 @@ function SearchTab() {
               />
             ))}
           </div>
-          {pageCount > 1 && (
-            <div className="flex items-center justify-center gap-2 pt-1 text-sm">
+          {(pageCount > 1 || shown.length > 10) && (
+            <div className="flex flex-wrap items-center justify-center gap-2 pt-1 text-sm">
               <button
                 type="button"
                 disabled={page === 0}
                 className="rounded border border-stone-300 px-3 py-1 disabled:opacity-40 dark:border-stone-600"
                 onClick={() => setPage(page - 1)}
               >
-                ‹ 前十日
+                ‹ 上一頁
               </button>
               <span className="text-stone-500">
                 第 {page + 1} / {pageCount} 頁
@@ -587,8 +588,25 @@ function SearchTab() {
                 className="rounded border border-stone-300 px-3 py-1 disabled:opacity-40 dark:border-stone-600"
                 onClick={() => setPage(page + 1)}
               >
-                後十日 ›
+                下一頁 ›
               </button>
+              <span className="ml-2 flex items-center gap-1 text-xs text-stone-400">
+                每頁
+                {[10, 20, 50].map((n) => (
+                  <button
+                    key={n}
+                    type="button"
+                    className={`rounded-full px-2 py-0.5 transition-colors ${
+                      pageSize === n
+                        ? "bg-red-700 text-white"
+                        : "bg-stone-100 text-stone-600 ring-1 ring-stone-200 hover:bg-stone-200 dark:bg-stone-700 dark:text-stone-300 dark:ring-stone-600"
+                    }`}
+                    onClick={() => setPageSizeStr(String(n))}
+                  >
+                    {n}
+                  </button>
+                ))}
+              </span>
             </div>
           )}
         </>
