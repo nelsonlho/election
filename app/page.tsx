@@ -539,6 +539,8 @@ function DayTab() {
   const [date, setDate] = useState(todayStr());
   const [femaleYear, setFemaleYear] = useStoredState("femaleYear", "");
   const [birthYear, setBirthYear] = useStoredState("birthYear", "");
+  const [dayCat, setDayCat] = useStoredState("dayCat", "全部");
+  const [dayRating, setDayRating] = useState("全");
   const { off } = useDisabledLayers();
 
   const results = useMemo(() => {
@@ -647,23 +649,62 @@ function DayTab() {
         />
       )}
 
+      {results && (
+        <div className="flex flex-wrap items-center gap-1.5">
+          {["全部", ...EVENT_CATEGORIES.map((c) => c.category)].map((c) => (
+            <button
+              key={c}
+              type="button"
+              className={`rounded-full px-2.5 py-1 text-xs transition-colors ${
+                dayCat === c
+                  ? "bg-red-700 font-medium text-white"
+                  : "bg-stone-100 text-stone-600 ring-1 ring-stone-200 hover:bg-stone-200 dark:bg-stone-700 dark:text-stone-300 dark:ring-stone-600"
+              }`}
+              onClick={() => setDayCat(c)}
+            >
+              {c}
+            </button>
+          ))}
+          <span className="mx-1 text-stone-300">｜</span>
+          {["全", "吉", "平", "凶"].map((rt) => (
+            <button
+              key={rt}
+              type="button"
+              className={`rounded-full px-2.5 py-1 text-xs transition-colors ${
+                dayRating === rt
+                  ? "bg-stone-800 font-medium text-white dark:bg-stone-200 dark:text-stone-900"
+                  : "bg-stone-100 text-stone-600 ring-1 ring-stone-200 hover:bg-stone-200 dark:bg-stone-700 dark:text-stone-300 dark:ring-stone-600"
+              }`}
+              onClick={() => setDayRating(rt)}
+            >
+              {rt}
+            </button>
+          ))}
+        </div>
+      )}
+
       <div className="space-y-3">
-        {results?.map((r, i) => (
-          <div
-            key={i}
-            className="rounded-lg border border-stone-200 bg-white p-4 shadow-sm dark:border-stone-700 dark:bg-stone-800"
-          >
-            <div className="flex items-center gap-2">
-              <span className={`rounded px-2 py-0.5 text-sm font-bold ${RATING_STYLE[r.evaluation.rating]}`}>
-                {r.evaluation.rating}
-              </span>
-              <span className="text-lg font-semibold">
-                {EVENT_NAMES[(Object.keys(EVENT_NAMES) as EventKey[])[i]]}
-              </span>
+        {results?.map((r, i) => {
+          const key = (Object.keys(EVENT_NAMES) as EventKey[])[i];
+          const cat = EVENT_CATEGORIES.find((c) => c.events.some((e) => e.key === key))?.category;
+          if (dayCat !== "全部" && cat !== dayCat) return null;
+          if (dayRating !== "全" && r.evaluation.rating !== dayRating) return null;
+          return (
+            <div
+              key={i}
+              className="rounded-lg border border-stone-200 bg-white p-4 shadow-sm dark:border-stone-700 dark:bg-stone-800"
+            >
+              <div className="flex items-center gap-2">
+                <span className={`rounded px-2 py-0.5 text-sm font-bold ${RATING_STYLE[r.evaluation.rating]}`}>
+                  {r.evaluation.rating}
+                </span>
+                <span className="text-lg font-semibold">{EVENT_NAMES[key]}</span>
+                <span className="text-xs text-stone-400">{cat}</span>
+              </div>
+              <ReasonList result={r} />
             </div>
-            <ReasonList result={r} />
-          </div>
-        ))}
+          );
+        })}
       </div>
     </div>
   );
