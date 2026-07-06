@@ -41,6 +41,7 @@ export interface DayInfo {
   xiu: string; // 二十八宿
   pengZu: string; // 彭祖百忌
   taiShen: string; // 胎神占方（原書 104-105 頁六十甲子日胎神，與庫表對勘全合）
+  jiFang: string; // 是日吉神方位（喜神、財神、福神、陽貴、陰貴）
   chongDesc: string; // 日沖
   yi: string[]; // 通書宜
   ji: string[]; // 通書忌
@@ -70,12 +71,24 @@ export function getDayInfo(y: number, m: number, d: number): DayInfo {
     xiu: toTraditional(lunar.getXiu()),
     pengZu: toTraditional(`${lunar.getPengZuGan()}　${lunar.getPengZuZhi()}`),
     taiShen: toTraditional(lunar.getDayPositionTai()),
+    jiFang: toTraditional(
+      `喜神${lunar.getDayPositionXiDesc()}　財神${lunar.getDayPositionCaiDesc()}　福神${lunar.getDayPositionFuDesc()}　陽貴${lunar.getDayPositionYangGuiDesc()}　陰貴${lunar.getDayPositionYinGuiDesc()}`,
+    ),
     chongDesc: toTraditional(lunar.getDayChongDesc()),
     yi: lunar.getDayYi().map(toTraditional),
     ji: lunar.getDayJi().map(toTraditional),
     jieQi: toTraditional(lunar.getJieQi()),
     nextDayJieQi: toTraditional(next.getJieQi()),
   };
+}
+
+// 流年凶方（原書 106 頁安床凶方年，兩行對勘定式）：
+// 病符＝年支退一、喪門＝年支進二、白虎＝年支進八、天狗＝年支進十
+export function nianXiongFang(yearZhi: string): string {
+  const i = ZHI.indexOf(yearZhi as (typeof ZHI)[number]);
+  if (i < 0) return "";
+  const at = (n: number) => ZHI[((i + n) % 12 + 12) % 12];
+  return `病符${at(-1)}方　喪門${at(2)}方　白虎${at(8)}方　天狗${at(10)}方`;
 }
 
 // 月將（太陽躔宮，依中氣）：雨水後亥、春分後戌……大寒後子（原書 224-225 頁貴人登天時表）
