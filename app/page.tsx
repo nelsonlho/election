@@ -411,6 +411,25 @@ function SearchTab() {
   useEffect(() => setPage(0), [results, showPing, pageSize]);
   const pageCount = Math.max(1, Math.ceil(shown.length / pageSize));
   const pageItems = shown.slice(page * pageSize, (page + 1) * pageSize);
+  const sizeChips = (
+    <span className="ml-2 flex items-center gap-1 text-xs text-stone-400">
+      每頁
+      {[10, 20, 50].map((n) => (
+        <button
+          key={n}
+          type="button"
+          className={`rounded-full px-2 py-0.5 transition-colors ${
+            pageSize === n
+              ? "bg-red-700 text-white"
+              : "bg-stone-100 text-stone-600 ring-1 ring-stone-200 hover:bg-stone-200 dark:bg-stone-700 dark:text-stone-300 dark:ring-stone-600"
+          }`}
+          onClick={() => setPageSizeStr(String(n))}
+        >
+          {n}
+        </button>
+      ))}
+    </span>
+  );
 
   return (
     <div className="space-y-4">
@@ -592,7 +611,7 @@ function SearchTab() {
               範圍之內無吉日。可展範圍再尋。
             </p>
           )}
-          <Pager page={page} pageCount={pageCount} onPage={setPage} />
+          <Pager page={page} pageCount={pageCount} onPage={setPage}>{sizeChips}</Pager>
           <div className="space-y-3">
             {pageItems.map((r) => (
               <DayCard
@@ -613,25 +632,7 @@ function SearchTab() {
               />
             ))}
           </div>
-          <Pager page={page} pageCount={pageCount} onPage={setPage}>
-            <span className="ml-2 flex items-center gap-1 text-xs text-stone-400">
-              每頁
-              {[10, 20, 50].map((n) => (
-                <button
-                  key={n}
-                  type="button"
-                  className={`rounded-full px-2 py-0.5 transition-colors ${
-                    pageSize === n
-                      ? "bg-red-700 text-white"
-                      : "bg-stone-100 text-stone-600 ring-1 ring-stone-200 hover:bg-stone-200 dark:bg-stone-700 dark:text-stone-300 dark:ring-stone-600"
-                  }`}
-                  onClick={() => setPageSizeStr(String(n))}
-                >
-                  {n}
-                </button>
-              ))}
-            </span>
-          </Pager>
+          <Pager page={page} pageCount={pageCount} onPage={setPage}>{sizeChips}</Pager>
         </>
       )}
     </div>
