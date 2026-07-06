@@ -101,7 +101,8 @@ export type JianChuEventKey =
   | "ruzhai" | "dongtu" | "xiuzao" | "shangliang" | "zuozao" | "anmen" | "chaixie" | "juejing"
   | "chuxing" | "kaishi" | "liquan" | "furen" | "qiuming" | "nacaifu" | "zaizhong" | "nachu"
   | "jisi" | "jinxiang" | "kaiguang" | "qiuyi" | "anxiang" | "jiechu"
-  | "anzang" | "potu" | "qizan" | "xiufen";
+  | "anzang" | "potu" | "qizan" | "xiufen"
+  | "rulian" | "yijiu" | "chengfu" | "chufu" | "xietu" | "libei" | "kaishengfen" | "heshoumu";
 
 export const JIANCHU_BY_EVENT: Record<
   JianChuEventKey,
@@ -149,6 +150,22 @@ export const JIANCHU_BY_EVENT: Record<
   qizan: { good: ["閉", "成", "危"], bad: ["破", "建", "滿", "開"] },
   // 修墳：同破土之例
   xiufen: { good: ["閉", "成"], bad: ["破", "建", "滿", "開"] },
+  // 入殮：除危成閉吉；建滿開忌（葬事忌開）
+  rulian: { good: ["除", "危", "成", "閉"], bad: ["建", "滿", "開"] },
+  // 移柩：同入殮之例
+  yijiu: { good: ["除", "危", "成", "閉"], bad: ["建", "滿", "開"] },
+  // 成服：除危成吉；建滿忌
+  chengfu: { good: ["除", "危", "成"], bad: ["建", "滿"] },
+  // 除服：除日除服正宜；建滿忌
+  chufu: { good: ["除", "危", "成", "開"], bad: ["建", "滿"] },
+  // 謝土：祭祀之屬——除定成開吉；破忌
+  xietu: { good: ["除", "定", "成", "開"], bad: ["破"] },
+  // 立碑：定成閉吉；破建滿忌
+  libei: { good: ["定", "成", "閉"], bad: ["破", "建", "滿"] },
+  // 開生墳（壽墳）：同破土之例
+  kaishengfen: { good: ["閉", "成"], bad: ["破", "建", "滿", "開"] },
+  // 合壽木（壽材）：定成開吉；破閉忌
+  heshoumu: { good: ["定", "成", "開"], bad: ["破", "閉"] },
   // 求嗣：滿日祈福求嗣，定成開亦吉；破閉平忌
   qiusi: { good: ["滿", "定", "成", "開"], bad: ["破", "閉", "平"] },
   // 立券交易：定執成開吉；破閉平收忌
