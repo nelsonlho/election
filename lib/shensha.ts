@@ -146,6 +146,12 @@ const SI_FEI: [string, string][][] = [
   [["丙", "午"], ["丁", "巳"]], // 冬
 ];
 
+// 正四廢（安床、裁衣皆忌——原書 93、100 頁）
+export function isSiFei(info: DayInfo): boolean {
+  const fei = SI_FEI[season(info.monthZhi)];
+  return fei.some(([g, z]) => info.dayGan === g && info.dayZhi === z);
+}
+
 export function getCaiYiJi(info: DayInfo): { kind: "凶" | "注"; text: string }[] {
   const out: { kind: "凶" | "注"; text: string }[] = [];
   const mi = MONTH_ORDER.indexOf(info.monthZhi);

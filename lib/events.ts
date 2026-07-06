@@ -1,7 +1,7 @@
 // 事類評日 — 嫁娶、安牀、出行（依《剋擇講義》起例）
 
 import { DayInfo, ZHI_CHONG, isTuWang } from "./almanac";
-import { getShenSha, getAnChuangJi, getCaiYiJi, getTianSiChong, getJiangShen, isPoSui, isChongMing } from "./shensha";
+import { getShenSha, getAnChuangJi, getCaiYiJi, getTianSiChong, getJiangShen, isPoSui, isChongMing, isSiFei } from "./shensha";
 import { JIANCHU, JIANCHU_BY_EVENT, JianChuName } from "./jianchu";
 
 export type EventKey =
@@ -302,6 +302,12 @@ function hunShenSha(info: DayInfo, fGan: string | undefined, fZhi: string): Reas
   // 天狗
   if (dz === zhiAdd(fZhi, 10))
     out.push({ kind: "注", text: "犯天狗，慎用（原書：麟陽登貴可制）" });
+  // 紅鸞、天喜（原書 196 頁；註引會海：天喜乃血光之神，紅鸞非吉曜，逢吉神則吉、凶神則凶）
+  const hongLuan = ZHI_ORDER_E[((3 - ZHI_ORDER_E.indexOf(fZhi)) % 12 + 12) % 12];
+  if (dz === hongLuan)
+    out.push({ kind: "注", text: "紅鸞日——原書：紅鸞非吉曜之物，逢吉神則吉、凶神則凶，並參餘法" });
+  if (dz === ZHI_CHONG[hongLuan])
+    out.push({ kind: "注", text: "天喜日——原書：天喜乃血光之神，逢吉神則吉、凶神則凶，並參餘法" });
   return out;
 }
 
@@ -468,10 +474,19 @@ export function evaluateDay(info: DayInfo, event: EventKey, opts: EvalOptions = 
     for (const hit of getAnChuangJi(info)) {
       reasons.push({ kind: hit.kind, text: `${hit.name}，${hit.note}` });
     }
+    // 正四廢（原書 100 頁安床碎金賦：四離四絕正四廢皆忌）
+    if (isSiFei(info))
+      reasons.push({ kind: "凶", text: "正四廢日，安牀忌之（原書：安床碎金賦）" });
     // 天嗣犯沖（原書 109 頁）：以本命（新床以女命）天干推
     if (opts.birthGan) {
       const ts = getTianSiChong(opts.birthGan, info.dayGanZhi, info.dayZhi);
       if (ts) reasons.push(ts);
+    }
+    // 沖夫星（原書 101 頁：坤造安床忌沖夫星，以女命推）
+    if (opts.birthZhi && info.dayZhi === zhiAdd(opts.birthZhi, 1)) {
+      if (opts.birthGan && info.dayGan === ganAdd(opts.birthGan, 3))
+        reasons.push({ kind: "凶", text: `${info.dayGanZhi}日正沖夫星，安牀大忌（原書：安床碎金賦）` });
+      else reasons.push({ kind: "注", text: "日支沖夫星，安牀慎用（原書：安床碎金賦）" });
     }
   }
   if (on("pengzu") && event === "chuxing" && info.dayZhi === "巳")
