@@ -425,6 +425,8 @@ export interface EvalOptions {
   birthZhi?: string; // 本命年支（沖命、破碎用；多命時為首命）
   birthGan?: string; // 本命年干（吉神定局用；多命時為首命）
   persons?: MingPerson[]; // 多命合參（如開市數東家、婚事乾造），逐命判沖破吉凶
+  xianMingZhi?: string; // 仙命（亡者）年支——葬事用
+  xianMingGan?: string; // 仙命年干
   mountainZhi?: string; // 宅舍座山（十二支山，造作事用）
   disabledLayers?: string[]; // 停用之法度層（鍵見 RULE_LAYERS）
 }
@@ -455,6 +457,7 @@ export const RULE_LAYERS: RuleLayer[] = [
   { key: "anchuang", name: "安牀忌例", desc: "臥尸、死別、醞巢、天賊、木馬、箭頭、刀砧、天嗣犯沖（原書 109-111）", events: ["anchuang"] },
   { key: "tuwang", name: "土王用事", desc: "四立前十八日忌動土破土", events: ["dongtu", "potu"] },
   { key: "shan", name: "沖山三殺", desc: "日支沖座山、流年三殺占山（須入座山；造葬以墓之坐山論）", events: ["ruzhai", "dongtu", "xiuzao", "shangliang", "anzang", "potu"] },
+  { key: "xianming", name: "仙命諸忌", desc: "日沖仙命、三殺、三刑、旬空（須入亡者生年——原書第八期）", events: ["anzang", "potu"] },
 ];
 
 export function layersForEvent(event: EventKey): RuleLayer[] {
@@ -483,6 +486,43 @@ function zaoZuoShan(info: DayInfo, mountainZhi: string): Reason[] {
   // 歲破沖山（原書第八期安葬山家凶神訣：歲破沖山年家大忌）
   if (ZHI_CHONG[yearZhi] === mountainZhi)
     out.push({ kind: "凶", text: `歲破占山（流年${info.yearGanZhi}沖${mountainZhi}山），歲內大忌（原書：安葬山家凶神訣）` });
+  return out;
+}
+
+// ── 仙命諸忌（原書第八期 543 頁「仙命諸空沖殺刑刃例」） ──────
+// 日沖仙命大凶；三殺日（真三殺大凶，餘取祿馬貴人可解）；三刑凶日；
+// 六甲旬空（仙命旬之空亡支，冷地空亡之屬，可權用）
+const XING_MAP: [string, string][] = [
+  ["子", "卯"], ["卯", "子"],
+  ["寅", "巳"], ["巳", "申"], ["申", "寅"],
+  ["丑", "戌"], ["戌", "未"], ["未", "丑"],
+  ["辰", "辰"], ["午", "午"], ["酉", "酉"], ["亥", "亥"],
+];
+
+function xianMingJi(info: DayInfo, xGan: string | undefined, xZhi: string): Reason[] {
+  const out: Reason[] = [];
+  const dz = info.dayZhi;
+  if (ZHI_CHONG[xZhi] === dz)
+    out.push({ kind: "凶", text: `日支${dz}沖仙命（亡命${xZhi}），葬課大凶（原書：仙命諸忌例）` });
+  if (SAN_SHA_FANG[xZhi]?.includes(dz))
+    out.push({ kind: "凶", text: `仙命三殺日（${xZhi}命見${dz}日）——原書：真三殺大凶，非真者取祿馬貴人解化` });
+  if (XING_MAP.some(([a, b]) => a === xZhi && b === dz))
+    out.push({ kind: "注", text: "日支刑仙命（三刑凶日），宜取貴人解化從權（原書：仙命諸忌例）" });
+  // 六甲旬空：仙命所在旬之空亡支
+  if (xGan) {
+    const gi = GAN_ORDER.indexOf(xGan);
+    const zi = ZHI_ORDER_E.indexOf(xZhi);
+    if (gi >= 0 && zi >= 0) {
+      let n = gi;
+      for (; n < 60; n += 10) if (n % 12 === zi) break;
+      if (n < 60) {
+        const head = n - (n % 10);
+        const kong = [ZHI_ORDER_E[(head + 10) % 12], ZHI_ORDER_E[(head + 11) % 12]];
+        if (kong.includes(dz))
+          out.push({ kind: "注", text: `仙命旬空日（${kong.join("、")}為空亡），冷地空亡之屬，葬課慎用` });
+      }
+    }
+  }
   return out;
 }
 
@@ -574,6 +614,11 @@ export function evaluateDay(info: DayInfo, event: EventKey, opts: EvalOptions = 
   // 造作沖山、三殺（原書第六期）：入宅動土修造上樑，有座向則判
   if (on("shan") && ZAO_ZUO_EVENTS.includes(event) && opts.mountainZhi) {
     reasons.push(...zaoZuoShan(info, opts.mountainZhi));
+  }
+
+  // 仙命諸忌（原書第八期）：葬事有亡命則判
+  if (on("xianming") && ZANG_EVENTS.includes(event) && opts.xianMingZhi) {
+    reasons.push(...xianMingJi(info, opts.xianMingGan, opts.xianMingZhi));
   }
 
   // 婚神煞（原書第四期六十女總局歸納）：胎元、夫星、天嗣、桃花、天狗

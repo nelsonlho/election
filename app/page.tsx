@@ -260,9 +260,11 @@ function SearchTab() {
   const [results, setResults] = useState<DayResult[] | null>(null);
   const [error, setError] = useState("");
   const [mountain, setMountain] = useStoredState("mountain", "");
+  const [xianMing, setXianMing] = useStoredState("xianMing", "");
   const { off, toggle } = useDisabledLayers();
   const ming = eventDef(event).mingInput;
   const isZaoZuo = ["dongtu", "xiuzao", "shangliang", "ruzhai", "anzang", "potu"].includes(event);
+  const isZang = event === "anzang" || event === "potu";
 
   const run = () => {
     setError("");
@@ -279,6 +281,7 @@ function SearchTab() {
         femaleBirthYear: femaleYear ? Number(femaleYear) : undefined,
         birthYears: parseYears(birthYear),
         mountainZhi: isZaoZuo && mountain ? mountain : undefined,
+        xianMingYear: isZang && /^\d{4}$/.test(xianMing) ? Number(xianMing) : undefined,
         disabledLayers: off,
       }),
     );
@@ -336,6 +339,25 @@ function SearchTab() {
             />
             <MingChips value={birthYear} onChange={setBirthYear} />
           </label>
+          {isZang && (
+            <label className="block text-sm">
+              <span className="mb-1 block font-medium">
+                仙命——亡者生年（可留空）
+                {/^\d{4}$/.test(xianMing) && (
+                  <span className="ml-2 text-red-600 dark:text-red-400">
+                    {yearGanOfBirthYear(Number(xianMing))}{yearZhiOfBirthYear(Number(xianMing))}命
+                  </span>
+                )}
+              </span>
+              <input
+                className="w-full rounded border border-stone-300 bg-white px-3 py-2 dark:border-stone-600 dark:bg-stone-900"
+                placeholder="例：1938"
+                inputMode="numeric"
+                value={xianMing}
+                onChange={(e) => setXianMing(e.target.value)}
+              />
+            </label>
+          )}
           <label className="block text-sm">
             <span className="mb-1 block font-medium">起始日</span>
             <input

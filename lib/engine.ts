@@ -24,7 +24,8 @@ export interface RangeQuery {
   femaleBirthYear?: number; // 婚事：女命生年（西元）
   birthYear?: number; // 本命生年（西元，可缺）
   birthYears?: number[]; // 多命合參（如開市數東家、婚事乾造），優先於 birthYear
-  mountainZhi?: string; // 宅舍座山（十二支山，造作事用，可缺）
+  mountainZhi?: string; // 座山（十二支山，造作葬事用，可缺）
+  xianMingYear?: number; // 仙命（亡者）生年——葬事用，可缺
   disabledLayers?: string[]; // 停用之法度層
 }
 
@@ -44,6 +45,10 @@ export function findAuspiciousDays(q: RangeQuery): DayResult[] {
     }
   }
   if (q.mountainZhi) opts.mountainZhi = q.mountainZhi;
+  if (q.xianMingYear) {
+    opts.xianMingZhi = yearZhiOfBirthYear(q.xianMingYear);
+    opts.xianMingGan = yearGanOfBirthYear(q.xianMingYear);
+  }
   if (q.disabledLayers?.length) opts.disabledLayers = q.disabledLayers;
 
   const n = Math.min(Math.max(q.days, 1), 366);
