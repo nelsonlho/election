@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { findAuspiciousDays, queryDay, DayResult } from "@/lib/engine";
-import { EventKey, EVENT_NAMES, EVENT_CATEGORIES, eventDef, Rating } from "@/lib/events";
+import { EventKey, EVENT_NAMES, EVENT_CATEGORIES, eventDef, layersForEvent, Rating } from "@/lib/events";
 import { JIANCHU, JIANCHU_ORDER } from "@/lib/jianchu";
 import { yearZhiOfBirthYear, yearGanOfBirthYear } from "@/lib/almanac";
 
@@ -75,6 +75,43 @@ function useStoredState(key: string, initial: string) {
     } catch {}
   };
   return [v, set] as const;
+}
+
+// 法度取捨（綱領二進階摺疊）：停用層存 localStorage（kezhai:offLayers，JSON 陣列）
+function useDisabledLayers() {
+  const [raw, setRaw] = useStoredState("offLayers", "[]");
+  let off: string[] = [];
+  try {
+    const p = JSON.parse(raw);
+    if (Array.isArray(p)) off = p.filter((x) => typeof x === "string");
+  } catch {}
+  const toggle = (key: string) =>
+    setRaw(JSON.stringify(off.includes(key) ? off.filter((k) => k !== key) : [...off, key]));
+  return { off, toggle };
+}
+
+function LayerToggles({ event, off, toggle }: { event: EventKey; off: string[]; toggle: (k: string) => void }) {
+  return (
+    <div className="sm:col-span-2">
+      <span className="mb-1 block text-sm font-medium">法度取捨（預設全用）</span>
+      <div className="grid gap-1.5 sm:grid-cols-2">
+        {layersForEvent(event).map((l) => (
+          <label key={l.key} className="flex items-start gap-2 text-sm" title={l.desc}>
+            <input
+              type="checkbox"
+              className="mt-1"
+              checked={!off.includes(l.key)}
+              onChange={() => toggle(l.key)}
+            />
+            <span>
+              {l.name}
+              <span className="block text-xs text-stone-400">{l.desc}</span>
+            </span>
+          </label>
+        ))}
+      </div>
+    </div>
+  );
 }
 
 // 事類分科選單（綱領三）：由 EVENT_CATEGORIES 自動生成
@@ -177,6 +214,7 @@ function SearchTab() {
   const [results, setResults] = useState<DayResult[] | null>(null);
   const [error, setError] = useState("");
   const [mountain, setMountain] = useStoredState("mountain", "");
+  const { off, toggle } = useDisabledLayers();
   const ming = eventDef(event).mingInput;
   const isZaoZuo = ["dongtu", "xiuzao", "shangliang", "ruzhai"].includes(event);
 
@@ -195,6 +233,7 @@ function SearchTab() {
         femaleBirthYear: femaleYear ? Number(femaleYear) : undefined,
         birthYear: birthYear ? Number(birthYear) : undefined,
         mountainZhi: isZaoZuo && mountain ? mountain : undefined,
+        disabledLayers: off,
       }),
     );
   };
@@ -269,13 +308,13 @@ function SearchTab() {
             </select>
           </label>
         </div>
-        {/* 進階摺疊（綱領二）：造作事類可指宅舍座山（原書沖山、三殺例用） */}
-        {isZaoZuo && (
-          <details className="mt-3" open={!!mountain}>
-            <summary className="cursor-pointer select-none text-sm text-stone-500 hover:text-stone-700 dark:hover:text-stone-300">
-              進階選項
-            </summary>
-            <div className="mt-2 grid gap-3 sm:grid-cols-2">
+        {/* 進階摺疊（綱領二）：宅舍座山（造作事）＋法度取捨 */}
+        <details className="mt-3" open={off.length > 0 || (isZaoZuo && !!mountain)}>
+          <summary className="cursor-pointer select-none text-sm text-stone-500 hover:text-stone-700 dark:hover:text-stone-300">
+            進階選項{off.length > 0 && <span className="ml-2 text-red-600 dark:text-red-400">（停用{off.length}層）</span>}
+          </summary>
+          <div className="mt-2 grid gap-3 sm:grid-cols-2">
+            {isZaoZuo && (
               <label className="block text-sm">
                 <span className="mb-1 block font-medium">宅舍座山（可留空）</span>
                 <select
@@ -291,9 +330,10 @@ function SearchTab() {
                   ))}
                 </select>
               </label>
-            </div>
-          </details>
-        )}
+            )}
+            <LayerToggles event={event} off={off} toggle={toggle} />
+          </div>
+        </details>
         {error && <p className="mt-3 text-sm text-red-600 dark:text-red-400">{error}</p>}
         <button
           className="mt-4 w-full rounded-lg bg-red-700 py-2.5 font-semibold text-white hover:bg-red-800 sm:w-auto sm:px-8"
@@ -338,6 +378,7 @@ function DayTab() {
   const [date, setDate] = useState(todayStr());
   const [femaleYear, setFemaleYear] = useStoredState("femaleYear", "");
   const [birthYear, setBirthYear] = useStoredState("birthYear", "");
+  const { off } = useDisabledLayers();
 
   const results = useMemo(() => {
     const [y, m, d] = date.split("-").map(Number);
@@ -350,9 +391,11 @@ function DayTab() {
         femaleBirthGan: fy ? yearGanOfBirthYear(fy) : undefined,
         birthZhi: by ? yearZhiOfBirthYear(by) : undefined,
         birthGan: by ? yearGanOfBirthYear(by) : undefined,
+        disabledLayers: off,
       }),
     );
-  }, [date, femaleYear, birthYear]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [date, femaleYear, birthYear, JSON.stringify(off)]);
 
   const info = results?.[0]?.info;
 

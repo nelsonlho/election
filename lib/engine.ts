@@ -20,6 +20,7 @@ export interface RangeQuery {
   femaleBirthYear?: number; // 婚事：女命生年（西元）
   birthYear?: number; // 餘事：本命生年（西元，可缺）
   mountainZhi?: string; // 宅舍座山（十二支山，造作事用，可缺）
+  disabledLayers?: string[]; // 停用之法度層
 }
 
 export function findAuspiciousDays(q: RangeQuery): DayResult[] {
@@ -34,6 +35,7 @@ export function findAuspiciousDays(q: RangeQuery): DayResult[] {
     opts.birthGan = yearGanOfBirthYear(q.birthYear);
   }
   if (q.mountainZhi) opts.mountainZhi = q.mountainZhi;
+  if (q.disabledLayers?.length) opts.disabledLayers = q.disabledLayers;
 
   const n = Math.min(Math.max(q.days, 1), 366);
   const out: DayResult[] = [];

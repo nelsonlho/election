@@ -386,6 +386,38 @@ export interface EvalOptions {
   birthZhi?: string; // 本命年支（沖命、破碎用）
   birthGan?: string; // 本命年干（吉神定局用）
   mountainZhi?: string; // 宅舍座山（十二支山，造作事用）
+  disabledLayers?: string[]; // 停用之法度層（鍵見 RULE_LAYERS）
+}
+
+// ── 法度層（介面可取捨；預設全開） ──────────────────────
+export interface RuleLayer {
+  key: string;
+  name: string;
+  desc: string;
+  events?: EventKey[]; // 缺者全事類通用
+}
+
+const HUN_EVENTS: EventKey[] = ["jiaqu", "nacai"];
+
+export const RULE_LAYERS: RuleLayer[] = [
+  { key: "yuejia", name: "月家神煞", desc: "月破、受死、往亡、歸忌、紅沙、四離四絕、楊公忌、重日" },
+  { key: "jianchu", name: "建除十二神", desc: "建滿平收黑，除危定執黃，成開可用，破閉不用" },
+  { key: "tongshu", name: "通書宜忌", desc: "逐日通書宜忌對照" },
+  { key: "pengzu", name: "彭祖百忌", desc: "亥不行嫁、申不安牀、巳不遠行、寅不祭祀等" },
+  { key: "chongming", name: "沖命破碎", desc: "日支正沖本命、破碎日（須入生年）" },
+  { key: "jixiong", name: "吉凶神定局", desc: "三合、六合、堆貴、進貴、堆祿、進祿、堆馬、刑（須入生年）" },
+  { key: "liyue", name: "行嫁利月", desc: "女命大利、小利、妨翁姑、妨父母、妨夫、妨婦月（論節氣）", events: ["jiaqu"] },
+  { key: "zhoutang", name: "嫁娶周堂", desc: "大月起夫順行、小月起婦逆行，值夫婦大凶", events: ["jiaqu"] },
+  { key: "nvming", name: "女命日吉凶", desc: "正檳榔殺、檳榔三殺、盤隔山殺、清吉取用（原書 86-89）", events: HUN_EVENTS },
+  { key: "bujiang", name: "陰陽不將", desc: "不將大吉；月厭、厭對、俱將忌（原書將神名目）", events: HUN_EVENTS },
+  { key: "hunsha", name: "婚神煞", desc: "沖胎元、沖夫星、沖天嗣、桃花、天狗（原書六十女總局）", events: HUN_EVENTS },
+  { key: "anchuang", name: "安牀忌例", desc: "臥尸、死別、醞巢、天賊、木馬、箭頭、刀砧、天嗣犯沖（原書 109-111）", events: ["anchuang"] },
+  { key: "tuwang", name: "土王用事", desc: "四立前十八日忌動土破土", events: ["dongtu", "potu"] },
+  { key: "shan", name: "沖山三殺", desc: "日支沖座山、流年三殺占山（須入座山）", events: ["ruzhai", "dongtu", "xiuzao", "shangliang"] },
+];
+
+export function layersForEvent(event: EventKey): RuleLayer[] {
+  return RULE_LAYERS.filter((l) => !l.events || l.events.includes(event));
 }
 
 // 造作事類（沖山、三殺以山向論——原書第六期 392-393 頁）
@@ -411,17 +443,19 @@ function zaoZuoShan(info: DayInfo, mountainZhi: string): Reason[] {
 
 export function evaluateDay(info: DayInfo, event: EventKey, opts: EvalOptions = {}): Evaluation {
   const reasons: Reason[] = [];
+  const off = new Set(opts.disabledLayers ?? []);
+  const on = (key: string) => !off.has(key);
 
-  reasons.push(...commonBad(info, event));
+  if (on("yuejia")) reasons.push(...commonBad(info, event));
 
   // 彭祖百忌（日支）
-  if (event === "jiaqu" && info.dayZhi === "亥")
+  if (on("pengzu") && event === "jiaqu" && info.dayZhi === "亥")
     reasons.push({ kind: "凶", text: "彭祖百忌：亥不行嫁，必主分張" });
-  if (event === "anchuang" && info.dayZhi === "申")
+  if (on("pengzu") && event === "anchuang" && info.dayZhi === "申")
     reasons.push({ kind: "凶", text: "彭祖百忌：申不安牀，鬼祟入房（原書：十二月皆忌申日）" });
 
   // 安牀忌例（原書 111 頁定局）
-  if (event === "anchuang") {
+  if (event === "anchuang" && on("anchuang")) {
     for (const hit of getAnChuangJi(info)) {
       reasons.push({ kind: hit.kind, text: `${hit.name}，${hit.note}` });
     }
@@ -431,11 +465,11 @@ export function evaluateDay(info: DayInfo, event: EventKey, opts: EvalOptions = 
       if (ts) reasons.push(ts);
     }
   }
-  if (event === "chuxing" && info.dayZhi === "巳")
+  if (on("pengzu") && event === "chuxing" && info.dayZhi === "巳")
     reasons.push({ kind: "凶", text: "彭祖百忌：巳不遠行，財物伏藏" });
-  if (JI_SI_EVENTS.includes(event) && info.dayZhi === "寅")
+  if (on("pengzu") && JI_SI_EVENTS.includes(event) && info.dayZhi === "寅")
     reasons.push({ kind: "凶", text: "彭祖百忌：寅不祭祀，神鬼不嘗" });
-  if (event === "qiuyi" && info.dayZhi === "未")
+  if (on("pengzu") && event === "qiuyi" && info.dayZhi === "未")
     reasons.push({ kind: "凶", text: "彭祖百忌：未不服藥，毒氣入腸" });
 
   // 本命沖煞（婚事以女命論，餘以本命論）
@@ -443,38 +477,40 @@ export function evaluateDay(info: DayInfo, event: EventKey, opts: EvalOptions = 
   const ming = useFemale ? opts.femaleBirthZhi : opts.birthZhi;
   if (ming) {
     const who = useFemale ? "女命" : "本命";
-    if (isChongMing(ming, info.dayZhi))
+    if (on("chongming") && isChongMing(ming, info.dayZhi))
       reasons.push({ kind: "凶", text: `日支${info.dayZhi}正沖${who}${ming}，犯沖大凶` });
     // 破碎日：通書公例；嫁娶另依原書女命日吉凶表，不重複計
-    if (event !== "jiaqu" && isPoSui(ming, info.dayZhi))
+    if (on("chongming") && event !== "jiaqu" && isPoSui(ming, info.dayZhi))
       reasons.push({ kind: "凶", text: `破碎日（${who}${ming}見${info.dayZhi}日），忌用` });
     // 吉凶神定局（原書 59 頁起）
-    const mingGan = useFemale ? opts.femaleBirthGan : opts.birthGan;
-    reasons.push(...jiXiongShen(info, mingGan, ming));
+    if (on("jixiong")) {
+      const mingGan = useFemale ? opts.femaleBirthGan : opts.birthGan;
+      reasons.push(...jiXiongShen(info, mingGan, ming));
+    }
   }
 
   // 女命十二地支日吉凶（《剋擇講義》書 86-89 頁）：婚事以女命三合局斷日
-  if ((event === "jiaqu" || event === "nacai") && opts.femaleBirthZhi) {
+  if (on("nvming") && (event === "jiaqu" || event === "nacai") && opts.femaleBirthZhi) {
     const v = nvMingDayVerdict(opts.femaleBirthZhi, info.dayZhi);
     if (v) reasons.push(v);
   }
 
   // 土王用事（原書：動土平基碎金賦）：四立前十八日，忌動土破土
-  if ((event === "dongtu" || event === "potu") && isTuWang(info.solar.y, info.solar.m, info.solar.d))
+  if (on("tuwang") && (event === "dongtu" || event === "potu") && isTuWang(info.solar.y, info.solar.m, info.solar.d))
     reasons.push({ kind: "凶", text: "土王用事（四立前十八日，土旺），忌動土破土" });
 
   // 造作沖山、三殺（原書第六期）：入宅動土修造上樑，有座向則判
-  if (ZAO_ZUO_EVENTS.includes(event) && opts.mountainZhi) {
+  if (on("shan") && ZAO_ZUO_EVENTS.includes(event) && opts.mountainZhi) {
     reasons.push(...zaoZuoShan(info, opts.mountainZhi));
   }
 
   // 婚神煞（原書第四期六十女總局歸納）：胎元、夫星、天嗣、桃花、天狗
-  if ((event === "jiaqu" || event === "nacai") && opts.femaleBirthZhi) {
+  if (on("hunsha") && (event === "jiaqu" || event === "nacai") && opts.femaleBirthZhi) {
     reasons.push(...hunShenSha(info, opts.femaleBirthGan, opts.femaleBirthZhi));
   }
 
   // 陰陽不將（原書 211-221 頁每月將神名目）：嫁娶專用
-  if (event === "jiaqu" || event === "nacai") {
+  if (on("bujiang") && (event === "jiaqu" || event === "nacai")) {
     const js = getJiangShen(info);
     if (js === "不將")
       reasons.push({ kind: "吉", text: "陰陽不將日，嫁娶大吉（原書：將神名目）" });
@@ -491,7 +527,7 @@ export function evaluateDay(info: DayInfo, event: EventKey, opts: EvalOptions = 
 
   // 嫁娶專屬：利月（原書 205-206 頁，以月建論）、周堂（原書 207-208 頁）
   if (event === "jiaqu") {
-    if (opts.femaleBirthZhi) {
+    if (on("liyue") && opts.femaleBirthZhi) {
       const cat = jiaQuMonthCat(opts.femaleBirthZhi, info.monthZhi);
       const de = sanDe(info);
       if (cat === "大利月")
@@ -514,8 +550,10 @@ export function evaluateDay(info: DayInfo, event: EventKey, opts: EvalOptions = 
         reasons.push({ kind: "凶", text: "本月妨夫月，原書：不利不用" });
       else reasons.push({ kind: "凶", text: "本月妨婦月，原書：不利不用" });
     }
-    const zt = zhouTang(info.lunarDay, info.lunarMonthDayCount);
-    if (zt === "夫" || zt === "婦")
+    const zt = on("zhoutang") ? zhouTang(info.lunarDay, info.lunarMonthDayCount) : "";
+    if (zt === "") {
+      // 周堂層停用
+    } else if (zt === "夫" || zt === "婦")
       reasons.push({ kind: "凶", text: `嫁娶周堂值「${zt}」，原書：此日大凶，最忌不用` });
     else if (zt === "翁")
       reasons.push({ kind: "注", text: "周堂值翁，新人進門翁勿相見（無翁或從權則可用）" });
@@ -530,12 +568,16 @@ export function evaluateDay(info: DayInfo, event: EventKey, opts: EvalOptions = 
   }
 
   // 建除十二神
-  const jcr = jianChuReason(info, event);
-  if (jcr) reasons.push(jcr);
+  if (on("jianchu")) {
+    const jcr = jianChuReason(info, event);
+    if (jcr) reasons.push(jcr);
+  }
 
   // 通書宜忌
-  const tsr = tongShuReason(info, event);
-  if (tsr) reasons.push(tsr);
+  if (on("tongshu")) {
+    const tsr = tongShuReason(info, event);
+    if (tsr) reasons.push(tsr);
+  }
 
   // 評等：有凶即凶；無凶而有吉為吉；餘為平
   const rating: Rating = reasons.some((r) => r.kind === "凶")
