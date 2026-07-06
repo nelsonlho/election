@@ -160,24 +160,51 @@ function LayerToggles({ event, off, toggle }: { event: EventKey; off: string[]; 
   );
 }
 
-// 事類分科選單（綱領三）：由 EVENT_CATEGORIES 自動生成
-function EventSelect({ value, onChange }: { value: EventKey; onChange: (e: EventKey) => void }) {
+// 事類分科選擇（綱領三）：二層籤選——科籤一列、事籤一列，
+// 廿餘事盡列而恆佔二行，點二下可達，選中恆顯
+function EventPicker({ value, onChange }: { value: EventKey; onChange: (e: EventKey) => void }) {
+  const currentCat =
+    EVENT_CATEGORIES.find((c) => c.events.some((e) => e.key === value))?.category ??
+    EVENT_CATEGORIES[0].category;
+  const [cat, setCat] = useState(currentCat);
+  // 外部（記存）改事類時，科籤隨之
+  useEffect(() => setCat(currentCat), [currentCat]);
+  const events = EVENT_CATEGORIES.find((c) => c.category === cat)?.events ?? [];
   return (
-    <select
-      className="w-full rounded border border-stone-300 bg-white px-3 py-2 dark:border-stone-600 dark:bg-stone-900"
-      value={value}
-      onChange={(e) => onChange(e.target.value as EventKey)}
-    >
-      {EVENT_CATEGORIES.map((c) => (
-        <optgroup key={c.category} label={c.category}>
-          {c.events.map((ev) => (
-            <option key={ev.key} value={ev.key}>
-              {ev.name}
-            </option>
-          ))}
-        </optgroup>
-      ))}
-    </select>
+    <div>
+      <div className="flex flex-wrap gap-1">
+        {EVENT_CATEGORIES.map((c) => (
+          <button
+            key={c.category}
+            type="button"
+            className={`rounded-t-md border-b-2 px-2.5 py-1 text-xs font-medium transition-colors ${
+              cat === c.category
+                ? "border-red-700 text-red-700 dark:border-red-400 dark:text-red-400"
+                : "border-transparent text-stone-500 hover:text-stone-700 dark:hover:text-stone-300"
+            }`}
+            onClick={() => setCat(c.category)}
+          >
+            {c.category}
+          </button>
+        ))}
+      </div>
+      <div className="mt-1.5 flex flex-wrap gap-1.5">
+        {events.map((ev) => (
+          <button
+            key={ev.key}
+            type="button"
+            className={`rounded-full px-3 py-1.5 text-sm transition-colors ${
+              value === ev.key
+                ? "bg-red-700 font-medium text-white"
+                : "bg-stone-100 text-stone-700 ring-1 ring-stone-200 hover:bg-stone-200 dark:bg-stone-700 dark:text-stone-200 dark:ring-stone-600 dark:hover:bg-stone-600"
+            }`}
+            onClick={() => onChange(ev.key)}
+          >
+            {ev.name}
+          </button>
+        ))}
+      </div>
+    </div>
   );
 }
 
@@ -300,10 +327,10 @@ function SearchTab() {
     <div className="space-y-4">
       <div className="rounded-lg border border-stone-200 bg-white p-4 shadow-sm dark:border-stone-700 dark:bg-stone-800">
         <div className="grid gap-3 sm:grid-cols-2">
-          <label className="block text-sm">
+          <div className="block text-sm sm:col-span-2">
             <span className="mb-1 block font-medium">事類</span>
-            <EventSelect value={event} onChange={(k) => setEventStr(k)} />
-          </label>
+            <EventPicker value={event} onChange={(k) => setEventStr(k)} />
+          </div>
           {ming === "female" && (
             <label className="block text-sm">
               <span className="mb-1 block font-medium">
