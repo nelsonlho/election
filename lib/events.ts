@@ -529,6 +529,33 @@ const GAN_SHAN_FANG: Record<string, string[]> = {
   壬: ["亥", "子", "丑"], 癸: ["亥", "子", "丑"],
 };
 
+// 陰府例（原書第六期 408-409 頁）：山歸宮（一卦管三山），宮納干化氣，
+// 剋化氣之干對為陰府——「雙字全凶，單字不忌」。
+// 錨定：例十二戌山忌丁壬、例九申山忌戊癸、例七丁山忌乙庚（餘頁漫漶，依律推全）。
+const MOUNTAIN_GONG: Record<string, string> = {
+  壬: "坎", 子: "坎", 癸: "坎", 丑: "艮", 艮: "艮", 寅: "艮",
+  甲: "震", 卯: "震", 乙: "震", 辰: "巽", 巽: "巽", 巳: "巽",
+  丙: "離", 午: "離", 丁: "離", 未: "坤", 坤: "坤", 申: "坤",
+  庚: "兌", 酉: "兌", 辛: "兌", 戌: "乾", 乾: "乾", 亥: "乾",
+};
+const YIN_FU: Record<string, [string, string]> = {
+  乾: ["丁", "壬"], 坎: ["丙", "辛"], 艮: ["甲", "己"], 震: ["戊", "癸"],
+  巽: ["甲", "己"], 離: ["乙", "庚"], 坤: ["戊", "癸"], 兌: ["乙", "庚"],
+};
+
+function yinFuJi(info: DayInfo, m: string): Reason | null {
+  const gong = MOUNTAIN_GONG[m];
+  const pair = gong ? YIN_FU[gong] : undefined;
+  if (!pair) return null;
+  const gans = [info.yearGanZhi.charAt(0), info.monthGanZhi.charAt(0), info.dayGan];
+  if (pair.every((g) => gans.includes(g)))
+    return {
+      kind: "凶",
+      text: `陰府（${m}山屬${gong}宮，忌${pair.join("")}雙字全）——年月日柱俱見，凶（原書：陰府例，單字不忌）`,
+    };
+  return null;
+}
+
 function zaoZuoShan(info: DayInfo, m: string): Reason[] {
   const out: Reason[] = [];
   const yearZhi = info.yearGanZhi.charAt(1);
@@ -552,6 +579,9 @@ function zaoZuoShan(info: DayInfo, m: string): Reason[] {
     if (GUA_SHAN_CHONG[m].includes(info.dayZhi))
       out.push({ kind: "凶", text: `日支${info.dayZhi}沖山（坐${m}山，對宮${GUA_SHAN_CHONG[m].join("")}之沖），忌之（原書：沖山例）` });
   }
+  // 陰府（諸山皆判）
+  const yf = yinFuJi(info, m);
+  if (yf) out.push(yf);
   return out;
 }
 
