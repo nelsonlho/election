@@ -617,6 +617,7 @@ export const RULE_LAYERS: RuleLayer[] = [
   { key: "shan", name: "沖山三殺", desc: "日支沖座山、流年三殺占山（須入座山；造葬以墓之坐山論）", events: ["ruzhai", "dongtu", "xiuzao", "shangliang", "anzang", "potu", "qizan", "xiufen", "juejing", "zuozao", "anmen", "libei", "kaishengfen", "xietu", "yixi", "qiji", "gaiwu"] },
   { key: "dongtuji", name: "動土忌例", desc: "土符、土瘟、天瘟、重日、白虎朱雀（原書 548）", events: ["dongtu"] },
   { key: "zhaizhou", name: "入宅安香周堂", desc: "十六位／八位周堂環，值凶位忌；出火同忌二分二至（原書 459-460）", events: ["ruzhai", "anxiang", "chuhuo"] },
+  { key: "doushou", name: "斗首化曜", desc: "山斗首五行對年月日干化氣：元辰廉子武財吉、貪官破鬼忌（爐傳斗首，非講義——原書七層斗首註云今已不用）。須入座山，預設關", events: ["ruzhai", "dongtu", "xiuzao", "shangliang", "anzang", "potu", "qizan", "xiufen", "juejing", "zuozao", "anmen", "libei", "kaishengfen", "xietu", "yixi", "qiji", "gaiwu"] },
   { key: "shashi", name: "殺師日", desc: "地師登山之忌（通書俗傳口訣：春辰戌、夏卯酉、秋丑未、冬子午；派別有異，非講義出）——預設關，主事地師者自開", events: ["anzang", "potu", "qizan", "xiufen", "kaishengfen", "dongtu", "qiji", "libei"] },
   { key: "zuotaisui", name: "坐太歲", desc: "山即流年之方，注「可坐不可向」——不忌此說者可停用", events: ["ruzhai", "dongtu", "xiuzao", "shangliang", "anzang", "potu", "qizan", "xiufen", "juejing", "zuozao", "anmen", "libei", "kaishengfen", "xietu", "yixi", "qiji", "gaiwu"] },
   { key: "xianming", name: "仙命諸忌", desc: "日沖仙命、三殺、三刑、旬空（須入亡者生年——原書第八期）", events: ["anzang", "potu", "qizan", "xiufen", "rulian", "yijiu", "libei", "kaishengfen"] },
@@ -627,7 +628,7 @@ export function layersForEvent(event: EventKey): RuleLayer[] {
 }
 
 // 預設關之層（開啟以 "enable:鍵" 存於同一取捨列）
-export const DEFAULT_OFF_LAYERS = ["shashi"];
+export const DEFAULT_OFF_LAYERS = ["shashi", "doushou"];
 
 export function isLayerOn(key: string, offList: string[]): boolean {
   return DEFAULT_OFF_LAYERS.includes(key)
@@ -667,6 +668,49 @@ const GAN_SHAN_FANG: Record<string, string[]> = {
   庚: ["申", "酉", "戌"], 辛: ["申", "酉", "戌"],
   壬: ["亥", "子", "丑"], 癸: ["亥", "子", "丑"],
 };
+
+// 斗首化曜（爐傳斗首擇日綱要，通行法，非講義；原書七層斗首註云已廢）
+// 廿四山斗首五行；柱干以五合化氣（甲己土乙庚金丙辛水丁壬木戊癸火）；
+// 山為我：同我元辰、我生廉子、我剋武財（吉）；生我貪官、剋我破鬼（忌）
+const DOUSHOU_WX: Record<string, string> = {
+  壬: "土", 子: "土", 巽: "土", 巳: "土", 辛: "土", 戌: "土",
+  癸: "火", 丑: "火", 丙: "火", 午: "火", 乾: "火", 亥: "火",
+  艮: "木", 寅: "木", 丁: "木", 未: "木",
+  甲: "水", 卯: "水", 坤: "水", 申: "水",
+  乙: "金", 辰: "金", 庚: "金", 酉: "金",
+};
+const HUA_QI: Record<string, string> = {
+  甲: "土", 己: "土", 乙: "金", 庚: "金", 丙: "水", 辛: "水",
+  丁: "木", 壬: "木", 戊: "火", 癸: "火",
+};
+const WX_SHENG: Record<string, string> = { 木: "火", 火: "土", 土: "金", 金: "水", 水: "木" };
+const WX_KE: Record<string, string> = { 木: "土", 土: "水", 水: "火", 火: "金", 金: "木" };
+
+function douShouYao(shanWx: string, ganWx: string): { name: string; ji: boolean } {
+  if (ganWx === shanWx) return { name: "元辰", ji: false };
+  if (WX_SHENG[shanWx] === ganWx) return { name: "廉子", ji: false };
+  if (WX_KE[shanWx] === ganWx) return { name: "武財", ji: false };
+  if (WX_SHENG[ganWx] === shanWx) return { name: "貪官", ji: true };
+  return { name: "破鬼", ji: true };
+}
+
+function douShou(info: DayInfo, m: string): Reason[] {
+  const shanWx = DOUSHOU_WX[m];
+  if (!shanWx) return [];
+  const pillars: [string, string][] = [
+    ["年", info.yearGanZhi.charAt(0)],
+    ["月", info.monthGanZhi.charAt(0)],
+    ["日", info.dayGan],
+  ];
+  const yaos = pillars.map(([label, g]) => ({ label, ...douShouYao(shanWx, HUA_QI[g]) }));
+  const desc = yaos.map((y) => `${y.label}${y.name}`).join("・");
+  const badCore = yaos.filter((y) => (y.label === "年" || y.label === "日") && y.ji);
+  if (badCore.length > 0)
+    return [{ kind: "凶", text: `斗首化曜（${m}山屬${shanWx}）：${desc}——${badCore.map((y) => y.label + "柱" + y.name).join("、")}忌（爐傳斗首，非講義）` }];
+  if (yaos.every((y) => !y.ji))
+    return [{ kind: "吉", text: `斗首化曜（${m}山屬${shanWx}）：${desc}，三柱皆吉曜（爐傳斗首，非講義）` }];
+  return [{ kind: "注", text: `斗首化曜（${m}山屬${shanWx}）：${desc}——月柱逢忌曜，慎（爐傳斗首，非講義）` }];
+}
 
 // 陰府例（原書第六期 408-409 頁）：山歸宮（一卦管三山），宮納干化氣，
 // 剋化氣之干對為陰府——「雙字全凶，單字不忌」。
@@ -879,6 +923,11 @@ export function evaluateDay(info: DayInfo, event: EventKey, opts: EvalOptions = 
     TIAN_YI[info.yearGanZhi.charAt(0)]?.includes(info.dayZhi)
   )
     reasons.push({ kind: "吉", text: `流年${info.yearGanZhi.charAt(0)}干天乙貴人臨日（二宅通用日課貴人）` });
+
+  // 斗首化曜（預設關；須座山）
+  if (on("doushou") && ZAO_ZUO_EVENTS.includes(event) && opts.mountainZhi) {
+    reasons.push(...douShou(info, opts.mountainZhi));
+  }
 
   // 仙命諸忌（原書第八期）：葬事有亡命則判
   if (on("xianming") && ZANG_EVENTS.includes(event) && opts.xianMingZhi) {
