@@ -4,7 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import { findAuspiciousDays, queryDay, personsOfYears, DayResult } from "@/lib/engine";
 import { EventKey, EVENT_NAMES, EVENT_CATEGORIES, eventDef, layersForEvent, Rating } from "@/lib/events";
 import { JIANCHU } from "@/lib/jianchu";
-import { yearZhiOfBirthYear, yearGanOfBirthYear, nianXiongFang } from "@/lib/almanac";
+import { yearZhiOfBirthYear, yearGanOfBirthYear, nianXiongFang, nianDaFang } from "@/lib/almanac";
 import { heHun, hexagramLines } from "@/lib/hehun";
 import type { Yao, Gua } from "@/lib/hehun";
 import { evaluateHours } from "@/lib/hours";
@@ -768,6 +768,10 @@ function DayTab() {
             <div>胎神占方：{info.taiShen}</div>
             <div>沖：{info.chongDesc}</div>
             <div className="sm:col-span-2">吉神方位：{info.jiFang}</div>
+            <div className="sm:col-span-2">
+              流年方位（{info.yearGanZhi}年）：{nianDaFang(info.yearGanZhi.charAt(1))}
+              <span className="ml-1 text-xs text-stone-400">（歲內恆忌，造葬修方尤重）</span>
+            </div>
             <div className="sm:col-span-2">
               流年凶方：{nianXiongFang(info.yearGanZhi.charAt(1))}
               <span className="ml-1 text-xs text-stone-400">（原書 106：安床置產諸事避之）</span>

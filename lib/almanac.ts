@@ -91,6 +91,23 @@ export function nianXiongFang(yearZhi: string): string {
   return `病符${at(-1)}方　喪門${at(2)}方　白虎${at(8)}方　天狗${at(10)}方`;
 }
 
+// 流年大方位：太歲（年支方）、歲破（沖太歲）、三煞（三合局殺方——原書三殺例）
+const SAN_SHA_DIR: Record<string, [string, string]> = {
+  // 局旺 → [煞方名, 三支]
+  申: ["南", "巳午未"], 子: ["南", "巳午未"], 辰: ["南", "巳午未"],
+  寅: ["北", "亥子丑"], 午: ["北", "亥子丑"], 戌: ["北", "亥子丑"],
+  巳: ["東", "寅卯辰"], 酉: ["東", "寅卯辰"], 丑: ["東", "寅卯辰"],
+  亥: ["西", "申酉戌"], 卯: ["西", "申酉戌"], 未: ["西", "申酉戌"],
+};
+
+export function nianDaFang(yearZhi: string): string {
+  const i = ZHI.indexOf(yearZhi as (typeof ZHI)[number]);
+  if (i < 0) return "";
+  const chong = ZHI[(i + 6) % 12];
+  const [dir, zhis] = SAN_SHA_DIR[yearZhi] ?? ["", ""];
+  return `太歲${yearZhi}方　歲破${chong}方　三煞${dir}方（${zhis}）`;
+}
+
 // 月將（太陽躔宮，依中氣）：雨水後亥、春分後戌……大寒後子（原書 224-225 頁貴人登天時表）
 const YUE_JIANG: Record<string, string> = {
   雨水: "亥", 春分: "戌", 穀雨: "酉", 小滿: "申", 夏至: "未", 大暑: "午",
