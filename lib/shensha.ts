@@ -164,6 +164,9 @@ export function getAnChuangJi(info: DayInfo): AnChuangHit[] {
     out.push({ name: "朱雀日", kind: "注", note: "安牀忌之，鳳凰符制之則吉" });
   if (ZHU_QUE_ZHONG.includes(info.dayGanZhi))
     out.push({ name: "朱雀中日", kind: "注", note: "安牀忌之，鳳凰符制之則吉" });
+  // 埋兒凶宿（原書 105 頁：心昴婁奎尾參危，逢之總不安，孩兒養最難——註者謂體察人情姑錄）
+  if (["心", "昴", "婁", "奎", "尾", "參", "危"].includes(info.xiu))
+    out.push({ name: "埋兒凶宿", kind: "注", note: `是日${info.xiu}宿——原書 105：逢之總不安，孩兒養最難（姑錄從俗）` });
   return out;
 }
 

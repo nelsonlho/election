@@ -617,6 +617,7 @@ export const RULE_LAYERS: RuleLayer[] = [
   { key: "shan", name: "沖山三殺", desc: "日支沖座山、流年三殺占山（須入座山；造葬以墓之坐山論）", events: ["ruzhai", "dongtu", "xiuzao", "shangliang", "anzang", "potu", "qizan", "xiufen", "juejing", "zuozao", "anmen", "libei", "kaishengfen", "xietu", "yixi", "qiji", "gaiwu"] },
   { key: "dongtuji", name: "動土忌例", desc: "土符、土瘟、天瘟、重日、白虎朱雀（原書 548）", events: ["dongtu"] },
   { key: "zhaizhou", name: "入宅安香周堂", desc: "十六位／八位周堂環，值凶位忌；出火同忌二分二至（原書 459-460）", events: ["ruzhai", "anxiang", "chuhuo"] },
+  { key: "yanqin", name: "演禽宿曜", desc: "廿八宿值日吉凶（通行值日歌，非講義——原書 110 註者於宿忌持譏，故預設關）：吉宿十四凶宿十四；角宿忌葬、鬼宿反宜葬", events: undefined },
   { key: "doushou", name: "斗首化曜", desc: "山斗首五行對年月日干化氣：元辰廉子武財吉、貪官破鬼忌（爐傳斗首，非講義——原書七層斗首註云今已不用）。須入座山，預設關", events: ["ruzhai", "dongtu", "xiuzao", "shangliang", "anzang", "potu", "qizan", "xiufen", "juejing", "zuozao", "anmen", "libei", "kaishengfen", "xietu", "yixi", "qiji", "gaiwu"] },
   { key: "shashi", name: "殺師日", desc: "地師登山之忌（通書俗傳口訣：春辰戌、夏卯酉、秋丑未、冬子午；派別有異，非講義出）——預設關，主事地師者自開", events: ["anzang", "potu", "qizan", "xiufen", "kaishengfen", "dongtu", "qiji", "libei"] },
   { key: "zuotaisui", name: "坐太歲", desc: "山即流年之方，注「可坐不可向」——不忌此說者可停用", events: ["ruzhai", "dongtu", "xiuzao", "shangliang", "anzang", "potu", "qizan", "xiufen", "juejing", "zuozao", "anmen", "libei", "kaishengfen", "xietu", "yixi", "qiji", "gaiwu"] },
@@ -628,7 +629,7 @@ export function layersForEvent(event: EventKey): RuleLayer[] {
 }
 
 // 預設關之層（開啟以 "enable:鍵" 存於同一取捨列）
-export const DEFAULT_OFF_LAYERS = ["shashi", "doushou"];
+export const DEFAULT_OFF_LAYERS = ["shashi", "doushou", "yanqin"];
 
 export function isLayerOn(key: string, offList: string[]): boolean {
   return DEFAULT_OFF_LAYERS.includes(key)
@@ -668,6 +669,30 @@ const GAN_SHAN_FANG: Record<string, string[]> = {
   庚: ["申", "酉", "戌"], 辛: ["申", "酉", "戌"],
   壬: ["亥", "子", "丑"], 癸: ["亥", "子", "丑"],
 };
+
+// 演禽——廿八宿值日吉凶（通行值日歌，非講義；原書 110 謬例宜關註者持譏，故預設關）
+const XIU_QIN: Record<string, string> = {
+  角: "角木蛟", 亢: "亢金龍", 氐: "氐土貉", 房: "房日兔", 心: "心月狐", 尾: "尾火虎", 箕: "箕水豹",
+  斗: "斗木獬", 牛: "牛金牛", 女: "女土蝠", 虛: "虛日鼠", 危: "危月燕", 室: "室火豬", 壁: "壁水貐",
+  奎: "奎木狼", 婁: "婁金狗", 胃: "胃土雉", 昴: "昴日雞", 畢: "畢月烏", 觜: "觜火猴", 參: "參水猿",
+  井: "井木犴", 鬼: "鬼金羊", 柳: "柳土獐", 星: "星日馬", 張: "張月鹿", 翼: "翼火蛇", 軫: "軫水蚓",
+};
+const XIU_JI = ["角", "房", "尾", "箕", "斗", "室", "壁", "婁", "胃", "畢", "參", "井", "張", "軫"];
+
+function yanQin(info: DayInfo, event: EventKey): Reason | null {
+  const xiu = info.xiu;
+  const qin = XIU_QIN[xiu];
+  if (!qin) return null;
+  const zang = ZANG_EVENTS.includes(event);
+  // 特例：角宿吉而忌葬；鬼宿凶而葬反吉
+  if (xiu === "角" && zang)
+    return { kind: "凶", text: `值日${qin}——角宿造作嫁娶吉而忌埋葬（通行值日歌，非講義）` };
+  if (xiu === "鬼" && zang)
+    return { kind: "吉", text: `值日${qin}——鬼宿諸事凶而埋葬反吉（通行值日歌，非講義）` };
+  if (XIU_JI.includes(xiu))
+    return { kind: "吉", text: `值日${qin}，吉宿（通行值日歌，非講義）` };
+  return { kind: "凶", text: `值日${qin}，凶宿（通行值日歌，非講義）` };
+}
 
 // 斗首化曜（爐傳斗首擇日綱要，通行法，非講義；原書七層斗首註云已廢）
 // 廿四山斗首五行；柱干以五合化氣（甲己土乙庚金丙辛水丁壬木戊癸火）；
@@ -923,6 +948,12 @@ export function evaluateDay(info: DayInfo, event: EventKey, opts: EvalOptions = 
     TIAN_YI[info.yearGanZhi.charAt(0)]?.includes(info.dayZhi)
   )
     reasons.push({ kind: "吉", text: `流年${info.yearGanZhi.charAt(0)}干天乙貴人臨日（二宅通用日課貴人）` });
+
+  // 演禽宿曜（預設關）
+  if (on("yanqin")) {
+    const yq = yanQin(info, event);
+    if (yq) reasons.push(yq);
+  }
 
   // 斗首化曜（預設關；須座山）
   if (on("doushou") && ZAO_ZUO_EVENTS.includes(event) && opts.mountainZhi) {
