@@ -695,7 +695,9 @@ function zaoZuoShan(info: DayInfo, m: string): Reason[] {
     if (sha.includes(m))
       out.push({ kind: "凶", text: `流年${info.yearGanZhi}三殺占山（${m}山），歲內造作葬事大忌（原書：三殺例）` });
     if (ZHI_CHONG[yearZhi] === m)
-      out.push({ kind: "凶", text: `歲破占山（流年${info.yearGanZhi}沖${m}山），歲內大忌（原書：安葬山家凶神訣）` });
+      out.push({ kind: "凶", text: `歲破占山（流年${info.yearGanZhi}沖${m}山，即向太歲），歲內大忌（原書：安葬山家凶神訣）` });
+    if (m === yearZhi)
+      out.push({ kind: "注", text: `坐太歲（${m}山即流年${info.yearGanZhi}之方）——古謂太歲可坐不可向，造葬修方從權慎用` });
   } else if (GAN_SHAN_CHONG[m]) {
     // 干山
     if (info.dayGan === GAN_SHAN_CHONG[m])
