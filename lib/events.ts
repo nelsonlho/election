@@ -617,12 +617,22 @@ export const RULE_LAYERS: RuleLayer[] = [
   { key: "shan", name: "沖山三殺", desc: "日支沖座山、流年三殺占山（須入座山；造葬以墓之坐山論）", events: ["ruzhai", "dongtu", "xiuzao", "shangliang", "anzang", "potu", "qizan", "xiufen", "juejing", "zuozao", "anmen", "libei", "kaishengfen", "xietu", "yixi", "qiji", "gaiwu"] },
   { key: "dongtuji", name: "動土忌例", desc: "土符、土瘟、天瘟、重日、白虎朱雀（原書 548）", events: ["dongtu"] },
   { key: "zhaizhou", name: "入宅安香周堂", desc: "十六位／八位周堂環，值凶位忌；出火同忌二分二至（原書 459-460）", events: ["ruzhai", "anxiang", "chuhuo"] },
+  { key: "shashi", name: "殺師日", desc: "地師登山之忌（通書俗傳口訣：春辰戌、夏卯酉、秋丑未、冬子午；派別有異，非講義出）——預設關，主事地師者自開", events: ["anzang", "potu", "qizan", "xiufen", "kaishengfen", "dongtu", "qiji", "libei"] },
   { key: "zuotaisui", name: "坐太歲", desc: "山即流年之方，注「可坐不可向」——不忌此說者可停用", events: ["ruzhai", "dongtu", "xiuzao", "shangliang", "anzang", "potu", "qizan", "xiufen", "juejing", "zuozao", "anmen", "libei", "kaishengfen", "xietu", "yixi", "qiji", "gaiwu"] },
   { key: "xianming", name: "仙命諸忌", desc: "日沖仙命、三殺、三刑、旬空（須入亡者生年——原書第八期）", events: ["anzang", "potu", "qizan", "xiufen", "rulian", "yijiu", "libei", "kaishengfen"] },
 ];
 
 export function layersForEvent(event: EventKey): RuleLayer[] {
   return RULE_LAYERS.filter((l) => !l.events || l.events.includes(event));
+}
+
+// 預設關之層（開啟以 "enable:鍵" 存於同一取捨列）
+export const DEFAULT_OFF_LAYERS = ["shashi"];
+
+export function isLayerOn(key: string, offList: string[]): boolean {
+  return DEFAULT_OFF_LAYERS.includes(key)
+    ? offList.includes("enable:" + key)
+    : !offList.includes(key);
 }
 
 // 造作造葬事類（沖山、三殺以山向論——原書第六期 392-393 頁，
@@ -762,8 +772,8 @@ const CHONG_SANG: Record<string, string> = {
 
 export function evaluateDay(info: DayInfo, event: EventKey, opts: EvalOptions = {}): Evaluation {
   const reasons: Reason[] = [];
-  const off = new Set(opts.disabledLayers ?? []);
-  const on = (key: string) => !off.has(key);
+  const offList = opts.disabledLayers ?? [];
+  const on = (key: string) => isLayerOn(key, offList);
 
   if (on("yuejia")) reasons.push(...commonBad(info, event));
 
@@ -837,6 +847,17 @@ export function evaluateDay(info: DayInfo, event: EventKey, opts: EvalOptions = 
   // 動土忌例（原書第八期 548 頁）：土符、土瘟、天瘟、重日、白虎朱雀
   if (event === "dongtu" && on("dongtuji")) {
     reasons.push(...getDongTuJi(info));
+  }
+
+  // 殺師日（通書俗傳，非講義；預設關）：春辰戌、夏卯酉、秋丑未、冬子午
+  if (on("shashi")) {
+    const SHASHI_EVENTS: EventKey[] = ["anzang", "potu", "qizan", "xiufen", "kaishengfen", "dongtu", "qiji", "libei"];
+    if (SHASHI_EVENTS.includes(event)) {
+      const seasonIdx = Math.floor(["寅", "卯", "辰", "巳", "午", "未", "申", "酉", "戌", "亥", "子", "丑"].indexOf(info.monthZhi) / 3);
+      const pairs = [["辰", "戌"], ["卯", "酉"], ["丑", "未"], ["子", "午"]][seasonIdx] ?? [];
+      if (pairs.includes(info.dayZhi))
+        reasons.push({ kind: "注", text: "殺師日（通書俗傳口訣，派別有異）——主事地師勿登山扶作，事主無妨" });
+    }
   }
 
   // 土王用事（原書：動土平基碎金賦）：四立前十八日，忌動土破土

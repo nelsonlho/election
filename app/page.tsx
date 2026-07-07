@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { findAuspiciousDays, queryDay, personsOfYears, DayResult } from "@/lib/engine";
-import { EventKey, EVENT_NAMES, EVENT_CATEGORIES, eventDef, layersForEvent, Rating } from "@/lib/events";
+import { EventKey, EVENT_NAMES, EVENT_CATEGORIES, eventDef, layersForEvent, isLayerOn, DEFAULT_OFF_LAYERS, Rating } from "@/lib/events";
 import { JIANCHU } from "@/lib/jianchu";
 import { yearZhiOfBirthYear, yearGanOfBirthYear, nianXiongFang, nianDaFang } from "@/lib/almanac";
 import { heHun, hexagramLines } from "@/lib/hehun";
@@ -144,8 +144,10 @@ function useDisabledLayers() {
     const p = JSON.parse(raw);
     if (Array.isArray(p)) off = p.filter((x) => typeof x === "string");
   } catch {}
-  const toggle = (key: string) =>
-    setRaw(JSON.stringify(off.includes(key) ? off.filter((k) => k !== key) : [...off, key]));
+  const toggle = (key: string) => {
+    const token = DEFAULT_OFF_LAYERS.includes(key) ? "enable:" + key : key;
+    setRaw(JSON.stringify(off.includes(token) ? off.filter((k) => k !== token) : [...off, token]));
+  };
   return { off, toggle };
 }
 
@@ -159,7 +161,7 @@ function LayerToggles({ event, off, toggle }: { event: EventKey; off: string[]; 
             <input
               type="checkbox"
               className="mt-1"
-              checked={!off.includes(l.key)}
+              checked={isLayerOn(l.key, off)}
               onChange={() => toggle(l.key)}
             />
             <span>
@@ -546,7 +548,7 @@ function SearchTab() {
         {/* 進階摺疊（綱領二）：宅舍座山（造作事）＋法度取捨 */}
         <details className="mt-3" open={off.length > 0 || (isZaoZuo && !!mountain)}>
           <summary className="cursor-pointer select-none text-sm text-stone-500 hover:text-stone-700 dark:hover:text-stone-300">
-            進階選項{off.length > 0 && <span className="ml-2 text-red-600 dark:text-red-400">（停用{off.length}層）</span>}
+            進階選項{off.filter((k) => !k.startsWith("enable:")).length > 0 && <span className="ml-2 text-red-600 dark:text-red-400">（停用{off.filter((k) => !k.startsWith("enable:")).length}層）</span>}
           </summary>
           <div className="mt-2 grid gap-3 sm:grid-cols-2">
             {isZaoZuo && (
