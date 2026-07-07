@@ -617,6 +617,7 @@ export const RULE_LAYERS: RuleLayer[] = [
   { key: "shan", name: "沖山三殺", desc: "日支沖座山、流年三殺占山（須入座山；造葬以墓之坐山論）", events: ["ruzhai", "dongtu", "xiuzao", "shangliang", "anzang", "potu", "qizan", "xiufen", "juejing", "zuozao", "anmen", "libei", "kaishengfen", "xietu", "yixi", "qiji", "gaiwu"] },
   { key: "dongtuji", name: "動土忌例", desc: "土符、土瘟、天瘟、重日、白虎朱雀（原書 548）", events: ["dongtu"] },
   { key: "zhaizhou", name: "入宅安香周堂", desc: "十六位／八位周堂環，值凶位忌；出火同忌二分二至（原書 459-460）", events: ["ruzhai", "anxiang", "chuhuo"] },
+  { key: "zuotaisui", name: "坐太歲", desc: "山即流年之方，注「可坐不可向」——不忌此說者可停用", events: ["ruzhai", "dongtu", "xiuzao", "shangliang", "anzang", "potu", "qizan", "xiufen", "juejing", "zuozao", "anmen", "libei", "kaishengfen", "xietu", "yixi", "qiji", "gaiwu"] },
   { key: "xianming", name: "仙命諸忌", desc: "日沖仙命、三殺、三刑、旬空（須入亡者生年——原書第八期）", events: ["anzang", "potu", "qizan", "xiufen", "rulian", "yijiu", "libei", "kaishengfen"] },
 ];
 
@@ -684,7 +685,7 @@ function yinFuJi(info: DayInfo, m: string): Reason | null {
   return null;
 }
 
-function zaoZuoShan(info: DayInfo, m: string): Reason[] {
+function zaoZuoShan(info: DayInfo, m: string, zuoTaiSui = true): Reason[] {
   const out: Reason[] = [];
   const yearZhi = info.yearGanZhi.charAt(1);
   const sha = SAN_SHA_FANG[yearZhi] ?? [];
@@ -696,7 +697,7 @@ function zaoZuoShan(info: DayInfo, m: string): Reason[] {
       out.push({ kind: "凶", text: `流年${info.yearGanZhi}三殺占山（${m}山），歲內造作葬事大忌（原書：三殺例）` });
     if (ZHI_CHONG[yearZhi] === m)
       out.push({ kind: "凶", text: `歲破占山（流年${info.yearGanZhi}沖${m}山，即向太歲），歲內大忌（原書：安葬山家凶神訣）` });
-    if (m === yearZhi)
+    if (zuoTaiSui && m === yearZhi)
       out.push({ kind: "注", text: `坐太歲（${m}山即流年${info.yearGanZhi}之方）——古謂太歲可坐不可向，造葬修方從權慎用` });
   } else if (GAN_SHAN_CHONG[m]) {
     // 干山
@@ -844,7 +845,7 @@ export function evaluateDay(info: DayInfo, event: EventKey, opts: EvalOptions = 
 
   // 造作沖山、三殺（原書第六期）：入宅動土修造上樑，有座向則判
   if (on("shan") && ZAO_ZUO_EVENTS.includes(event) && opts.mountainZhi) {
-    reasons.push(...zaoZuoShan(info, opts.mountainZhi));
+    reasons.push(...zaoZuoShan(info, opts.mountainZhi, on("zuotaisui")));
   }
 
   // 仙命諸忌（原書第八期）：葬事有亡命則判
