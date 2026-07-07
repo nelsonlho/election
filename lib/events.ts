@@ -739,6 +739,9 @@ const XING_MAP: [string, string][] = [
 function xianMingJi(info: DayInfo, xGan: string | undefined, xZhi: string): Reason[] {
   const out: Reason[] = [];
   const dz = info.dayZhi;
+  // 陰宅貴人：日支為仙命年干之天乙貴人，吉
+  if (xGan && TIAN_YI[xGan]?.includes(dz))
+    out.push({ kind: "吉", text: `日支${dz}為仙命${xGan}干天乙貴人（陰宅貴人臨日）` });
   if (ZHI_CHONG[xZhi] === dz)
     out.push({ kind: "凶", text: `日支${dz}沖仙命（亡命${xZhi}），葬課大凶（原書：仙命諸忌例）` });
   if (SAN_SHA_FANG[xZhi]?.includes(dz))
@@ -868,6 +871,14 @@ export function evaluateDay(info: DayInfo, event: EventKey, opts: EvalOptions = 
   if (on("shan") && ZAO_ZUO_EVENTS.includes(event) && opts.mountainZhi) {
     reasons.push(...zaoZuoShan(info, opts.mountainZhi, on("zuotaisui")));
   }
+
+  // 二宅通用：日課流年干之天乙貴人臨日支，吉
+  if (
+    on("jixiong") &&
+    (ZAO_ZUO_EVENTS.includes(event) || ZANG_EVENTS.includes(event)) &&
+    TIAN_YI[info.yearGanZhi.charAt(0)]?.includes(info.dayZhi)
+  )
+    reasons.push({ kind: "吉", text: `流年${info.yearGanZhi.charAt(0)}干天乙貴人臨日（二宅通用日課貴人）` });
 
   // 仙命諸忌（原書第八期）：葬事有亡命則判
   if (on("xianming") && ZANG_EVENTS.includes(event) && opts.xianMingZhi) {
