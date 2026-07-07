@@ -190,7 +190,7 @@ function EventPicker({ value, onChange }: { value: EventKey; onChange: (e: Event
           <button
             key={c.category}
             type="button"
-            className={`rounded-t-md border-b-2 px-2.5 py-1 text-xs font-medium transition-colors ${
+            className={`rounded-t-md border-b-2 px-3 py-1.5 text-xs font-medium transition-colors ${
               cat === c.category
                 ? "border-red-700 text-red-700 dark:border-red-400 dark:text-red-400"
                 : "border-transparent text-stone-500 hover:text-stone-700 dark:hover:text-stone-300"
@@ -461,7 +461,7 @@ function SearchTab() {
           )}
           <label className="block text-sm">
             <span className="mb-1 block font-medium">
-              {ming === "female" ? "男方等生年（可多人，可留空）" : "本命生年（可多人）"}
+              {ming === "female" ? "男方等生年（可多人）" : "本命生年（可多人）"}
               {parseYears(birthYear).length > 1 && (
                 <span className="ml-2 text-red-600 dark:text-red-400">
                   {parseYears(birthYear).length}命合參
@@ -470,7 +470,7 @@ function SearchTab() {
             </span>
             <input
               className="w-full rounded border border-stone-300 bg-white px-3 py-2 dark:border-stone-600 dark:bg-stone-900"
-              placeholder={ming === "female" ? "例：1996（男方；東家夥友亦可並列）" : "例：1990、1965（東家數人可並列）"}
+              placeholder={ming === "female" ? "例：1996（男方）" : "例：1990、1965"}
               value={birthYear}
               onChange={(e) => setBirthYear(e.target.value)}
             />

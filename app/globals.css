@@ -24,3 +24,19 @@ body {
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
 }
+
+/* 互動元素游標（Tailwind v4 preflight 預設 button 為 default） */
+button:not(:disabled),
+summary,
+select,
+label:has(> input[type="checkbox"]) {
+  cursor: pointer;
+}
+
+/* 手機：輸入字級足 16px，免 iOS 聚焦自動縮放 */
+@media (max-width: 640px) {
+  input,
+  select {
+    font-size: 16px;
+  }
+}
