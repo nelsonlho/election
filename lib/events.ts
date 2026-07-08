@@ -449,6 +449,21 @@ function anXiangZhouTang(lunarDay: number, monthDayCount: number): { name: strin
   return { name, bad: ANXIANG_BAD.has(name) };
 }
 
+// ── 開市周堂（原書第七期，PDF 298 圈點兩例互證） ──────────
+// 八位環：發相・自如・債木（凶）・財帛・囷旺・爭訟（凶）・平等・福慶
+// 大月初一起發相順行；小月初一起財帛逆行
+const KAISHI_ZT = ["發相", "自如", "債木", "財帛", "囷旺", "爭訟", "平等", "福慶"];
+const KAISHI_BAD = new Set(["債木", "爭訟"]);
+
+function kaiShiZhouTang(lunarDay: number, monthDayCount: number): { name: string; bad: boolean } {
+  const idx =
+    monthDayCount >= 30
+      ? (lunarDay - 1) % 8
+      : (((3 - (lunarDay - 1)) % 8) + 8) % 8;
+  const name = KAISHI_ZT[idx];
+  return { name, bad: KAISHI_BAD.has(name) };
+}
+
 // ── 共同凶煞 ──────────────────────────────────────────────
 // 各神煞所忌之事類
 const WANG_WANG_EVENTS: EventKey[] = ["chuxing", "jiaqu", "ruzhai", "furen", "qiuming", "yixi", "guining"]; // 往亡忌出行、嫁娶、移徙、上任求名
@@ -617,6 +632,7 @@ export const RULE_LAYERS: RuleLayer[] = [
   { key: "shan", name: "沖山三殺", desc: "日支沖座山、流年三殺占山（須入座山；造葬以墓之坐山論）", events: ["ruzhai", "dongtu", "xiuzao", "shangliang", "anzang", "potu", "qizan", "xiufen", "juejing", "zuozao", "anmen", "libei", "kaishengfen", "xietu", "yixi", "qiji", "gaiwu"] },
   { key: "dongtuji", name: "動土忌例", desc: "土符、土瘟、天瘟、重日、白虎朱雀（原書 548）", events: ["dongtu"] },
   { key: "zhaizhou", name: "入宅安香周堂", desc: "十六位／八位周堂環，值凶位忌；出火同忌二分二至（原書 459-460）", events: ["ruzhai", "anxiang", "chuhuo"] },
+  { key: "kaishizhou", name: "開市周堂", desc: "八位環：債木、爭訟值日忌（原書第七期圈點）", events: ["kaishi"] },
   { key: "yanqin", name: "演禽宿曜", desc: "廿八宿值日吉凶（通行值日歌，非講義——原書 110 註者於宿忌持譏，故預設關）：吉宿十四凶宿十四；角宿忌葬、鬼宿反宜葬", events: undefined },
   { key: "doushou", name: "斗首化曜", desc: "山斗首五行對年月日干化氣：元辰廉子武財吉、貪官破鬼忌（爐傳斗首，非講義——原書七層斗首註云今已不用）。須入座山，預設關", events: ["ruzhai", "dongtu", "xiuzao", "shangliang", "anzang", "potu", "qizan", "xiufen", "juejing", "zuozao", "anmen", "libei", "kaishengfen", "xietu", "yixi", "qiji", "gaiwu"] },
   { key: "shashi", name: "殺師日", desc: "地師登山之忌（通書俗傳口訣：春辰戌、夏卯酉、秋丑未、冬子午；派別有異，非講義出）——預設關，主事地師者自開", events: ["anzang", "potu", "qizan", "xiufen", "kaishengfen", "dongtu", "qiji", "libei"] },
@@ -963,6 +979,15 @@ export function evaluateDay(info: DayInfo, event: EventKey, opts: EvalOptions = 
   // 仙命諸忌（原書第八期）：葬事有亡命則判
   if (on("xianming") && ZANG_EVENTS.includes(event) && opts.xianMingZhi) {
     reasons.push(...xianMingJi(info, opts.xianMingGan, opts.xianMingZhi));
+  }
+
+  // 開市周堂（原書第七期）
+  if (on("kaishizhou") && event === "kaishi") {
+    const zt = kaiShiZhouTang(info.lunarDay, info.lunarMonthDayCount);
+    if (zt.bad)
+      reasons.push({ kind: "凶", text: `開市周堂值「${zt.name}」（原書圈點凶位），忌用` });
+    else
+      reasons.push({ kind: "吉", text: `開市周堂值「${zt.name}」，吉` });
   }
 
   // 入宅、安香周堂（原書 459-460 頁）；出火同忌二分二至

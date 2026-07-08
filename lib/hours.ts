@@ -112,6 +112,10 @@ export function evaluateHours(info: DayInfo, opts: HourOptions = {}): HourEval[]
       GAN_LIST.indexOf(hGan) % 2 === dayGanIdx % 2 // 同陰陽方為五不遇（甲日庚午、乙日辛巳之例）
     )
       reasons.push({ kind: "凶", text: "五不遇時（時干剋日干）" });
+    // 天地雷兵時（原書 396）：五子元遁起時干，見丙天兵忌上樑，見庚地兵勿動土，戊為雷兵
+    if (hGan === "丙") reasons.push({ kind: "注", text: "天兵時（遇丙）——忌上樑蓋屋（原書 396）" });
+    if (hGan === "庚") reasons.push({ kind: "注", text: "地兵時（遇庚）——忌動土破土（原書 396）" });
+    if (hGan === "戊") reasons.push({ kind: "注", text: "雷兵時（遇戊）——造作慎用（原書 396）" });
     if (kong.includes(hz)) reasons.push({ kind: "注", text: "日旬空亡時，慎用" });
     if (XING.some(([a, b]) => a === dz && b === hz))
       reasons.push({ kind: "注", text: "時支刑日支，慎用" });
