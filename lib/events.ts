@@ -405,6 +405,12 @@ function hunShenSha(info: DayInfo, fGan: string | undefined, fZhi: string): Reas
     const ts = getTianSiChong(fGan, info.dayGanZhi, dz);
     if (ts) out.push({ kind: ts.kind, text: ts.text.replace("安牀大忌", "婚事大忌") });
   }
+  // 殺翁＝命支＋1 之日、殺姑＝命支＋7 之日（六十女總局細註歸納：
+  // 甲子女翁丑姑未、乙丑女翁寅姑申、丙寅女翁卯姑酉、庚午女翁未姑丑，四驗皆合）
+  if (dz === zhiAdd(fZhi, 1))
+    out.push({ kind: "注", text: "犯殺翁——家有翁者忌：三德逢一可解，無德則新娘進門時翁少避；無翁不忌（原書：六十女總局）" });
+  if (dz === zhiAdd(fZhi, 7))
+    out.push({ kind: "注", text: "犯殺姑——家有姑者忌：三德逢一可解，無德則新娘進門時姑少避；無姑不忌（原書：六十女總局）" });
   // 桃花（咸池）
   if (XIAN_CHI[fZhi] === dz)
     out.push({ kind: "注", text: "犯桃花（咸池），慎用（原書：四柱有堆長生、進長生可解）" });
@@ -653,7 +659,7 @@ export const RULE_LAYERS: RuleLayer[] = [
   { key: "zhoutang", name: "嫁娶周堂", desc: "大月起夫順行、小月起婦逆行，值夫婦大凶", events: ["jiaqu"] },
   { key: "nvming", name: "女命日吉凶", desc: "正檳榔殺、檳榔三殺、盤隔山殺、清吉取用（原書 86-89）", events: HUN_EVENTS },
   { key: "bujiang", name: "陰陽不將", desc: "不將大吉；月厭、厭對、俱將忌（原書將神名目）", events: HUN_EVENTS },
-  { key: "hunsha", name: "婚神煞", desc: "沖胎元、沖夫星、沖天嗣、桃花、天狗（原書六十女總局）", events: HUN_EVENTS },
+  { key: "hunsha", name: "婚神煞", desc: "沖胎元、沖夫星、沖天嗣、殺翁殺姑、桃花、天狗（原書六十女總局）", events: HUN_EVENTS },
   { key: "caiyiji", name: "裁衣忌例", desc: "長星、短星、天賊、白虎、朱雀、正四廢（原書 92-93）", events: ["caiyi"] },
   { key: "anchuang", name: "安牀忌例", desc: "臥尸、死別、醞巢、天賊、木馬、箭頭、刀砧、天嗣犯沖（原書 109-111）", events: ["anchuang"] },
   { key: "tuwang", name: "土王用事", desc: "四立前十八日忌動土破土穿井修墳", events: ["dongtu", "potu", "juejing", "xiufen", "kaishengfen", "qiji"] },
