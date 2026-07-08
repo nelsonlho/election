@@ -1,7 +1,7 @@
 // 事類評日 — 嫁娶、安牀、出行（依《剋擇講義》起例）
 
 import { DayInfo, ZHI_CHONG, isTuWang } from "./almanac";
-import { getShenSha, getAnChuangJi, getCaiYiJi, getDongTuJi, getTianSiChong, getJiangShen, isPoSui, isChongMing, isSiFei } from "./shensha";
+import { getShenSha, getAnChuangJi, getCaiYiJi, getDongTuJi, getTianSiChong, getJiangShen, getMieMo, isPoSui, isChongMing, isSiFei } from "./shensha";
 import { JIANCHU, JIANCHU_BY_EVENT, JianChuName } from "./jianchu";
 
 export type EventKey =
@@ -514,8 +514,10 @@ function commonBad(info: DayInfo, event: EventKey): Reason[] {
       out.push({ kind: "凶", text: "正紅紗（季月丑日），安葬忌之（原書：安葬忌例）" });
     if (info.lunarDay === 17)
       out.push({ kind: "凶", text: "橫天朱雀（每月十七日），忌安葬（原書：安葬忌例）" });
-    if (zhiAdd(info.monthZhi, 10) === info.dayZhi)
-      out.push({ kind: "凶", text: `天狗日（${info.monthZhi}月${info.dayZhi}日，月支進十），安葬忌之（原書：安葬忌例）` });
+    // 安葬忌例表另有「開星日」欄（月支進十）——即建除開日，建除層已判，不重出
+    const mm = getMieMo(info);
+    if (mm)
+      out.push({ kind: "凶", text: `真滅沒日（${mm}），大忌勿用（原書：日家凶神）` });
   }
   return out;
 }
@@ -856,6 +858,11 @@ function zaoZuoShan(info: DayInfo, m: string, zuoTaiSui = true): Reason[] {
   } else if (GAN_SHAN_CHONG[m] && GAN_SHAN_FANG[m]?.every((z) => mSha.includes(z))) {
     out.push({ kind: "凶", text: `三殺凶月（${mz}月三殺占方，${m}山附焉），月內不可用（原書：月家凶神）` });
   }
+  // ── 日三殺占山（原書 394 三殺例：「四柱中逢申子辰任何一字，殺在南方，
+  //    七山均不能用」——故日支一字亦成殺方）───────────────────
+  const dSha = SAN_SHA_FANG[info.dayZhi] ?? [];
+  if (ZHI_CHONG[m] ? dSha.includes(m) : GAN_SHAN_CHONG[m] ? GAN_SHAN_FANG[m]?.every((z) => dSha.includes(z)) : false)
+    out.push({ kind: "凶", text: `日三殺占山（課中${info.dayZhi}字，殺${dSha.join("")}方，${m}山在焉），不能用（原書：三殺例）` });
   {
     const ci = MOUNTAINS_24.indexOf(ZHI_CHONG[mz] ?? "");
     if (ci >= 0 && MOUNTAINS_24[(ci + 1) % 24] === m)

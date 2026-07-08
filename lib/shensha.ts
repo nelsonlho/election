@@ -197,6 +197,21 @@ export function isSiFei(info: DayInfo): boolean {
   return fei.some(([g, z]) => info.dayGan === g && info.dayZhi === z);
 }
 
+// 真滅沒日（原書 93 裁衣合帳忌例、第八期日家凶神「真滅沒日」——大忌勿用）：
+// 朔日逢角、上弦逢虛、望日逢亢、下弦逢虛、晦日逢婁。
+// （原書另列「盈日逢牛、虛日逢鬼」二例，盈日虛日之義未注，闕之；
+//  朔＝初一、上弦＝初八、望＝十五、下弦＝廿三、晦＝月末日，從曆例）
+export function getMieMo(info: DayInfo): string | null {
+  const d = info.lunarDay;
+  const xiu = info.xiu;
+  if (d === 1 && xiu === "角") return "朔日逢角";
+  if (d === 8 && xiu === "虛") return "上弦逢虛";
+  if (d === 15 && xiu === "亢") return "望日逢亢";
+  if (d === 23 && xiu === "虛") return "下弦逢虛";
+  if (d === info.lunarMonthDayCount && xiu === "婁") return "晦日逢婁";
+  return null;
+}
+
 export function getCaiYiJi(info: DayInfo): { kind: "凶" | "注"; text: string }[] {
   const out: { kind: "凶" | "注"; text: string }[] = [];
   const mi = MONTH_ORDER.indexOf(info.monthZhi);
@@ -215,6 +230,12 @@ export function getCaiYiJi(info: DayInfo): { kind: "凶" | "注"; text: string }
   const fei = SI_FEI[season(info.monthZhi)];
   if (fei.some(([g, z]) => info.dayGan === g && dz === z))
     out.push({ kind: "凶", text: "正四廢日，俗忌勿用（原書：裁衣合帳忌例）" });
+  // 開星日（建除開日，月支進十）：俗忌合帳；裁衣則開日本吉，故作注
+  if (info.zhiXing === "開")
+    out.push({ kind: "注", text: "開星日（建除開日），俗忌合帳——裁衣不在此忌（原書：裁衣合帳忌例）" });
+  const mm = getMieMo(info);
+  if (mm)
+    out.push({ kind: "凶", text: `真滅沒日（${mm}），大忌勿用（原書：裁衣合帳忌例）` });
   return out;
 }
 
