@@ -5,7 +5,7 @@
 // 埋兒凶時（書 105）：子午卯酉女忌丑時、寅申巳亥女忌申時、辰戌丑未女忌卯時。
 
 import { GAN, ZHI, ZHI_CHONG, getYueJiang, DayInfo } from "./almanac";
-import { HUI_TOU, JIAN_REN } from "./events";
+import { HUI_TOU, JIAN_REN, SAN_SHA_FANG, GAN_SHAN_CHONG, GAN_SHAN_FANG, GUA_SHAN_CHONG } from "./events";
 
 const GAN_LIST = GAN as readonly string[];
 const ZHI_LIST = ZHI as readonly string[];
@@ -73,6 +73,7 @@ export interface HourOptions {
   femaleGan?: string; // 女命年干（箭刃用）
   persons?: { label: string; zhi: string; gan?: string }[]; // 諸命（沖命、回頭貢殺、箭刃用）
   xianMingZhi?: string; // 仙命（葬事用）
+  mountainZhi?: string; // 宅舍墳塋座山（造作葬事——時支沖山、時三殺用，原書 394 三殺例「四柱中任何一字」）
 }
 
 export function evaluateHours(info: DayInfo, opts: HourOptions = {}): HourEval[] {
@@ -129,6 +130,29 @@ export function evaluateHours(info: DayInfo, opts: HourOptions = {}): HourEval[]
     }
     if (opts.xianMingZhi && ZHI_CHONG[opts.xianMingZhi] === hz)
       reasons.push({ kind: "凶", text: `時沖仙命${opts.xianMingZhi}` });
+    // 時支沖山、時三殺（原書 394-395 豎造沖山三殺例：「四柱中任何一字」皆成沖成殺，
+    // 故時柱亦判；造作葬事有座山則用）
+    if (opts.mountainZhi) {
+      const m = opts.mountainZhi;
+      const hSha = SAN_SHA_FANG[hz] ?? [];
+      if (ZHI_CHONG[m]) {
+        // 支山
+        if (ZHI_CHONG[m] === hz)
+          reasons.push({ kind: "凶", text: `時支${hz}沖山（坐${m}山），造作葬事忌之（原書：沖山例）` });
+        if (hSha.includes(m))
+          reasons.push({ kind: "凶", text: `時三殺占山（課中${hz}字，殺${hSha.join("")}方，${m}山在焉），不能用（原書：三殺例）` });
+      } else if (GAN_SHAN_CHONG[m]) {
+        // 干山（以時干論沖）
+        if (hGan === GAN_SHAN_CHONG[m])
+          reasons.push({ kind: "凶", text: `時干${hGan}沖山（坐${m}山，${m}${GAN_SHAN_CHONG[m]}對沖），忌之（原書：沖山例）` });
+        if (GAN_SHAN_FANG[m]?.every((z) => hSha.includes(z)))
+          reasons.push({ kind: "凶", text: `時三殺占方（課中${hz}字，殺${hSha.join("")}方，${m}山附焉），不能用（原書：三殺例）` });
+      } else if (GUA_SHAN_CHONG[m]) {
+        // 卦山（對宮二支之沖）
+        if (GUA_SHAN_CHONG[m].includes(hz))
+          reasons.push({ kind: "凶", text: `時支${hz}沖山（坐${m}山，對宮${GUA_SHAN_CHONG[m].join("")}之沖），忌之（原書：沖山例）` });
+      }
+    }
     // 回頭貢殺、箭刃（原書 56-57）：此時足成四柱之局者
     {
       const pillars = [info.yearGanZhi.charAt(1), info.monthZhi, dz, hz];

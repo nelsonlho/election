@@ -105,6 +105,45 @@ function MonthSelect({ label, value, onChange }: { label: string; value: string;
   );
 }
 
+// 座山選單（造作葬事——沖山三殺日課時課共用；正體五行併顯）
+function MountainSelect({ value, onChange }: { value: string; onChange: (v: string) => void }) {
+  return (
+    <label className="block text-sm">
+      <span className="mb-1 block font-medium">
+        座山——宅舍或墳塋（可留空）
+        {value && MOUNTAIN_WX[value] && (
+          <span className="ml-2 text-red-600 dark:text-red-400">{value}山屬{MOUNTAIN_WX[value]}（正體五行）</span>
+        )}
+      </span>
+      <select
+        className="w-full rounded border border-stone-300 bg-white px-3 py-2 dark:border-stone-600 dark:bg-stone-900"
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+      >
+        <option value="">不指定</option>
+        {([
+          ["北（壬子癸）", ["壬", "子", "癸"]],
+          ["東北（丑艮寅）", ["丑", "艮", "寅"]],
+          ["東（甲卯乙）", ["甲", "卯", "乙"]],
+          ["東南（辰巽巳）", ["辰", "巽", "巳"]],
+          ["南（丙午丁）", ["丙", "午", "丁"]],
+          ["西南（未坤申）", ["未", "坤", "申"]],
+          ["西（庚酉辛）", ["庚", "酉", "辛"]],
+          ["西北（戌乾亥）", ["戌", "乾", "亥"]],
+        ] as [string, string[]][]).map(([label, ms]) => (
+          <optgroup key={label} label={label}>
+            {ms.map((z) => (
+              <option key={z} value={z}>
+                {z}山
+              </option>
+            ))}
+          </optgroup>
+        ))}
+      </select>
+    </label>
+  );
+}
+
 // 已輸之命列為籤，點×可除——使「可輸多人」一目瞭然
 function MingChips({ value, onChange }: { value: string; onChange: (v: string) => void }) {
   const years = parseYears(value);
@@ -274,7 +313,7 @@ function DayCard({
   hourOpts,
 }: {
   result: DayResult;
-  hourOpts?: { femaleZhi?: string; femaleGan?: string; persons?: { label: string; zhi: string; gan?: string }[]; xianMingZhi?: string };
+  hourOpts?: { femaleZhi?: string; femaleGan?: string; persons?: { label: string; zhi: string; gan?: string }[]; xianMingZhi?: string; mountainZhi?: string };
 }) {
   const { info, evaluation } = result;
   const [open, setOpen] = useState(false);
@@ -598,41 +637,7 @@ function SearchTab() {
             進階選項{off.filter((k) => !k.startsWith("enable:")).length > 0 && <span className="ml-2 text-red-600 dark:text-red-400">（停用{off.filter((k) => !k.startsWith("enable:")).length}層）</span>}
           </summary>
           <div className="mt-2 grid gap-3 sm:grid-cols-2">
-            {isZaoZuo && (
-              <label className="block text-sm">
-                <span className="mb-1 block font-medium">
-                  座山——宅舍或墳塋（可留空）
-                  {mountain && MOUNTAIN_WX[mountain] && (
-                    <span className="ml-2 text-red-600 dark:text-red-400">{mountain}山屬{MOUNTAIN_WX[mountain]}（正體五行）</span>
-                  )}
-                </span>
-                <select
-                  className="w-full rounded border border-stone-300 bg-white px-3 py-2 dark:border-stone-600 dark:bg-stone-900"
-                  value={mountain}
-                  onChange={(e) => setMountain(e.target.value)}
-                >
-                  <option value="">不指定</option>
-                  {([
-                    ["北（壬子癸）", ["壬", "子", "癸"]],
-                    ["東北（丑艮寅）", ["丑", "艮", "寅"]],
-                    ["東（甲卯乙）", ["甲", "卯", "乙"]],
-                    ["東南（辰巽巳）", ["辰", "巽", "巳"]],
-                    ["南（丙午丁）", ["丙", "午", "丁"]],
-                    ["西南（未坤申）", ["未", "坤", "申"]],
-                    ["西（庚酉辛）", ["庚", "酉", "辛"]],
-                    ["西北（戌乾亥）", ["戌", "乾", "亥"]],
-                  ] as [string, string[]][]).map(([label, ms]) => (
-                    <optgroup key={label} label={label}>
-                      {ms.map((z) => (
-                        <option key={z} value={z}>
-                          {z}山
-                        </option>
-                      ))}
-                    </optgroup>
-                  ))}
-                </select>
-              </label>
-            )}
+            {isZaoZuo && <MountainSelect value={mountain} onChange={setMountain} />}
             <LayerToggles event={event} off={off} toggle={toggle} />
           </div>
         </details>
@@ -687,6 +692,7 @@ function SearchTab() {
                   })),
                   xianMingZhi:
                     isZang && /^\d{4}$/.test(xianMing) ? yearZhiOfBirthYear(Number(xianMing)) : undefined,
+                  mountainZhi: isZaoZuo && mountain ? mountain : undefined,
                 }}
               />
             ))}
@@ -707,9 +713,11 @@ function DayTab() {
   const [xianMing, setXianMing] = useStoredState("xianMing", "");
   const [femaleMonth, setFemaleMonth] = useStoredState("femaleMonth", "");
   const [birthMonth, setBirthMonth] = useStoredState("birthMonth", "");
+  const [mountain, setMountain] = useStoredState("mountain", "");
   const { off } = useDisabledLayers();
   const showFemale = dayCat === "全部" || dayCat === "婚嫁家室";
   const showXian = dayCat === "全部" || dayCat === "造葬";
+  const showMountain = dayCat === "全部" || dayCat === "居家造作" || dayCat === "造葬";
 
   const results = useMemo(() => {
     const [y, m, d] = date.split("-").map(Number);
@@ -728,11 +736,12 @@ function DayTab() {
         xianMingGan: xy ? yearGanOfBirthYear(xy) : undefined,
         femaleBirthMonth: fy && femaleMonth ? Number(femaleMonth) : undefined,
         birthMonth: persons[0] && birthMonth ? Number(birthMonth) : undefined,
+        mountainZhi: showMountain && mountain ? mountain : undefined,
         disabledLayers: off,
       }),
     );
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [date, femaleYear, birthYear, xianMing, femaleMonth, birthMonth, showFemale, showXian, JSON.stringify(off)]);
+  }, [date, femaleYear, birthYear, xianMing, femaleMonth, birthMonth, mountain, showFemale, showXian, showMountain, JSON.stringify(off)]);
 
   const info = results?.[0]?.info;
 
@@ -821,6 +830,7 @@ function DayTab() {
               />
             </label>
           )}
+          {showMountain && <MountainSelect value={mountain} onChange={setMountain} />}
         </div>
       </div>
 
@@ -877,6 +887,7 @@ function DayTab() {
           femaleGan={/^\d{4}$/.test(femaleYear) ? yearGanOfBirthYear(Number(femaleYear)) : undefined}
           persons={personsOfYears(parseYears(birthYear)).map((p) => ({ label: `${p.year}（${p.zhi}）命`, zhi: p.zhi, gan: p.gan }))}
           xianMingZhi={showXian && /^\d{4}$/.test(xianMing) ? yearZhiOfBirthYear(Number(xianMing)) : undefined}
+          mountainZhi={showMountain && mountain ? mountain : undefined}
         />
       )}
 
@@ -1089,24 +1100,26 @@ function HoursGrid({
   femaleGan,
   persons,
   xianMingZhi,
+  mountainZhi,
 }: {
   info: ReturnType<typeof queryDay>["info"];
   femaleZhi?: string;
   femaleGan?: string;
   persons: { label: string; zhi: string; gan?: string }[];
   xianMingZhi?: string;
+  mountainZhi?: string;
 }) {
   const hours = useMemo(
-    () => evaluateHours(info, { femaleZhi, femaleGan, persons, xianMingZhi }),
+    () => evaluateHours(info, { femaleZhi, femaleGan, persons, xianMingZhi, mountainZhi }),
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [info.dayGanZhi, info.solar.y, info.solar.m, info.solar.d, femaleZhi, femaleGan, xianMingZhi, JSON.stringify(persons)],
+    [info.dayGanZhi, info.solar.y, info.solar.m, info.solar.d, femaleZhi, femaleGan, xianMingZhi, mountainZhi, JSON.stringify(persons)],
   );
   return (
     <div className="rounded-lg border border-stone-200 bg-white p-4 shadow-sm dark:border-stone-700 dark:bg-stone-800">
       <div className="text-sm font-medium">
         十二時辰吉凶
         <span className="ml-2 text-xs font-normal text-stone-400">
-          貴登天門為時家最吉（原書 224）；命造欄有入則並判沖命、埋兒凶時
+          貴登天門為時家最吉（原書 224）；命造欄有入則並判沖命、埋兒凶時；座山有入則並判時沖山、時三殺
         </span>
       </div>
       <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-3">

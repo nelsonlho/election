@@ -688,7 +688,8 @@ export function isLayerOn(key: string, offList: string[]): boolean {
 const ZAO_ZUO_EVENTS: EventKey[] = ["dongtu", "xiuzao", "shangliang", "ruzhai", "anzang", "potu", "qizan", "xiufen", "juejing", "zuozao", "anmen", "libei", "kaishengfen", "xietu", "yixi", "qiji", "gaiwu"];
 
 // 流年三殺方（依年支三合局）：申子辰年煞南、寅午戌年煞北、巳酉丑年煞東、亥卯未年煞西
-const SAN_SHA_FANG: Record<string, string[]> = {
+// （時課亦用之——原書 394 三殺例：「四柱中任何一字」成殺方，故輸出）
+export const SAN_SHA_FANG: Record<string, string[]> = {
   申: ["巳", "午", "未"], 子: ["巳", "午", "未"], 辰: ["巳", "午", "未"],
   寅: ["亥", "子", "丑"], 午: ["亥", "子", "丑"], 戌: ["亥", "子", "丑"],
   巳: ["寅", "卯", "辰"], 酉: ["寅", "卯", "辰"], 丑: ["寅", "卯", "辰"],
@@ -710,16 +711,16 @@ export const MOUNTAIN_WX: Record<string, string> = {
   申: "金", 庚: "金", 酉: "金", 辛: "金", 乾: "金",
   辰: "土", 戌: "土", 丑: "土", 未: "土", 艮: "土", 坤: "土",
 };
-// 干山之沖（四柱有此干謂之沖山——原書 392 沖山例；日課以日干論）
-const GAN_SHAN_CHONG: Record<string, string> = {
+// 干山之沖（四柱有此干謂之沖山——原書 392 沖山例；日課以日干論，時課以時干論）
+export const GAN_SHAN_CHONG: Record<string, string> = {
   甲: "庚", 庚: "甲", 乙: "辛", 辛: "乙", 丙: "壬", 壬: "丙", 丁: "癸", 癸: "丁",
 };
 // 卦山之沖：對宮卦所轄二支（乾戌亥↔巽辰巳、坤未申↔艮丑寅）
-const GUA_SHAN_CHONG: Record<string, string[]> = {
+export const GUA_SHAN_CHONG: Record<string, string[]> = {
   乾: ["辰", "巳"], 巽: ["戌", "亥"], 坤: ["丑", "寅"], 艮: ["未", "申"],
 };
 // 干山所附方位組（三殺占方用）：甲乙東（寅卯辰）、丙丁南、庚辛西、壬癸北
-const GAN_SHAN_FANG: Record<string, string[]> = {
+export const GAN_SHAN_FANG: Record<string, string[]> = {
   甲: ["寅", "卯", "辰"], 乙: ["寅", "卯", "辰"],
   丙: ["巳", "午", "未"], 丁: ["巳", "午", "未"],
   庚: ["申", "酉", "戌"], 辛: ["申", "酉", "戌"],
