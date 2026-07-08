@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { findAuspiciousDays, queryDay, personsOfYears, DayResult } from "@/lib/engine";
-import { EventKey, EVENT_NAMES, EVENT_CATEGORIES, eventDef, layersForEvent, isLayerOn, DEFAULT_OFF_LAYERS, Rating } from "@/lib/events";
+import { EventKey, EVENT_NAMES, EVENT_CATEGORIES, eventDef, layersForEvent, isLayerOn, DEFAULT_OFF_LAYERS, MOUNTAIN_WX, Rating } from "@/lib/events";
 import { JIANCHU } from "@/lib/jianchu";
 import { yearZhiOfBirthYear, yearGanOfBirthYear, nianXiongFang, nianDaFang } from "@/lib/almanac";
 import { heHun, hexagramLines } from "@/lib/hehun";
@@ -600,7 +600,12 @@ function SearchTab() {
           <div className="mt-2 grid gap-3 sm:grid-cols-2">
             {isZaoZuo && (
               <label className="block text-sm">
-                <span className="mb-1 block font-medium">座山——宅舍或墳塋（可留空）</span>
+                <span className="mb-1 block font-medium">
+                  座山——宅舍或墳塋（可留空）
+                  {mountain && MOUNTAIN_WX[mountain] && (
+                    <span className="ml-2 text-red-600 dark:text-red-400">{mountain}山屬{MOUNTAIN_WX[mountain]}（正體五行）</span>
+                  )}
+                </span>
                 <select
                   className="w-full rounded border border-stone-300 bg-white px-3 py-2 dark:border-stone-600 dark:bg-stone-900"
                   value={mountain}
