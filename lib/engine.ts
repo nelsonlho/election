@@ -25,6 +25,7 @@ export interface RangeQuery {
   birthYear?: number; // 本命生年（西元，可缺）
   birthYears?: number[]; // 多命合參（如開市數東家、婚事乾造），優先於 birthYear
   mountainZhi?: string; // 座山（十二支山，造作葬事用，可缺）
+  jianXiang?: string; // 兼向——座山所兼之鄰山（沖兼、三殺七山用，可缺）
   xianMingYear?: number; // 仙命（亡者）生年——葬事用，可缺
   femaleBirthMonth?: number; // 女命生月（陰胎用——安牀）
   birthMonth?: number; // 本命（乾造）生月（陽氣用——安牀）
@@ -50,6 +51,7 @@ export function findAuspiciousDays(q: RangeQuery): DayResult[] {
     }
   }
   if (q.mountainZhi) opts.mountainZhi = q.mountainZhi;
+  if (q.jianXiang) opts.jianXiang = q.jianXiang;
   if (q.xianMingYear) {
     opts.xianMingZhi = yearZhiOfBirthYear(q.xianMingYear);
     opts.xianMingGan = yearGanOfBirthYear(q.xianMingYear);

@@ -74,6 +74,7 @@ export interface HourOptions {
   persons?: { label: string; zhi: string; gan?: string }[]; // 諸命（沖命、回頭貢殺、箭刃用）
   xianMingZhi?: string; // 仙命（葬事用）
   mountainZhi?: string; // 宅舍墳塋座山（造作葬事——時支沖山、時三殺用，原書 394 三殺例「四柱中任何一字」）
+  jianXiang?: string; // 兼向（座山之鄰山——時沖兼、卦山兼入殺方用，原書 394-395）
 }
 
 export function evaluateHours(info: DayInfo, opts: HourOptions = {}): HourEval[] {
@@ -151,6 +152,19 @@ export function evaluateHours(info: DayInfo, opts: HourOptions = {}): HourEval[]
         // 卦山（對宮二支之沖）
         if (GUA_SHAN_CHONG[m].includes(hz))
           reasons.push({ kind: "凶", text: `時支${hz}沖山（坐${m}山，對宮${GUA_SHAN_CHONG[m].join("")}之沖），忌之（原書：沖山例）` });
+        // 三殺七山之隅：卦山兼入殺方（巽兼巳、坤兼未之屬——原書 395 三殺例）
+        if (opts.jianXiang && hSha.includes(opts.jianXiang))
+          reasons.push({ kind: "凶", text: `三殺占兼（時課${hz}字殺${hSha.join("")}方，坐${m}山兼${opts.jianXiang}即七山之隅），不能用（原書：三殺例）` });
+      }
+      // 時沖兼（原書 394 沖山例兼例：四柱中如有沖所兼之字，謂之沖兼凶）
+      const j = opts.jianXiang;
+      if (j) {
+        if (ZHI_CHONG[j] === hz)
+          reasons.push({ kind: "凶", text: `時支${hz}沖兼（坐${m}山兼${j}），謂之沖兼凶（原書：沖山例）` });
+        else if (GAN_SHAN_CHONG[j] === hGan)
+          reasons.push({ kind: "凶", text: `時干${hGan}沖兼（坐${m}山兼${j}，${j}${GAN_SHAN_CHONG[j]}對沖），謂之沖兼凶（原書：沖山例）` });
+        else if (GUA_SHAN_CHONG[j]?.includes(hz))
+          reasons.push({ kind: "凶", text: `時支${hz}沖兼（坐${m}山兼${j}，對宮${GUA_SHAN_CHONG[j].join("")}之沖），謂之沖兼凶（原書：沖山例）` });
       }
     }
     // 回頭貢殺、箭刃（原書 56-57）：此時足成四柱之局者

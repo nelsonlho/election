@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { findAuspiciousDays, queryDay, personsOfYears, DayResult } from "@/lib/engine";
-import { EventKey, EVENT_NAMES, EVENT_CATEGORIES, eventDef, layersForEvent, isLayerOn, DEFAULT_OFF_LAYERS, MOUNTAIN_WX, Rating } from "@/lib/events";
+import { EventKey, EVENT_NAMES, EVENT_CATEGORIES, eventDef, layersForEvent, isLayerOn, DEFAULT_OFF_LAYERS, MOUNTAIN_WX, MOUNTAINS_24, Rating } from "@/lib/events";
 import { JIANCHU } from "@/lib/jianchu";
 import { yearZhiOfBirthYear, yearGanOfBirthYear, nianXiongFang, nianDaFang } from "@/lib/almanac";
 import { heHun, hexagramLines } from "@/lib/hehun";
@@ -106,7 +106,20 @@ function MonthSelect({ label, value, onChange }: { label: string; value: string;
 }
 
 // 座山選單（造作葬事——沖山三殺日課時課共用；正體五行併顯）
-function MountainSelect({ value, onChange }: { value: string; onChange: (v: string) => void }) {
+// 兼向副選單：座山之左右鄰山（原書 394-395 沖兼、三殺七山用）
+function MountainSelect({
+  value,
+  onChange,
+  jian,
+  onJian,
+}: {
+  value: string;
+  onChange: (v: string) => void;
+  jian?: string;
+  onJian?: (v: string) => void;
+}) {
+  const mi = MOUNTAINS_24.indexOf(value);
+  const neighbors = mi >= 0 ? [MOUNTAINS_24[(mi + 23) % 24], MOUNTAINS_24[(mi + 1) % 24]] : [];
   return (
     <label className="block text-sm">
       <span className="mb-1 block font-medium">
@@ -115,31 +128,51 @@ function MountainSelect({ value, onChange }: { value: string; onChange: (v: stri
           <span className="ml-2 text-red-600 dark:text-red-400">{value}山屬{MOUNTAIN_WX[value]}（正體五行）</span>
         )}
       </span>
-      <select
-        className="w-full rounded border border-stone-300 bg-white px-3 py-2 dark:border-stone-600 dark:bg-stone-900"
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-      >
-        <option value="">不指定</option>
-        {([
-          ["北（壬子癸）", ["壬", "子", "癸"]],
-          ["東北（丑艮寅）", ["丑", "艮", "寅"]],
-          ["東（甲卯乙）", ["甲", "卯", "乙"]],
-          ["東南（辰巽巳）", ["辰", "巽", "巳"]],
-          ["南（丙午丁）", ["丙", "午", "丁"]],
-          ["西南（未坤申）", ["未", "坤", "申"]],
-          ["西（庚酉辛）", ["庚", "酉", "辛"]],
-          ["西北（戌乾亥）", ["戌", "乾", "亥"]],
-        ] as [string, string[]][]).map(([label, ms]) => (
-          <optgroup key={label} label={label}>
-            {ms.map((z) => (
+      <div className="flex gap-2">
+        <select
+          className="w-full rounded border border-stone-300 bg-white px-3 py-2 dark:border-stone-600 dark:bg-stone-900"
+          value={value}
+          onChange={(e) => {
+            onChange(e.target.value);
+            onJian?.("");
+          }}
+        >
+          <option value="">不指定</option>
+          {([
+            ["北（壬子癸）", ["壬", "子", "癸"]],
+            ["東北（丑艮寅）", ["丑", "艮", "寅"]],
+            ["東（甲卯乙）", ["甲", "卯", "乙"]],
+            ["東南（辰巽巳）", ["辰", "巽", "巳"]],
+            ["南（丙午丁）", ["丙", "午", "丁"]],
+            ["西南（未坤申）", ["未", "坤", "申"]],
+            ["西（庚酉辛）", ["庚", "酉", "辛"]],
+            ["西北（戌乾亥）", ["戌", "乾", "亥"]],
+          ] as [string, string[]][]).map(([label, ms]) => (
+            <optgroup key={label} label={label}>
+              {ms.map((z) => (
+                <option key={z} value={z}>
+                  {z}山
+                </option>
+              ))}
+            </optgroup>
+          ))}
+        </select>
+        {value && onJian && (
+          <select
+            className="w-28 shrink-0 rounded border border-stone-300 bg-white px-2 py-2 dark:border-stone-600 dark:bg-stone-900"
+            value={jian ?? ""}
+            onChange={(e) => onJian(e.target.value)}
+            title="兼向——原書 394-395 沖兼、三殺七山之隅"
+          >
+            <option value="">不兼</option>
+            {neighbors.map((z) => (
               <option key={z} value={z}>
-                {z}山
+                兼{z}
               </option>
             ))}
-          </optgroup>
-        ))}
-      </select>
+          </select>
+        )}
+      </div>
     </label>
   );
 }
@@ -313,7 +346,7 @@ function DayCard({
   hourOpts,
 }: {
   result: DayResult;
-  hourOpts?: { femaleZhi?: string; femaleGan?: string; persons?: { label: string; zhi: string; gan?: string }[]; xianMingZhi?: string; mountainZhi?: string };
+  hourOpts?: { femaleZhi?: string; femaleGan?: string; persons?: { label: string; zhi: string; gan?: string }[]; xianMingZhi?: string; mountainZhi?: string; jianXiang?: string };
 }) {
   const { info, evaluation } = result;
   const [open, setOpen] = useState(false);
@@ -442,6 +475,7 @@ function SearchTab() {
   const [results, setResults] = useState<DayResult[] | null>(null);
   const [error, setError] = useState("");
   const [mountain, setMountain] = useStoredState("mountain", "");
+  const [jianXiang, setJianXiang] = useStoredState("jianXiang", "");
   const [xianMing, setXianMing] = useStoredState("xianMing", "");
   const [femaleMonth, setFemaleMonth] = useStoredState("femaleMonth", "");
   const [birthMonth, setBirthMonth] = useStoredState("birthMonth", "");
@@ -465,6 +499,7 @@ function SearchTab() {
         femaleBirthYear: femaleYear ? Number(femaleYear) : undefined,
         birthYears: parseYears(birthYear),
         mountainZhi: isZaoZuo && mountain ? mountain : undefined,
+        jianXiang: isZaoZuo && mountain && jianXiang ? jianXiang : undefined,
         xianMingYear: isZang && /^\d{4}$/.test(xianMing) ? Number(xianMing) : undefined,
         femaleBirthMonth: event === "anchuang" && femaleMonth ? Number(femaleMonth) : undefined,
         birthMonth: event === "anchuang" && birthMonth ? Number(birthMonth) : undefined,
@@ -637,7 +672,7 @@ function SearchTab() {
             進階選項{off.filter((k) => !k.startsWith("enable:")).length > 0 && <span className="ml-2 text-red-600 dark:text-red-400">（停用{off.filter((k) => !k.startsWith("enable:")).length}層）</span>}
           </summary>
           <div className="mt-2 grid gap-3 sm:grid-cols-2">
-            {isZaoZuo && <MountainSelect value={mountain} onChange={setMountain} />}
+            {isZaoZuo && <MountainSelect value={mountain} onChange={setMountain} jian={jianXiang} onJian={setJianXiang} />}
             <LayerToggles event={event} off={off} toggle={toggle} />
           </div>
         </details>
@@ -693,6 +728,7 @@ function SearchTab() {
                   xianMingZhi:
                     isZang && /^\d{4}$/.test(xianMing) ? yearZhiOfBirthYear(Number(xianMing)) : undefined,
                   mountainZhi: isZaoZuo && mountain ? mountain : undefined,
+                  jianXiang: isZaoZuo && mountain && jianXiang ? jianXiang : undefined,
                 }}
               />
             ))}
@@ -714,6 +750,7 @@ function DayTab() {
   const [femaleMonth, setFemaleMonth] = useStoredState("femaleMonth", "");
   const [birthMonth, setBirthMonth] = useStoredState("birthMonth", "");
   const [mountain, setMountain] = useStoredState("mountain", "");
+  const [jianXiang, setJianXiang] = useStoredState("jianXiang", "");
   const { off } = useDisabledLayers();
   const showFemale = dayCat === "全部" || dayCat === "婚嫁家室";
   const showXian = dayCat === "全部" || dayCat === "造葬";
@@ -737,11 +774,12 @@ function DayTab() {
         femaleBirthMonth: fy && femaleMonth ? Number(femaleMonth) : undefined,
         birthMonth: persons[0] && birthMonth ? Number(birthMonth) : undefined,
         mountainZhi: showMountain && mountain ? mountain : undefined,
+        jianXiang: showMountain && mountain && jianXiang ? jianXiang : undefined,
         disabledLayers: off,
       }),
     );
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [date, femaleYear, birthYear, xianMing, femaleMonth, birthMonth, mountain, showFemale, showXian, showMountain, JSON.stringify(off)]);
+  }, [date, femaleYear, birthYear, xianMing, femaleMonth, birthMonth, mountain, jianXiang, showFemale, showXian, showMountain, JSON.stringify(off)]);
 
   const info = results?.[0]?.info;
 
@@ -830,7 +868,7 @@ function DayTab() {
               />
             </label>
           )}
-          {showMountain && <MountainSelect value={mountain} onChange={setMountain} />}
+          {showMountain && <MountainSelect value={mountain} onChange={setMountain} jian={jianXiang} onJian={setJianXiang} />}
         </div>
       </div>
 
@@ -888,6 +926,7 @@ function DayTab() {
           persons={personsOfYears(parseYears(birthYear)).map((p) => ({ label: `${p.year}（${p.zhi}）命`, zhi: p.zhi, gan: p.gan }))}
           xianMingZhi={showXian && /^\d{4}$/.test(xianMing) ? yearZhiOfBirthYear(Number(xianMing)) : undefined}
           mountainZhi={showMountain && mountain ? mountain : undefined}
+          jianXiang={showMountain && mountain && jianXiang ? jianXiang : undefined}
         />
       )}
 
@@ -1101,6 +1140,7 @@ function HoursGrid({
   persons,
   xianMingZhi,
   mountainZhi,
+  jianXiang,
 }: {
   info: ReturnType<typeof queryDay>["info"];
   femaleZhi?: string;
@@ -1108,11 +1148,12 @@ function HoursGrid({
   persons: { label: string; zhi: string; gan?: string }[];
   xianMingZhi?: string;
   mountainZhi?: string;
+  jianXiang?: string;
 }) {
   const hours = useMemo(
-    () => evaluateHours(info, { femaleZhi, femaleGan, persons, xianMingZhi, mountainZhi }),
+    () => evaluateHours(info, { femaleZhi, femaleGan, persons, xianMingZhi, mountainZhi, jianXiang }),
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [info.dayGanZhi, info.solar.y, info.solar.m, info.solar.d, femaleZhi, femaleGan, xianMingZhi, mountainZhi, JSON.stringify(persons)],
+    [info.dayGanZhi, info.solar.y, info.solar.m, info.solar.d, femaleZhi, femaleGan, xianMingZhi, mountainZhi, jianXiang, JSON.stringify(persons)],
   );
   return (
     <div className="rounded-lg border border-stone-200 bg-white p-4 shadow-sm dark:border-stone-700 dark:bg-stone-800">

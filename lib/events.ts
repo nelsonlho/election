@@ -628,6 +628,7 @@ export interface EvalOptions {
   femaleBirthMonth?: number; // 女命生月（1-12，以節氣為界——陰胎用，原書 107）
   birthMonth?: number; // 本命（乾造）生月——陽氣用
   mountainZhi?: string; // 宅舍座山（十二支山，造作事用）
+  jianXiang?: string; // 兼向——座山所兼之鄰山（原書 394-395 沖兼、三殺七山用，可缺）
   disabledLayers?: string[]; // 停用之法度層（鍵見 RULE_LAYERS）
 }
 
@@ -821,7 +822,7 @@ function yinFuJi(info: DayInfo, m: string): Reason | null {
   return null;
 }
 
-function zaoZuoShan(info: DayInfo, m: string, zuoTaiSui = true): Reason[] {
+function zaoZuoShan(info: DayInfo, m: string, zuoTaiSui = true, jian?: string): Reason[] {
   const out: Reason[] = [];
   const yearZhi = info.yearGanZhi.charAt(1);
   const sha = SAN_SHA_FANG[yearZhi] ?? [];
@@ -868,6 +869,38 @@ function zaoZuoShan(info: DayInfo, m: string, zuoTaiSui = true): Reason[] {
     const ci = MOUNTAINS_24.indexOf(ZHI_CHONG[mz] ?? "");
     if (ci >= 0 && MOUNTAINS_24[(ci + 1) % 24] === m)
       out.push({ kind: "凶", text: `劍鋒殺月（${mz}月劍鋒占${m}山），忌葬勿用為要——太陽、木星、木局可制（原書：月家凶神）` });
+  }
+  // ── 兼向諸例（原書 394-395 豎造細目）──────────────────────
+  // 沖山例兼例：「◯山兼◯，四柱中如有沖所兼之字，謂之沖兼凶」（癸山兼子有午字、
+  // 坤山兼未有丑字之屬）；三殺例：殺方七山＝殺方五山＋兩隅卦山兼入
+  // （殺南則巽山兼巳、坤山兼未，殺北則乾山兼亥、艮山兼丑）。
+  if (jian) {
+    const pillarZhi: [string, string][] = [["年", yearZhi], ["月", mz], ["日", info.dayZhi]];
+    const pillarGan: [string, string][] = [["年", info.yearGanZhi.charAt(0)], ["月", info.monthGanZhi.charAt(0)], ["日", info.dayGan]];
+    if (ZHI_CHONG[jian]) {
+      // 兼支山：柱支沖所兼
+      for (const [label, z] of pillarZhi)
+        if (ZHI_CHONG[jian] === z)
+          out.push({ kind: "凶", text: `${label}支${z}沖兼（坐${m}山兼${jian}），謂之沖兼凶（原書：沖山例）` });
+      // 三殺七山之隅：卦山兼入殺方
+      if (GUA_SHAN_CHONG[m]) {
+        for (const [label, z] of pillarZhi) {
+          const s = SAN_SHA_FANG[z] ?? [];
+          if (s.includes(jian))
+            out.push({ kind: "凶", text: `三殺占兼（${label}課${z}字殺${s.join("")}方，坐${m}山兼${jian}即七山之隅），不能用（原書：三殺例）` });
+        }
+      }
+    } else if (GAN_SHAN_CHONG[jian]) {
+      // 兼干山：柱干沖所兼
+      for (const [label, g] of pillarGan)
+        if (GAN_SHAN_CHONG[jian] === g)
+          out.push({ kind: "凶", text: `${label}干${g}沖兼（坐${m}山兼${jian}，${jian}${GAN_SHAN_CHONG[jian]}對沖），謂之沖兼凶（原書：沖山例）` });
+    } else if (GUA_SHAN_CHONG[jian]) {
+      // 兼卦山：柱支沖對宮二支
+      for (const [label, z] of pillarZhi)
+        if (GUA_SHAN_CHONG[jian].includes(z))
+          out.push({ kind: "凶", text: `${label}支${z}沖兼（坐${m}山兼${jian}，對宮${GUA_SHAN_CHONG[jian].join("")}之沖），謂之沖兼凶（原書：沖山例）` });
+    }
   }
   // 陰府（諸山皆判）
   const yf = yinFuJi(info, m);
@@ -1131,7 +1164,7 @@ export function evaluateDay(info: DayInfo, event: EventKey, opts: EvalOptions = 
 
   // 造作沖山、三殺（原書第六期）：入宅動土修造上樑，有座向則判
   if (on("shan") && ZAO_ZUO_EVENTS.includes(event) && opts.mountainZhi) {
-    reasons.push(...zaoZuoShan(info, opts.mountainZhi, on("zuotaisui")));
+    reasons.push(...zaoZuoShan(info, opts.mountainZhi, on("zuotaisui"), opts.jianXiang));
   }
 
   // 二宅通用：日課流年干之天乙貴人臨日支，吉
