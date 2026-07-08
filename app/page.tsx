@@ -334,28 +334,32 @@ function Pager({
   onPage: (p: number) => void;
   children?: React.ReactNode;
 }) {
-  if (pageCount <= 1) return null;
+  if (pageCount <= 1 && !children) return null;
   return (
     <div className="flex flex-wrap items-center justify-center gap-2 py-1 text-sm">
-      <button
-        type="button"
-        disabled={page === 0}
-        className="rounded border border-stone-300 px-3 py-1 disabled:opacity-40 dark:border-stone-600"
-        onClick={() => onPage(page - 1)}
-      >
-        ‹ 上一頁
-      </button>
-      <span className="text-stone-500">
-        第 {page + 1} / {pageCount} 頁
-      </span>
-      <button
-        type="button"
-        disabled={page >= pageCount - 1}
-        className="rounded border border-stone-300 px-3 py-1 disabled:opacity-40 dark:border-stone-600"
-        onClick={() => onPage(page + 1)}
-      >
-        下一頁 ›
-      </button>
+      {pageCount > 1 && (
+        <>
+          <button
+            type="button"
+            disabled={page === 0}
+            className="rounded border border-stone-300 px-3 py-1 disabled:opacity-40 dark:border-stone-600"
+            onClick={() => onPage(page - 1)}
+          >
+            ‹ 上一頁
+          </button>
+          <span className="text-stone-500">
+            第 {page + 1} / {pageCount} 頁
+          </span>
+          <button
+            type="button"
+            disabled={page >= pageCount - 1}
+            className="rounded border border-stone-300 px-3 py-1 disabled:opacity-40 dark:border-stone-600"
+            onClick={() => onPage(page + 1)}
+          >
+            下一頁 ›
+          </button>
+        </>
+      )}
       {children}
     </div>
   );
