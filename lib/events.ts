@@ -507,6 +507,16 @@ function commonBad(info: DayInfo, event: EventKey): Reason[] {
     out.push({ kind: "凶", text: `重喪日（${info.monthZhi}月${info.dayGan}日），葬事大忌（原書：安葬日家凶神訣）` });
   if (SAN_SANG_EVENTS.includes(event) && SAN_SANG_DAY[info.monthZhi] === info.dayZhi)
     out.push({ kind: "凶", text: `三喪日（四季之殺：春辰、夏未、秋戌、冬丑），喪葬動土犯是不用（原書：入殮成服動土忌例）` });
+  if (SAN_SANG_EVENTS.includes(event) && FU_RI[info.monthZhi] === info.dayGan && CHONG_SANG[info.monthZhi] !== info.dayGan)
+    out.push({ kind: "凶", text: `復日（${info.monthZhi}月${info.dayGan}日），喪葬忌之，恐致重喪（原書：安葬入殮成服忌例）` });
+  if (event === "anzang") {
+    if (JI_YUE.includes(info.monthZhi) && info.dayZhi === "丑")
+      out.push({ kind: "凶", text: "正紅紗（季月丑日），安葬忌之（原書：安葬忌例）" });
+    if (info.lunarDay === 17)
+      out.push({ kind: "凶", text: "橫天朱雀（每月十七日），忌安葬（原書：安葬忌例）" });
+    if (zhiAdd(info.monthZhi, 10) === info.dayZhi)
+      out.push({ kind: "凶", text: `天狗日（${info.monthZhi}月${info.dayZhi}日，月支進十），安葬忌之（原書：安葬忌例）` });
+  }
   return out;
 }
 
@@ -944,6 +954,17 @@ function baZuoJi(info: DayInfo, event: EventKey, m: string | undefined): Reason[
   }
   return out;
 }
+
+// ── 安葬忌例逐月表補（原書第八期，PDF 308 左頁）──────────────
+// 天狗日：正月子順行（月支進十）；復日：月家干日 寅甲卯乙辰戊巳丙午丁未己
+// 申庚酉辛戌戊亥壬子癸丑己（與入殮、成服除服表干列同——三六九十二月與重喪
+// 己日有辰戌月戊日之異，故另立）；正紅紗：季月丑日（孟仲月表作○無忌）；
+// 橫天朱雀：每月十七日（表十二行皆書十七）。
+const FU_RI: Record<string, string> = {
+  寅: "甲", 卯: "乙", 辰: "戊", 巳: "丙", 午: "丁", 未: "己",
+  申: "庚", 酉: "辛", 戌: "戊", 亥: "壬", 子: "癸", 丑: "己",
+};
+const JI_YUE = ["辰", "未", "戌", "丑"]; // 季月
 
 // 重喪日（原書第八期安葬日家凶神訣：重日重喪並三喪）——月家干日
 // 寅月甲、卯月乙、巳月丙、午月丁、申月庚、酉月辛、亥月壬、子月癸、四季月（辰未戌丑）己
