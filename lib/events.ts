@@ -833,6 +833,24 @@ function zaoZuoShan(info: DayInfo, m: string, zuoTaiSui = true): Reason[] {
     if (GUA_SHAN_CHONG[m].includes(info.dayZhi))
       out.push({ kind: "凶", text: `日支${info.dayZhi}沖山（坐${m}山，對宮${GUA_SHAN_CHONG[m].join("")}之沖），忌之（原書：沖山例）` });
   }
+  // ── 月家凶神占山（原書第八期月家八條）──────────────────────
+  const mz = info.monthZhi;
+  const mSha = SAN_SHA_FANG[mz] ?? [];
+  if (ZHI_CHONG[m]) {
+    if (ZHI_CHONG[m] === mz)
+      out.push({ kind: "凶", text: `沖山凶月（${mz}月建沖${m}山，如年之歲破），月內大凶不可用（原書：月家凶神）` });
+    if (mSha.includes(m))
+      out.push({ kind: "凶", text: `三殺凶月（${mz}月三殺占${m}山），月家之大殺不可用（原書：月家凶神）` });
+    if (zhiAdd(mz, 9) === m)
+      out.push({ kind: "凶", text: `八座凶月（${mz}月八座方占${m}山），難有制法從俗大忌（原書：月家凶神）` });
+  } else if (GAN_SHAN_CHONG[m] && GAN_SHAN_FANG[m]?.every((z) => mSha.includes(z))) {
+    out.push({ kind: "凶", text: `三殺凶月（${mz}月三殺占方，${m}山附焉），月內不可用（原書：月家凶神）` });
+  }
+  {
+    const ci = MOUNTAINS_24.indexOf(ZHI_CHONG[mz] ?? "");
+    if (ci >= 0 && MOUNTAINS_24[(ci + 1) % 24] === m)
+      out.push({ kind: "凶", text: `劍鋒殺月（${mz}月劍鋒占${m}山），忌葬勿用為要——太陽、木星、木局可制（原書：月家凶神）` });
+  }
   // 陰府（諸山皆判）
   const yf = yinFuJi(info, m);
   if (yf) out.push(yf);
