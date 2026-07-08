@@ -652,6 +652,7 @@ export const RULE_LAYERS: RuleLayer[] = [
   { key: "zuotaisui", name: "坐太歲", desc: "山即流年之方，注「可坐不可向」——不忌此說者可停用", events: ["ruzhai", "dongtu", "xiuzao", "shangliang", "anzang", "potu", "qizan", "xiufen", "juejing", "zuozao", "anmen", "libei", "kaishengfen", "xietu", "yixi", "qiji", "gaiwu"] },
   { key: "xianming", name: "仙命諸忌", desc: "日沖仙命、三殺、三刑、旬空（須入亡者生年——原書第八期）", events: ["anzang", "potu", "qizan", "xiufen", "rulian", "yijiu", "libei", "kaishengfen"] },
   { key: "bazuo", name: "八座劍鋒", desc: "年家八座日勿用；八座方、劍鋒方占山制化權用（原書第八期安葬凶神年支表）", events: ["anzang", "potu", "qizan", "xiufen", "rulian", "yijiu", "libei", "kaishengfen"] },
+  { key: "diya", name: "地啞年例", desc: "流年逐月地啞日（八日一週期），俗以制重喪三喪之屬（原書第八期）", events: ["anzang", "potu", "qizan", "xiufen", "rulian", "yijiu", "libei", "kaishengfen", "chengfu", "chufu", "dongtu"] },
 ];
 
 export function layersForEvent(event: EventKey): RuleLayer[] {
@@ -865,6 +866,23 @@ function xianMingJi(info: DayInfo, xGan: string | undefined, xZhi: string): Reas
   return out;
 }
 
+// ── 地啞年例（原書第八期，安葬忌例後附表）───────────────────
+// 流年年支分八組，農曆日號以八為週期：組值 g——子1、丑寅0、卯7、辰巳6、
+// 午5、未申4、酉3、戌亥2；某月地啞日＝日號 d 合 d ≡ g−(月−1)（mod 8）。
+// 全表逐格與此式合（子年正月初一初九十七廿五……戌亥年正月初二初十十八廿六）。
+// 表前註（字有漶漫）謂俗以制重喪、三喪之屬——故作注，非吉凶。
+const DI_YA_G: Record<string, number> = {
+  子: 1, 丑: 0, 寅: 0, 卯: 7, 辰: 6, 巳: 6,
+  午: 5, 未: 4, 申: 4, 酉: 3, 戌: 2, 亥: 2,
+};
+
+function isDiYa(yearZhi: string, lunarMonth: number, lunarDay: number): boolean {
+  const g = DI_YA_G[yearZhi];
+  if (g === undefined) return false;
+  const m = Math.abs(lunarMonth); // 閏月從本月
+  return ((lunarDay - (g - (m - 1))) % 8 + 8) % 8 === 0;
+}
+
 // ── 年家八座、劍鋒（原書第八期安葬凶神年支表；訣云「橫天八座不堪留」） ──
 // 八座日：凶神年支對定干支日，「勿用」——子年癸酉、丑年甲戌、寅年丁亥、卯年甲子、
 // 辰年乙丑、巳年甲寅、午年丁卯、未年甲辰、申年己巳、酉年甲午、戌年丁未、亥年甲申
@@ -1028,6 +1046,11 @@ export function evaluateDay(info: DayInfo, event: EventKey, opts: EvalOptions = 
   // 年家八座、劍鋒（原書第八期安葬凶神年支表）：八座日勿用；占山者作注
   if (on("bazuo") && ZANG_EVENTS.includes(event)) {
     reasons.push(...baZuoJi(info, event, opts.mountainZhi));
+  }
+
+  // 地啞年例（原書第八期）：喪葬課值地啞日，俗以制重喪三喪之屬
+  if (on("diya") && SAN_SANG_EVENTS.includes(event) && isDiYa(info.yearGanZhi.charAt(1), info.lunarMonth, info.lunarDay)) {
+    reasons.push({ kind: "注", text: "地啞日（原書：地啞年例）——俗以制重喪、三喪之屬，喪葬課可權用" });
   }
 
   // 開市周堂（原書第七期）
