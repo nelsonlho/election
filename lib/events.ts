@@ -613,6 +613,8 @@ export interface EvalOptions {
   persons?: MingPerson[]; // 多命合參（如開市數東家、婚事乾造），逐命判沖破吉凶
   xianMingZhi?: string; // 仙命（亡者）年支——葬事用
   xianMingGan?: string; // 仙命年干
+  femaleBirthMonth?: number; // 女命生月（1-12，以節氣為界——陰胎用，原書 107）
+  birthMonth?: number; // 本命（乾造）生月——陽氣用
   mountainZhi?: string; // 宅舍座山（十二支山，造作事用）
   disabledLayers?: string[]; // 停用之法度層（鍵見 RULE_LAYERS）
 }
@@ -653,6 +655,7 @@ export const RULE_LAYERS: RuleLayer[] = [
   { key: "xianming", name: "仙命諸忌", desc: "日沖仙命、三殺、三刑、旬空（須入亡者生年——原書第八期）", events: ["anzang", "potu", "qizan", "xiufen", "rulian", "yijiu", "libei", "kaishengfen"] },
   { key: "bazuo", name: "八座劍鋒", desc: "年家八座日勿用；八座方、劍鋒方占山制化權用（原書第八期安葬凶神年支表）", events: ["anzang", "potu", "qizan", "xiufen", "rulian", "yijiu", "libei", "kaishengfen"] },
   { key: "diya", name: "地啞年例", desc: "流年逐月地啞日（八日一週期），俗以制重喪三喪之屬（原書第八期）", events: ["anzang", "potu", "qizan", "xiufen", "rulian", "yijiu", "libei", "kaishengfen", "chengfu", "chufu", "dongtu"] },
+  { key: "huitou", name: "回頭貢殺箭刃", desc: "辰戌丑未命遇四柱三合全局殺之（不能制化）；命干箭刃雙全（原書 56-57，須入生年）" },
 ];
 
 export function layersForEvent(event: EventKey): RuleLayer[] {
@@ -866,6 +869,35 @@ function xianMingJi(info: DayInfo, xGan: string | undefined, xZhi: string): Reas
   return out;
 }
 
+// ── 回頭貢殺、箭刃（原書第一期 56-57 頁）─────────────────────
+// 回頭貢殺：惟辰戌丑未四命；擇日四柱支中三合全局殺之——亥卯未全殺戌命、
+// 寅午戌全殺丑命、巳酉丑全殺辰命、申子辰全殺未命。三字全方犯（二字不謂），不能制化。
+export const HUI_TOU: Record<string, string[]> = {
+  戌: ["亥", "卯", "未"], 丑: ["寅", "午", "戌"], 辰: ["巳", "酉", "丑"], 未: ["申", "子", "辰"],
+};
+// 箭刃：命干對定雙支——甲庚卯酉、乙辛辰戌、丙戊壬子午、丁己癸丑未；
+// 四柱中雙全謂之犯箭刃；逢天乙貴人到、三合化刃則喜。
+export const JIAN_REN: Record<string, [string, string]> = {
+  甲: ["卯", "酉"], 庚: ["卯", "酉"], 乙: ["辰", "戌"], 辛: ["辰", "戌"],
+  丙: ["子", "午"], 戊: ["子", "午"], 壬: ["子", "午"],
+  丁: ["丑", "未"], 己: ["丑", "未"], 癸: ["丑", "未"],
+};
+
+// ── 陽氣陰胎（原書第一期 107 頁表、108 頁註）──────────────────
+// 乾造推陽氣、坤造推陰胎，同表：支＝生月支進三（正月巳……十二月辰）；
+// 干＝甲己年生起丁、乙庚起己、丙辛起辛、丁壬起癸、戊癸起乙，自正月順行。
+// 生月以節氣為界（正＝立春雨水……）。擇日日支沖之謂之犯沖，安牀忌。
+const YIN_TAI_GAN_START: Record<string, number> = {
+  甲: 3, 己: 3, 乙: 5, 庚: 5, 丙: 7, 辛: 7, 丁: 9, 壬: 9, 戊: 1, 癸: 1, // 丁己辛癸乙 之干序
+};
+export function yinTaiYangQi(birthGan: string, month: number): { gan: string; zhi: string } | null {
+  const s = YIN_TAI_GAN_START[birthGan];
+  if (s === undefined || month < 1 || month > 12) return null;
+  const gan = GAN_ORDER[(s + month - 1) % 10];
+  const zhi = ZHI_ORDER_E[(5 + month - 1) % 12]; // 正月巳
+  return { gan, zhi };
+}
+
 // ── 地啞年例（原書第八期，安葬忌例後附表）───────────────────
 // 流年年支分八組，農曆日號以八為週期：組值 g——子1、丑寅0、卯7、辰巳6、
 // 午5、未申4、酉3、戌亥2；某月地啞日＝日號 d 合 d ≡ g−(月−1)（mod 8）。
@@ -959,6 +991,17 @@ export function evaluateDay(info: DayInfo, event: EventKey, opts: EvalOptions = 
         reasons.push({ kind: "凶", text: `${info.dayGanZhi}日正沖夫星，安牀大忌（原書：安床碎金賦）` });
       else reasons.push({ kind: "注", text: "日支沖夫星，安牀慎用（原書：安床碎金賦）" });
     }
+    // 陽氣陰胎日沖（原書 107-108）：坤造生月推陰胎、乾造生月推陽氣，日支沖之忌
+    if (opts.femaleBirthGan && opts.femaleBirthMonth) {
+      const t = yinTaiYangQi(opts.femaleBirthGan, opts.femaleBirthMonth);
+      if (t && ZHI_CHONG[t.zhi] === info.dayZhi)
+        reasons.push({ kind: "凶", text: `日支${info.dayZhi}沖陰胎（坤造${opts.femaleBirthMonth}月生，陰胎${t.gan}${t.zhi}），安牀忌之（原書 107）` });
+    }
+    if (opts.birthGan && opts.birthMonth) {
+      const t = yinTaiYangQi(opts.birthGan, opts.birthMonth);
+      if (t && ZHI_CHONG[t.zhi] === info.dayZhi)
+        reasons.push({ kind: "凶", text: `日支${info.dayZhi}沖陽氣（乾造${opts.birthMonth}月生，陽氣${t.gan}${t.zhi}），安牀忌之（原書 107）` });
+    }
   }
   if (on("pengzu") && event === "chuxing" && info.dayZhi === "巳")
     reasons.push({ kind: "凶", text: "彭祖百忌：巳不遠行，財物伏藏" });
@@ -986,6 +1029,21 @@ export function evaluateDay(info: DayInfo, event: EventKey, opts: EvalOptions = 
       reasons.push({ kind: "凶", text: `破碎日（${p.label}見${info.dayZhi}日），忌用` });
     // 吉凶神定局（原書 59 頁起）
     if (on("jixiong")) reasons.push(...jiXiongShen(info, p.gan, p.zhi, p.label));
+    // 回頭貢殺、箭刃（原書 56-57）：以課之年月日支論，時支於時課再判
+    if (on("huitou")) {
+      const pillars = [info.yearGanZhi.charAt(1), info.monthZhi, info.dayZhi];
+      const need = HUI_TOU[p.zhi];
+      if (need) {
+        const have = need.filter((z) => pillars.includes(z));
+        if (have.length === 3)
+          reasons.push({ kind: "凶", text: `年月日支${need.join("")}三合全局，${p.label}犯回頭貢殺，不能制化（原書 56）` });
+        else if (have.length === 2)
+          reasons.push({ kind: "注", text: `年月日支已見${have.join("")}二字，${p.label}擇時勿再取${need.filter((z) => !have.includes(z)).join("")}時，恐成回頭貢殺（原書 56）` });
+      }
+      const pair = p.gan ? JIAN_REN[p.gan] : undefined;
+      if (pair && pair.every((z) => pillars.includes(z)))
+        reasons.push({ kind: "凶", text: `課中${pair.join("")}雙全，${p.label}犯箭刃（原書 57：逢天乙貴人到、三合化刃則喜）` });
+    }
   }
 
   // 女命十二地支日吉凶（《剋擇講義》書 86-89 頁）：婚事以女命三合局斷日

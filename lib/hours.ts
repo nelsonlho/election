@@ -5,6 +5,7 @@
 // 埋兒凶時（書 105）：子午卯酉女忌丑時、寅申巳亥女忌申時、辰戌丑未女忌卯時。
 
 import { GAN, ZHI, ZHI_CHONG, getYueJiang, DayInfo } from "./almanac";
+import { HUI_TOU, JIAN_REN } from "./events";
 
 const GAN_LIST = GAN as readonly string[];
 const ZHI_LIST = ZHI as readonly string[];
@@ -69,7 +70,8 @@ export interface HourEval {
 
 export interface HourOptions {
   femaleZhi?: string; // 女命（婚事埋兒凶時、沖命用）
-  persons?: { label: string; zhi: string }[]; // 諸命（沖命用）
+  femaleGan?: string; // 女命年干（箭刃用）
+  persons?: { label: string; zhi: string; gan?: string }[]; // 諸命（沖命、回頭貢殺、箭刃用）
   xianMingZhi?: string; // 仙命（葬事用）
 }
 
@@ -127,6 +129,22 @@ export function evaluateHours(info: DayInfo, opts: HourOptions = {}): HourEval[]
     }
     if (opts.xianMingZhi && ZHI_CHONG[opts.xianMingZhi] === hz)
       reasons.push({ kind: "凶", text: `時沖仙命${opts.xianMingZhi}` });
+    // 回頭貢殺、箭刃（原書 56-57）：此時足成四柱之局者
+    {
+      const pillars = [info.yearGanZhi.charAt(1), info.monthZhi, dz, hz];
+      const mings = [
+        ...(opts.femaleZhi ? [{ label: `女命${opts.femaleZhi}`, zhi: opts.femaleZhi, gan: opts.femaleGan }] : []),
+        ...(opts.persons ?? []),
+      ];
+      for (const p of mings) {
+        const need = HUI_TOU[p.zhi];
+        if (need && need.includes(hz) && need.every((z) => pillars.includes(z)))
+          reasons.push({ kind: "凶", text: `此時${need.join("")}三合全局，${p.label}犯回頭貢殺，不能制化（原書 56）` });
+        const pair = p.gan ? JIAN_REN[p.gan] : undefined;
+        if (pair && pair.includes(hz) && pair.every((z) => pillars.includes(z)))
+          reasons.push({ kind: "凶", text: `此時${pair.join("")}雙全，${p.label}犯箭刃（原書 57：天乙到、三合化刃則喜）` });
+      }
+    }
     // 埋兒凶時（原書 105 頁；婚牀事以女命論）
     if (opts.femaleZhi) {
       const fz = opts.femaleZhi;

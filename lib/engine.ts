@@ -26,16 +26,21 @@ export interface RangeQuery {
   birthYears?: number[]; // 多命合參（如開市數東家、婚事乾造），優先於 birthYear
   mountainZhi?: string; // 座山（十二支山，造作葬事用，可缺）
   xianMingYear?: number; // 仙命（亡者）生年——葬事用，可缺
+  femaleBirthMonth?: number; // 女命生月（陰胎用——安牀）
+  birthMonth?: number; // 本命（乾造）生月（陽氣用——安牀）
   disabledLayers?: string[]; // 停用之法度層
 }
 
 export function findAuspiciousDays(q: RangeQuery): DayResult[] {
   const opts: EvalOptions = {};
   const useFemale = eventDef(q.event).mingInput === "female";
-  if (useFemale && q.femaleBirthYear) {
+  // 安牀雖以本命入，陰胎仍以女命推（原書 107）——故亦收女命
+  if ((useFemale || q.event === "anchuang") && q.femaleBirthYear) {
     opts.femaleBirthZhi = yearZhiOfBirthYear(q.femaleBirthYear);
     opts.femaleBirthGan = yearGanOfBirthYear(q.femaleBirthYear);
   }
+  if (q.femaleBirthMonth) opts.femaleBirthMonth = q.femaleBirthMonth;
+  if (q.birthMonth) opts.birthMonth = q.birthMonth;
   const years = q.birthYears?.length ? q.birthYears : q.birthYear ? [q.birthYear] : [];
   if (years.length) {
     opts.persons = personsOfYears(years);

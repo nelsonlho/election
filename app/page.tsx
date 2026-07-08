@@ -82,6 +82,29 @@ function parseYears(s: string): number[] {
   return (s.match(/\d{4}/g) ?? []).map(Number);
 }
 
+// 生月選單（陽氣陰胎用——原書 107：以節氣為界）
+const MONTH_NAMES = ["正", "二", "三", "四", "五", "六", "七", "八", "九", "十", "十一", "十二"];
+
+function MonthSelect({ label, value, onChange }: { label: string; value: string; onChange: (v: string) => void }) {
+  return (
+    <label className="block text-sm">
+      <span className="mb-1 block font-medium">{label}</span>
+      <select
+        className="w-full rounded border border-stone-300 bg-white px-3 py-2 dark:border-stone-600 dark:bg-stone-900"
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+      >
+        <option value="">不指定</option>
+        {MONTH_NAMES.map((n, i) => (
+          <option key={i} value={String(i + 1)}>
+            {n}月（節氣為界）
+          </option>
+        ))}
+      </select>
+    </label>
+  );
+}
+
 // 已輸之命列為籤，點×可除——使「可輸多人」一目瞭然
 function MingChips({ value, onChange }: { value: string; onChange: (v: string) => void }) {
   const years = parseYears(value);
@@ -251,7 +274,7 @@ function DayCard({
   hourOpts,
 }: {
   result: DayResult;
-  hourOpts?: { femaleZhi?: string; persons?: { label: string; zhi: string }[]; xianMingZhi?: string };
+  hourOpts?: { femaleZhi?: string; femaleGan?: string; persons?: { label: string; zhi: string; gan?: string }[]; xianMingZhi?: string };
 }) {
   const { info, evaluation } = result;
   const [open, setOpen] = useState(false);
@@ -381,6 +404,8 @@ function SearchTab() {
   const [error, setError] = useState("");
   const [mountain, setMountain] = useStoredState("mountain", "");
   const [xianMing, setXianMing] = useStoredState("xianMing", "");
+  const [femaleMonth, setFemaleMonth] = useStoredState("femaleMonth", "");
+  const [birthMonth, setBirthMonth] = useStoredState("birthMonth", "");
   const { off, toggle } = useDisabledLayers();
   const ming = eventDef(event).mingInput;
   const isZaoZuo = ["dongtu", "xiuzao", "shangliang", "ruzhai", "anzang", "potu", "qizan", "xiufen", "juejing", "zuozao", "anmen", "libei", "kaishengfen", "xietu", "yixi", "qiji", "gaiwu"].includes(event);
@@ -402,6 +427,8 @@ function SearchTab() {
         birthYears: parseYears(birthYear),
         mountainZhi: isZaoZuo && mountain ? mountain : undefined,
         xianMingYear: isZang && /^\d{4}$/.test(xianMing) ? Number(xianMing) : undefined,
+        femaleBirthMonth: event === "anchuang" && femaleMonth ? Number(femaleMonth) : undefined,
+        birthMonth: event === "anchuang" && birthMonth ? Number(birthMonth) : undefined,
         disabledLayers: off,
       }),
     );
@@ -500,6 +527,22 @@ function SearchTab() {
                 onChange={(e) => setXianMing(e.target.value)}
               />
             </label>
+          )}
+          {event === "anchuang" && (
+            <>
+              <label className="block text-sm">
+                <span className="mb-1 block font-medium">女命生年（陰胎，可留空）</span>
+                <input
+                  className="w-full rounded border border-stone-300 bg-white px-3 py-2 dark:border-stone-600 dark:bg-stone-900"
+                  placeholder="例：1998"
+                  inputMode="numeric"
+                  value={femaleYear}
+                  onChange={(e) => setFemaleYear(e.target.value)}
+                />
+              </label>
+              <MonthSelect label="女命生月（陰胎）" value={femaleMonth} onChange={setFemaleMonth} />
+              <MonthSelect label="本命生月（陽氣）" value={birthMonth} onChange={setBirthMonth} />
+            </>
           )}
           </div>
           <div className="grid grid-cols-2 gap-3">
@@ -628,9 +671,14 @@ function SearchTab() {
                     ming === "female" && /^\d{4}$/.test(femaleYear)
                       ? yearZhiOfBirthYear(Number(femaleYear))
                       : undefined,
+                  femaleGan:
+                    ming === "female" && /^\d{4}$/.test(femaleYear)
+                      ? yearGanOfBirthYear(Number(femaleYear))
+                      : undefined,
                   persons: personsOfYears(parseYears(birthYear)).map((p) => ({
                     label: `${p.year}（${p.zhi}）命`,
                     zhi: p.zhi,
+                    gan: p.gan,
                   })),
                   xianMingZhi:
                     isZang && /^\d{4}$/.test(xianMing) ? yearZhiOfBirthYear(Number(xianMing)) : undefined,
@@ -652,6 +700,8 @@ function DayTab() {
   const [dayCat, setDayCat] = useStoredState("dayCat", "全部");
   const [dayRating, setDayRating] = useState("全");
   const [xianMing, setXianMing] = useStoredState("xianMing", "");
+  const [femaleMonth, setFemaleMonth] = useStoredState("femaleMonth", "");
+  const [birthMonth, setBirthMonth] = useStoredState("birthMonth", "");
   const { off } = useDisabledLayers();
   const showFemale = dayCat === "全部" || dayCat === "婚嫁家室";
   const showXian = dayCat === "全部" || dayCat === "造葬";
@@ -671,11 +721,13 @@ function DayTab() {
         persons,
         xianMingZhi: xy ? yearZhiOfBirthYear(xy) : undefined,
         xianMingGan: xy ? yearGanOfBirthYear(xy) : undefined,
+        femaleBirthMonth: fy && femaleMonth ? Number(femaleMonth) : undefined,
+        birthMonth: persons[0] && birthMonth ? Number(birthMonth) : undefined,
         disabledLayers: off,
       }),
     );
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [date, femaleYear, birthYear, xianMing, showFemale, showXian, JSON.stringify(off)]);
+  }, [date, femaleYear, birthYear, xianMing, femaleMonth, birthMonth, showFemale, showXian, JSON.stringify(off)]);
 
   const info = results?.[0]?.info;
 
@@ -735,6 +787,12 @@ function DayTab() {
                 onChange={(e) => setFemaleYear(e.target.value)}
               />
             </label>
+          )}
+          {showFemale && (
+            <>
+              <MonthSelect label="女命生月（安牀陰胎）" value={femaleMonth} onChange={setFemaleMonth} />
+              <MonthSelect label="本命生月（安牀陽氣）" value={birthMonth} onChange={setBirthMonth} />
+            </>
           )}
           <label className="block text-sm">
             <span className="mb-1 block font-medium">本命生年（可多人）</span>
@@ -811,7 +869,8 @@ function DayTab() {
         <HoursGrid
           info={info}
           femaleZhi={/^\d{4}$/.test(femaleYear) ? yearZhiOfBirthYear(Number(femaleYear)) : undefined}
-          persons={personsOfYears(parseYears(birthYear)).map((p) => ({ label: `${p.year}（${p.zhi}）命`, zhi: p.zhi }))}
+          femaleGan={/^\d{4}$/.test(femaleYear) ? yearGanOfBirthYear(Number(femaleYear)) : undefined}
+          persons={personsOfYears(parseYears(birthYear)).map((p) => ({ label: `${p.year}（${p.zhi}）命`, zhi: p.zhi, gan: p.gan }))}
           xianMingZhi={showXian && /^\d{4}$/.test(xianMing) ? yearZhiOfBirthYear(Number(xianMing)) : undefined}
         />
       )}
@@ -1022,18 +1081,20 @@ function HehunTab() {
 function HoursGrid({
   info,
   femaleZhi,
+  femaleGan,
   persons,
   xianMingZhi,
 }: {
   info: ReturnType<typeof queryDay>["info"];
   femaleZhi?: string;
-  persons: { label: string; zhi: string }[];
+  femaleGan?: string;
+  persons: { label: string; zhi: string; gan?: string }[];
   xianMingZhi?: string;
 }) {
   const hours = useMemo(
-    () => evaluateHours(info, { femaleZhi, persons, xianMingZhi }),
+    () => evaluateHours(info, { femaleZhi, femaleGan, persons, xianMingZhi }),
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    [info.dayGanZhi, info.solar.y, info.solar.m, info.solar.d, femaleZhi, xianMingZhi, JSON.stringify(persons)],
+    [info.dayGanZhi, info.solar.y, info.solar.m, info.solar.d, femaleZhi, femaleGan, xianMingZhi, JSON.stringify(persons)],
   );
   return (
     <div className="rounded-lg border border-stone-200 bg-white p-4 shadow-sm dark:border-stone-700 dark:bg-stone-800">
