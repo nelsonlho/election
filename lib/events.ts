@@ -665,6 +665,7 @@ export const RULE_LAYERS: RuleLayer[] = [
   { key: "tuwang", name: "土王用事", desc: "四立前十八日忌動土破土穿井修墳", events: ["dongtu", "potu", "juejing", "xiufen", "kaishengfen", "qiji"] },
   { key: "shan", name: "沖山三殺", desc: "日支沖座山、流年三殺占山（須入座山；造葬以墓之坐山論）", events: ["ruzhai", "dongtu", "xiuzao", "shangliang", "anzang", "potu", "qizan", "xiufen", "juejing", "zuozao", "anmen", "libei", "kaishengfen", "xietu", "yixi", "qiji", "gaiwu"] },
   { key: "dongtuji", name: "動土忌例", desc: "土符、土瘟、天瘟、重日、白虎朱雀（原書 548）", events: ["dongtu"] },
+  { key: "zhengong", name: "震宮殺", desc: "飛宮月家殺：八節起宮、五虎遁至呼聲泊宮，殺宮三山忌上樑（須入座山；原書第九期）", events: ["shangliang"] },
   { key: "zhaizhou", name: "入宅安香周堂", desc: "十六位／八位周堂環，值凶位忌；出火同忌二分二至（原書 459-460）", events: ["ruzhai", "anxiang", "chuhuo"] },
   { key: "kaishizhou", name: "開市周堂", desc: "八位環：債木、爭訟值日忌（原書第七期圈點）", events: ["kaishi"] },
   { key: "yanqin", name: "演禽宿曜", desc: "廿八宿值日吉凶（通行值日歌，非講義——原書 110 註者於宿忌持譏，故預設關）：吉宿十四凶宿十四；角宿忌葬、鬼宿反宜葬", events: undefined },
@@ -912,6 +913,57 @@ function zaoZuoShan(info: DayInfo, m: string, zuoTaiSui = true, jian?: string): 
   const yf = yinFuJi(info, m);
   if (yf) out.push(yf);
   return out;
+}
+
+// ── 震宮殺（原書第九期，書 619-621／PDF 340-341）──────────────
+// 飛宮月家殺，忌上樑。訣：八節起宮 → 就其位起甲子順飛九宮、算至流年干支即泊宮
+//   → 泊宮起五虎遁（正月月建）順飛、行至本月月建（呼聲）即殺宮 → 殺宮三山忌上樑。
+// 九宮順飛序 [坎坤震巽中乾兌艮離]；八節卦：立春艮、春分震、立夏巽、夏至離、
+//   立秋坤、秋分兌、立冬乾、冬至坎（月無八節者從最近之節，如三月從春分震）。
+// 殺宮 = (節宮序 + 年六十甲子序 + 月數 − 1) mod 9。
+// 丙寅年清讀四證：正月泊坎殺坎、二月泊中殺乾、三月泊中殺兌、四月泊乾——皆合；
+//   六月殺兌、八月殺兌亦與殘讀相符（原書逐月推演，書 341）。
+const PALACE_ORDER = ["坎", "坤", "震", "巽", "中", "乾", "兌", "艮", "離"];
+// 各卦宮所轄三山（中宮無山）
+const PALACE_SAN_SHAN: Record<string, string[]> = {
+  坎: ["壬", "子", "癸"], 艮: ["丑", "艮", "寅"], 震: ["甲", "卯", "乙"], 巽: ["辰", "巽", "巳"],
+  離: ["丙", "午", "丁"], 坤: ["未", "坤", "申"], 兌: ["庚", "酉", "辛"], 乾: ["戌", "乾", "亥"],
+};
+// 月建（節氣月支）→ 起宮八節卦
+const ZHEN_GONG_NODE: Record<string, string> = {
+  寅: "艮", 卯: "震", 辰: "震", 巳: "巽", 午: "離", 未: "離",
+  申: "坤", 酉: "兌", 戌: "兌", 亥: "乾", 子: "坎", 丑: "坎",
+};
+
+// 年六十甲子序（甲子＝0）：n≡干(mod10)、n≡支(mod12)
+function ganZhiCycleIndex(gz: string): number {
+  const g = "甲乙丙丁戊己庚辛壬癸".indexOf(gz.charAt(0));
+  const z = ZHI_ORDER_E.indexOf(gz.charAt(1));
+  if (g < 0 || z < 0) return -1;
+  return ((6 * g - 5 * z) % 60 + 60) % 60;
+}
+
+// 震宮殺所在之宮（依流年干支、月建）
+function zhenGongShaPalace(yearGanZhi: string, monthZhi: string): string | null {
+  const node = ZHEN_GONG_NODE[monthZhi];
+  const yc = ganZhiCycleIndex(yearGanZhi);
+  if (!node || yc < 0) return null;
+  const m = ((ZHI_ORDER_E.indexOf(monthZhi) - 2 + 12) % 12) + 1; // 寅＝1…丑＝12
+  const idx = ((PALACE_ORDER.indexOf(node) + yc + m - 1) % 9 + 9) % 9;
+  return PALACE_ORDER[idx];
+}
+
+// 震宮殺占山（上樑用）：殺宮三山忌上樑
+function zhenGongSha(info: DayInfo, m: string): Reason[] {
+  const gong = zhenGongShaPalace(info.yearGanZhi, info.monthZhi);
+  if (!gong || gong === "中") return []; // 殺入中宮，無定山
+  const shan = PALACE_SAN_SHAN[gong] ?? [];
+  if (shan.includes(m))
+    return [{
+      kind: "凶",
+      text: `震宮殺（流年${info.yearGanZhi}${info.monthZhi}月殺在${gong}宮，${shan.join("")}三山），忌上樑（原書第九期飛宮：八節起宮、五虎遁至呼聲泊宮）`,
+    }];
+  return [];
 }
 
 // ── 仙命諸忌（原書第八期 543 頁「仙命諸空沖殺刑刃例」） ──────
@@ -1171,6 +1223,11 @@ export function evaluateDay(info: DayInfo, event: EventKey, opts: EvalOptions = 
   // 造作沖山、三殺（原書第六期）：入宅動土修造上樑，有座向則判
   if (on("shan") && ZAO_ZUO_EVENTS.includes(event) && opts.mountainZhi) {
     reasons.push(...zaoZuoShan(info, opts.mountainZhi, on("zuotaisui"), opts.jianXiang));
+  }
+
+  // 震宮殺（原書第九期飛宮）：上樑有座山則判
+  if (on("zhengong") && event === "shangliang" && opts.mountainZhi) {
+    reasons.push(...zhenGongSha(info, opts.mountainZhi));
   }
 
   // 二宅通用：日課流年干之天乙貴人臨日支，吉
