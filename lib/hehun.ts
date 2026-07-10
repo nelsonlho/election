@@ -65,7 +65,20 @@ const PALACE_LIST: [Gua, string[]][] = [
   ["坤", ["坤為地", "地雷復", "地澤臨", "地天泰", "雷天大壯", "澤天夬", "水天需", "水地比"]],
   ["兌", ["兌為澤", "澤水困", "澤地萃", "澤山咸", "水山蹇", "地山謙", "雷山小過", "雷澤歸妹"]],
 ];
-for (const [palace, names] of PALACE_LIST) for (const n of names) PALACE_OF[n] = palace;
+const PALACE_RANK: Record<string, number> = {}; // 卦→京房宮卦序（1本宮…8歸魂）
+for (const [palace, names] of PALACE_LIST) for (let i = 0; i < names.length; i++) { PALACE_OF[names[i]] = palace; PALACE_RANK[names[i]] = i + 1; }
+
+// 起持世（書 153）：本宮世上爻、二卦世初、三卦世二、四卦世三、
+//   五卦世四、六卦世五、七卦（游魂）世四、八卦（歸魂）世三。應＝世±三爻。
+const SHI_BY_RANK: Record<number, number> = { 1: 6, 2: 1, 3: 2, 4: 3, 5: 4, 6: 5, 7: 4, 8: 3 };
+// 世應爻位（1初…6上）——依卦之京房宮序
+export function shiYingPos(guaName: string): { shi: number; ying: number } | null {
+  const rank = PALACE_RANK[guaName];
+  if (!rank) return null;
+  const shi = SHI_BY_RANK[rank];
+  const ying = shi <= 3 ? shi + 3 : shi - 3; // 世應相隔三爻
+  return { shi, ying };
+}
 
 // 八宮五行
 const GUA_WU_XING: Record<Gua, string> = {
@@ -134,6 +147,7 @@ const ZHI_WX: Record<string, string> = {
 export interface Yao {
   ganZhi: string;
   liuQin: "父母" | "兄弟" | "子孫" | "妻財" | "官鬼";
+  shiYing?: "世" | "應"; // 世爻／應爻（京房八宮，書 153；不改總判，主客之標）
 }
 
 // 八卦爻畫（自初而上；true＝陽爻實畫，false＝陰爻斷畫）
@@ -167,7 +181,12 @@ function liuQinOf(palaceWx: string, zhi: string): Yao["liuQin"] {
 export function tiGuaYaos(upper: Gua, lower: Gua, tiGuaName: string): Yao[] {
   const palaceWx = GUA_WU_XING[PALACE_OF[tiGuaName]];
   const list = [...NA_JIA[lower].inner, ...NA_JIA[upper].outer];
-  return list.map((gz) => ({ ganZhi: gz, liuQin: liuQinOf(palaceWx, gz.charAt(1)) }));
+  const sy = shiYingPos(tiGuaName); // 世應以體卦論
+  return list.map((gz, i) => ({
+    ganZhi: gz,
+    liuQin: liuQinOf(palaceWx, gz.charAt(1)),
+    ...(sy && i + 1 === sy.shi ? { shiYing: "世" as const } : sy && i + 1 === sy.ying ? { shiYing: "應" as const } : {}),
+  }));
 }
 
 export interface HeHunResult {

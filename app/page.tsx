@@ -985,6 +985,11 @@ function HexagramFigure({ upper, lower, yaos }: { upper: Gua; lower: Gua; yaos: 
                 {y && (
                   <span className={`text-sm ${special ? "font-medium text-amber-700 dark:text-amber-400" : "text-stone-600 dark:text-stone-400"}`}>
                     {y.ganZhi}　{y.liuQin}
+                    {y.shiYing && (
+                      <span className="ml-1.5 rounded bg-stone-200 px-1 text-xs font-medium text-stone-600 dark:bg-stone-700 dark:text-stone-300">
+                        {y.shiYing}
+                      </span>
+                    )}
                   </span>
                 )}
               </>
@@ -1091,7 +1096,7 @@ function HehunTab() {
             <div className="text-sm font-medium">
               體卦六爻　<span className="font-serif text-base">{result.tiGua}</span>
               <span className="ml-2 text-xs font-normal text-stone-400">
-                渾天甲子，初爻在底，一爻管五年
+                渾天甲子，初爻在底，一爻管五年；世應京房八宮定位（世主、應客，書153）
               </span>
             </div>
             <div className="mt-3">
