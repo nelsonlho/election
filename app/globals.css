@@ -40,3 +40,23 @@ label:has(> input[type="checkbox"]) {
     font-size: 16px;
   }
 }
+
+/* 列印課單：螢幕以 inline display:none 隱藏，印時 !important 覆之惟顯，餘皆隱；白底黑字省墨 */
+@media print {
+  body * {
+    visibility: hidden;
+  }
+  .print-sheet,
+  .print-sheet * {
+    visibility: visible;
+  }
+  .print-sheet {
+    display: block !important;
+    position: absolute;
+    inset: 0;
+    margin: 0;
+    padding: 1.5rem 1.75rem;
+    background: #fff;
+    color: #000;
+  }
+}

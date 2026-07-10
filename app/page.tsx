@@ -452,6 +452,71 @@ function DayCard({
 }
 
 
+// 課單：擇定之日交客之單——事類、命造、公農干支、評等、吉凶逐條、時方。印時獨顯
+const REASON_MARK: Record<string, string> = { 吉: "【吉】", 凶: "【凶】", 注: "【注】" };
+function CourseSheet({
+  result,
+  eventName,
+  mingSummary,
+  mountainZhi,
+  hourOpts,
+}: {
+  result: DayResult;
+  eventName: string;
+  mingSummary?: string;
+  mountainZhi?: string;
+  hourOpts?: Parameters<typeof DayCard>[0]["hourOpts"];
+}) {
+  const { info, evaluation } = result;
+  const goodHours = useMemo(
+    () => evaluateHours(info, hourOpts ?? {}).filter((h) => h.rating === "吉"),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [info.dayGanZhi, JSON.stringify(hourOpts)],
+  );
+  return (
+    <div className="print-sheet" style={{ display: "none" }}>
+      <div style={{ maxWidth: "42rem", margin: "0 auto", lineHeight: 1.7 }}>
+        <div style={{ textAlign: "center", borderBottom: "2px solid #000", paddingBottom: "0.5rem", marginBottom: "0.75rem" }}>
+          <div style={{ fontSize: "1.5rem", fontWeight: 700, letterSpacing: "0.3em" }}>剋擇課單</div>
+          <div style={{ fontSize: "0.85rem", marginTop: "0.25rem" }}>依《剋擇講義》</div>
+        </div>
+        <table style={{ width: "100%", fontSize: "0.95rem", borderCollapse: "collapse" }}>
+          <tbody>
+            <tr><td style={{ width: "5rem", fontWeight: 700, verticalAlign: "top", padding: "0.15rem 0" }}>事類</td><td>{eventName}</td></tr>
+            {mingSummary && <tr><td style={{ fontWeight: 700, verticalAlign: "top", padding: "0.15rem 0" }}>命造</td><td>{mingSummary}</td></tr>}
+            {mountainZhi && <tr><td style={{ fontWeight: 700, verticalAlign: "top", padding: "0.15rem 0" }}>座山</td><td>{mountainZhi}山</td></tr>}
+            <tr><td style={{ fontWeight: 700, verticalAlign: "top", padding: "0.15rem 0" }}>公曆</td><td>{info.solar.y}年{info.solar.m}月{info.solar.d}日　星期{info.solar.week}</td></tr>
+            <tr><td style={{ fontWeight: 700, verticalAlign: "top", padding: "0.15rem 0" }}>農曆</td><td>{info.lunarText}</td></tr>
+            <tr><td style={{ fontWeight: 700, verticalAlign: "top", padding: "0.15rem 0" }}>干支</td><td>{info.yearGanZhi}年　{info.monthGanZhi}月　{info.dayGanZhi}日</td></tr>
+            <tr><td style={{ fontWeight: 700, verticalAlign: "top", padding: "0.15rem 0" }}>建除</td><td>{info.zhiXing}日・{info.xiu}宿</td></tr>
+          </tbody>
+        </table>
+        <div style={{ margin: "0.75rem 0", padding: "0.4rem", border: "1px solid #000", textAlign: "center", fontSize: "1.1rem", fontWeight: 700 }}>
+          評定：{evaluation.rating}　{eventName}
+        </div>
+        <div style={{ fontWeight: 700, borderBottom: "1px solid #000", marginBottom: "0.4rem" }}>吉凶詳批</div>
+        <ul style={{ fontSize: "0.9rem", listStyle: "none", padding: 0, margin: 0 }}>
+          {evaluation.reasons.map((r, i) => (
+            <li key={i} style={{ padding: "0.1rem 0" }}>{REASON_MARK[r.kind] ?? ""}{r.text}</li>
+          ))}
+          {evaluation.reasons.length === 0 && <li style={{ padding: "0.1rem 0" }}>是日無宜忌之神，平常。</li>}
+        </ul>
+        <table style={{ width: "100%", fontSize: "0.85rem", borderCollapse: "collapse", marginTop: "0.6rem" }}>
+          <tbody>
+            <tr><td style={{ width: "5rem", fontWeight: 700, verticalAlign: "top", padding: "0.15rem 0" }}>吉時</td><td>{goodHours.length ? goodHours.map((h) => `${h.reasons.some((x) => x.text.includes("登天門")) ? "★" : ""}${h.ganZhi}時(${h.range})`).join("、") : "是日無純吉之時"}</td></tr>
+            <tr><td style={{ fontWeight: 700, verticalAlign: "top", padding: "0.15rem 0" }}>沖</td><td>{info.chongDesc}</td></tr>
+            <tr><td style={{ fontWeight: 700, verticalAlign: "top", padding: "0.15rem 0" }}>胎神</td><td>{info.taiShen}</td></tr>
+            <tr><td style={{ fontWeight: 700, verticalAlign: "top", padding: "0.15rem 0" }}>彭祖</td><td>{info.pengZu}</td></tr>
+          </tbody>
+        </table>
+        <div style={{ marginTop: "1rem", paddingTop: "0.4rem", borderTop: "1px solid #000", fontSize: "0.75rem", textAlign: "center" }}>
+          擇日之法門派多有異同，本單依《剋擇講義》原文起例，僅供參考。　★＝貴人登天門，時家最吉。
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function Pager({
   page,
   pageCount,
@@ -695,6 +760,12 @@ function SearchTab() {
   const selected = selKey ? (results ?? []).find((r) => dayKey(r) === selKey) ?? null : null;
   const pingN = (results ?? []).filter((r) => r.evaluation.rating === "平").length;
   const extend = (n: number) => { setDaysStr(String(n)); setTimeout(() => runRef.current(), 0); };
+  // 課單命造摘要
+  const mingSummary = [
+    ming === "female" && /^\d{4}$/.test(femaleYear) ? `女命${femaleYear}（${yearZhiOfBirthYear(Number(femaleYear))}）` : "",
+    ...personsOfYears(parseYears(birthYear)).map((p) => `${ming === "female" ? "男方" : "本命"}${p.year}（${p.zhi}）`),
+    isZang && /^\d{4}$/.test(xianMing) ? `仙命${xianMing}（${yearGanOfBirthYear(Number(xianMing))}${yearZhiOfBirthYear(Number(xianMing))}）` : "",
+  ].filter(Boolean).join("、") || undefined;
   const pageCount = Math.max(1, Math.ceil(shown.length / pageSize));
   const pageItems = shown.slice(page * pageSize, (page + 1) * pageSize);
   const sizeChips = (
@@ -889,9 +960,13 @@ function SearchTab() {
             <div>
               <div className="mb-1.5 flex items-center justify-between text-sm text-stone-500">
                 <span>所選之日</span>
-                <button type="button" className="text-stone-400 hover:text-stone-600 dark:hover:text-stone-300" onClick={() => setSelKey(null)}>收起 ✕</button>
+                <div className="flex items-center gap-3">
+                  <button type="button" className="inline-flex items-center gap-1 rounded-lg border border-stone-300 px-3 py-1.5 text-stone-600 hover:bg-stone-100 dark:border-stone-600 dark:text-stone-300 dark:hover:bg-stone-700" onClick={() => window.print()}>🖨 列印課單</button>
+                  <button type="button" className="text-stone-400 hover:text-stone-600 dark:hover:text-stone-300" onClick={() => setSelKey(null)}>收起 ✕</button>
+                </div>
               </div>
               <DayCard key={`sel-${selKey}`} result={selected} hourOpts={hourOpts} defaultOpen />
+              <CourseSheet result={selected} eventName={EVENT_NAMES[event]} mingSummary={mingSummary} mountainZhi={isZaoZuo && mountain ? mountain : undefined} hourOpts={hourOpts} />
             </div>
           )}
           {shown.length === 0 && (

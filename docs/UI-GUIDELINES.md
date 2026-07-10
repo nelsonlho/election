@@ -65,6 +65,14 @@
 - 鍵名精簡（`f`女命·`b`本命·`s`起日·`d`日數·`mt`座山·`jx`兼向·`xm`仙命·`fm`/`bm`生月·`cat`科·`m`男命）。
 - 只編查詢輸入，不編結果；`localStorage` 存個人常用值，網址參數則供分享——二者不衝，網址參數優先代入。
 
+## 六之四、列印課單
+
+- 尋吉日擇定之日（熱圖點選者）可**列印課單**：`CourseSheet` 呈事類、命造、公農干支、
+  評定、吉凶逐條詳批、吉時、沖／胎神／彭祖——擇日師交客之單。
+- 印術：`CourseSheet` 恆在 DOM，螢幕以 inline `display:none` 隱（Tailwind v4 會略去無類名之裸 CSS 規則，
+  故不以 class 隱）；`@media print` 內 `display:block !important` 覆 inline 而顯，並 `visibility` 隱其餘，白底黑字省墨。
+- 「列印課單」鈕呼 `window.print()`。
+
 ## 七、色制
 
 | 物 | 色 | 義 |
