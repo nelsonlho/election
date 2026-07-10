@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import { findAuspiciousDays, queryDay, personsOfYears, DayResult } from "@/lib/engine";
+import { findAuspiciousDays, queryDay, personsOfYears, DayResult, MAX_SPAN_DAYS } from "@/lib/engine";
 import { EventKey, EVENT_NAMES, EVENT_CATEGORIES, eventDef, layersForEvent, isLayerOn, DEFAULT_OFF_LAYERS, MOUNTAIN_WX, MOUNTAINS_24, Rating } from "@/lib/events";
 import { JIANCHU } from "@/lib/jianchu";
 import { yearZhiOfBirthYear, yearGanOfBirthYear, nianXiongFang, nianDaFang } from "@/lib/almanac";
@@ -871,13 +871,33 @@ function SearchTab() {
           </div>
           <div className="grid grid-cols-2 gap-3">
           <label className="block text-sm">
-            <span className="mb-1 block font-medium">起始日</span>
+            <span className="mb-1 block font-medium">
+              起始日
+              <span className="ml-2 text-xs font-normal text-stone-400">可設過去</span>
+            </span>
             <input
               type="date"
               className="w-full rounded border border-stone-300 bg-white px-3 py-2 dark:border-stone-600 dark:bg-stone-900"
               value={start}
-              onChange={(e) => setStart(e.target.value)}
+              onChange={(e) => e.target.value && setStart(e.target.value)}
             />
+            <div className="mt-1.5 flex flex-wrap items-center gap-1">
+              <span className="text-xs text-stone-400">往前</span>
+              {([["卅日", 30], ["九十日", 90], ["半年", 180], ["一年", 366]] as [string, number][]).map(([label, n]) => (
+                <button
+                  key={n}
+                  type="button"
+                  className="rounded-full bg-stone-100 px-2 py-0.5 text-xs text-stone-600 ring-1 ring-stone-200 transition-colors hover:bg-stone-200 dark:bg-stone-700 dark:text-stone-300 dark:ring-stone-600"
+                  onClick={() => {
+                    const end = addDaysStr(start, days - 1);
+                    setStart(addDaysStr(end, -(n - 1)));
+                    setDaysStr(String(n));
+                  }}
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
           </label>
           <label className="block text-sm">
             <span className="mb-1 block font-medium">
@@ -892,11 +912,12 @@ function SearchTab() {
               onChange={(e) => {
                 if (!e.target.value) return;
                 const n = spanDays(start, e.target.value);
-                setDaysStr(String(Math.min(366, Math.max(1, n))));
+                setDaysStr(String(Math.min(MAX_SPAN_DAYS, Math.max(1, n))));
               }}
             />
-            <div className="mt-1.5 flex flex-wrap gap-1">
-              {([["卅日", 30], ["六十日", 60], ["九十日", 90], ["半年", 180], ["一年", 366]] as [string, number][]).map(
+            <div className="mt-1.5 flex flex-wrap items-center gap-1">
+              <span className="text-xs text-stone-400">往後</span>
+              {([["卅日", 30], ["九十日", 90], ["半年", 180], ["一年", 366], ["三年", MAX_SPAN_DAYS]] as [string, number][]).map(
                 ([label, n]) => (
                   <button
                     key={n}

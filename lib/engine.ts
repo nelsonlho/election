@@ -17,9 +17,12 @@ export function queryDay(y: number, m: number, d: number, event: EventKey, opts:
   return { info, evaluation: evaluateDay(info, event, opts) };
 }
 
+// 單查日數上限（約三年）——起始日可設任意日（含過去），故過去未來皆可盡查
+export const MAX_SPAN_DAYS = 1100;
+
 export interface RangeQuery {
   start: Date;
-  days: number; // 尋日範圍（上限 366）
+  days: number; // 尋日範圍（上限 MAX_SPAN_DAYS）
   event: EventKey;
   femaleBirthYear?: number; // 婚事：女命生年（西元）
   birthYear?: number; // 本命生年（西元，可缺）
@@ -58,7 +61,7 @@ export function findAuspiciousDays(q: RangeQuery): DayResult[] {
   }
   if (q.disabledLayers?.length) opts.disabledLayers = q.disabledLayers;
 
-  const n = Math.min(Math.max(q.days, 1), 366);
+  const n = Math.min(Math.max(q.days, 1), MAX_SPAN_DAYS);
   const out: DayResult[] = [];
   const cur = new Date(q.start.getTime());
   for (let i = 0; i < n; i++) {
