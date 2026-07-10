@@ -485,6 +485,12 @@ function CalendarHeatmap({
     }
     return [...map.entries()];
   }, [results]);
+  // 逐月分頁——一年之查日子甚多，一月一頁
+  const [monthIdx, setMonthIdx] = useState(0);
+  const mi = Math.min(monthIdx, months.length - 1);
+  useEffect(() => setMonthIdx(0), [results]);
+  // 每月吉日數（導覽提示何月有吉）
+  const jiCount = (dm: Map<number, DayResult>) => [...dm.values()].filter((r) => r.evaluation.rating === "吉").length;
   const cellCls = (rating: Rating, sel: boolean) => {
     const base = "flex h-8 w-full items-center justify-center rounded text-xs transition-colors ";
     const ring = sel ? "ring-2 ring-red-500 ring-offset-1 dark:ring-offset-stone-800 " : "";
@@ -500,39 +506,66 @@ function CalendarHeatmap({
         <span className="flex items-center gap-1"><span className="inline-block h-3 w-3 rounded-sm bg-stone-800 dark:bg-stone-950" />凶</span>
         <span className="ml-auto text-stone-400">點日→課詳</span>
       </div>
-      <div className="space-y-4">
-        {months.map(([mk, dayMap]) => {
-          const [y, m] = mk.split("-").map(Number);
-          const daysInMonth = new Date(y, m, 0).getDate();
-          const firstCol = (new Date(y, m - 1, 1).getDay() + 6) % 7; // 週一為首
-          const cells: (number | null)[] = [];
-          for (let i = 0; i < firstCol; i++) cells.push(null);
-          for (let d = 1; d <= daysInMonth; d++) cells.push(d);
-          return (
-            <div key={mk}>
+      {months.length > 0 && (() => {
+        const [mk, dayMap] = months[mi];
+        const [y, m] = mk.split("-").map(Number);
+        const daysInMonth = new Date(y, m, 0).getDate();
+        const firstCol = (new Date(y, m - 1, 1).getDay() + 6) % 7; // 週一為首
+        const cells: (number | null)[] = [];
+        for (let i = 0; i < firstCol; i++) cells.push(null);
+        for (let d = 1; d <= daysInMonth; d++) cells.push(d);
+        const nJi = jiCount(dayMap);
+        return (
+          <div>
+            {months.length > 1 && (
+              <div className="mb-2 flex items-center justify-between">
+                <button
+                  type="button"
+                  disabled={mi === 0}
+                  className="rounded border border-stone-300 px-2 py-1 text-sm disabled:opacity-40 dark:border-stone-600"
+                  onClick={() => setMonthIdx(mi - 1)}
+                >
+                  ‹
+                </button>
+                <span className="text-sm font-medium text-stone-700 dark:text-stone-300">
+                  {y}年{m}月
+                  {nJi > 0 && <span className="ml-1.5 text-red-600 dark:text-red-400">吉{nJi}日</span>}
+                  <span className="ml-1.5 text-xs font-normal text-stone-400">{mi + 1}/{months.length}</span>
+                </span>
+                <button
+                  type="button"
+                  disabled={mi >= months.length - 1}
+                  className="rounded border border-stone-300 px-2 py-1 text-sm disabled:opacity-40 dark:border-stone-600"
+                  onClick={() => setMonthIdx(mi + 1)}
+                >
+                  ›
+                </button>
+              </div>
+            )}
+            {months.length === 1 && (
               <div className="mb-1 text-sm font-medium text-stone-700 dark:text-stone-300">
-                {y}年{m}月
+                {y}年{m}月{nJi > 0 && <span className="ml-1.5 text-red-600 dark:text-red-400">吉{nJi}日</span>}
               </div>
-              <div className="grid grid-cols-7 gap-1">
-                {WEEK_HEAD.map((w) => (
-                  <div key={w} className="text-center text-xs text-stone-400">{w}</div>
-                ))}
-                {cells.map((d, i) => {
-                  if (d === null) return <div key={`b${i}`} />;
-                  const r = dayMap.get(d);
-                  if (!r) return <div key={d} className="flex h-8 items-center justify-center text-xs text-stone-300 dark:text-stone-600">{d}</div>;
-                  const k = dayKey(r);
-                  return (
-                    <button key={d} type="button" className={cellCls(r.evaluation.rating, k === selectedKey)} onClick={() => onSelect(r)}>
-                      {d}
-                    </button>
-                  );
-                })}
-              </div>
+            )}
+            <div className="grid grid-cols-7 gap-1">
+              {WEEK_HEAD.map((w) => (
+                <div key={w} className="text-center text-xs text-stone-400">{w}</div>
+              ))}
+              {cells.map((d, i) => {
+                if (d === null) return <div key={`b${i}`} />;
+                const r = dayMap.get(d);
+                if (!r) return <div key={d} className="flex h-8 items-center justify-center text-xs text-stone-300 dark:text-stone-600">{d}</div>;
+                const k = dayKey(r);
+                return (
+                  <button key={d} type="button" className={cellCls(r.evaluation.rating, k === selectedKey)} onClick={() => onSelect(r)}>
+                    {d}
+                  </button>
+                );
+              })}
             </div>
-          );
-        })}
-      </div>
+          </div>
+        );
+      })()}
     </div>
   );
 }
