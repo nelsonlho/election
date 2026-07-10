@@ -344,12 +344,14 @@ function ReasonList({ result }: { result: DayResult }) {
 function DayCard({
   result,
   hourOpts,
+  defaultOpen = false,
 }: {
   result: DayResult;
   hourOpts?: { femaleZhi?: string; femaleGan?: string; persons?: { label: string; zhi: string; gan?: string }[]; xianMingZhi?: string; mountainZhi?: string; jianXiang?: string };
+  defaultOpen?: boolean;
 }) {
   const { info, evaluation } = result;
-  const [open, setOpen] = useState(false);
+  const [open, setOpen] = useState(defaultOpen);
   const goodHours = useMemo(() => {
     if (!open) return [];
     return evaluateHours(info, hourOpts ?? {}).filter((h) => h.rating === "吉");
@@ -460,6 +462,81 @@ function Pager({
   );
 }
 
+// 月曆熱圖：全範圍逐日評等一目——吉硃、平灰、凶玄；點日展課詳
+const WEEK_HEAD = ["一", "二", "三", "四", "五", "六", "日"];
+function dayKey(r: DayResult) {
+  return `${r.info.solar.y}-${r.info.solar.m}-${r.info.solar.d}`;
+}
+function CalendarHeatmap({
+  results,
+  selectedKey,
+  onSelect,
+}: {
+  results: DayResult[];
+  selectedKey: string | null;
+  onSelect: (r: DayResult) => void;
+}) {
+  const months = useMemo(() => {
+    const map = new Map<string, Map<number, DayResult>>();
+    for (const r of results) {
+      const mk = `${r.info.solar.y}-${r.info.solar.m}`;
+      if (!map.has(mk)) map.set(mk, new Map());
+      map.get(mk)!.set(r.info.solar.d, r);
+    }
+    return [...map.entries()];
+  }, [results]);
+  const cellCls = (rating: Rating, sel: boolean) => {
+    const base = "flex h-8 w-full items-center justify-center rounded text-xs transition-colors ";
+    const ring = sel ? "ring-2 ring-red-500 ring-offset-1 dark:ring-offset-stone-800 " : "";
+    if (rating === "吉") return base + ring + "cursor-pointer bg-red-600 font-semibold text-white hover:bg-red-500";
+    if (rating === "凶") return base + ring + "cursor-pointer bg-stone-800 text-stone-400 hover:bg-stone-700 dark:bg-stone-950 dark:text-stone-500";
+    return base + ring + "cursor-pointer bg-stone-200 text-stone-600 hover:bg-stone-300 dark:bg-stone-700 dark:text-stone-300";
+  };
+  return (
+    <div className="rounded-lg border border-stone-200 bg-white p-4 shadow-sm dark:border-stone-700 dark:bg-stone-800">
+      <div className="mb-2 flex items-center gap-3 text-xs text-stone-500">
+        <span className="flex items-center gap-1"><span className="inline-block h-3 w-3 rounded-sm bg-red-600" />吉</span>
+        <span className="flex items-center gap-1"><span className="inline-block h-3 w-3 rounded-sm bg-stone-200 dark:bg-stone-700" />平</span>
+        <span className="flex items-center gap-1"><span className="inline-block h-3 w-3 rounded-sm bg-stone-800 dark:bg-stone-950" />凶</span>
+        <span className="ml-auto text-stone-400">點日→課詳</span>
+      </div>
+      <div className="space-y-4">
+        {months.map(([mk, dayMap]) => {
+          const [y, m] = mk.split("-").map(Number);
+          const daysInMonth = new Date(y, m, 0).getDate();
+          const firstCol = (new Date(y, m - 1, 1).getDay() + 6) % 7; // 週一為首
+          const cells: (number | null)[] = [];
+          for (let i = 0; i < firstCol; i++) cells.push(null);
+          for (let d = 1; d <= daysInMonth; d++) cells.push(d);
+          return (
+            <div key={mk}>
+              <div className="mb-1 text-sm font-medium text-stone-700 dark:text-stone-300">
+                {y}年{m}月
+              </div>
+              <div className="grid grid-cols-7 gap-1">
+                {WEEK_HEAD.map((w) => (
+                  <div key={w} className="text-center text-xs text-stone-400">{w}</div>
+                ))}
+                {cells.map((d, i) => {
+                  if (d === null) return <div key={`b${i}`} />;
+                  const r = dayMap.get(d);
+                  if (!r) return <div key={d} className="flex h-8 items-center justify-center text-xs text-stone-300 dark:text-stone-600">{d}</div>;
+                  const k = dayKey(r);
+                  return (
+                    <button key={d} type="button" className={cellCls(r.evaluation.rating, k === selectedKey)} onClick={() => onSelect(r)}>
+                      {d}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
 function SearchTab() {
   const [eventStr, setEventStr] = useStoredState("event", "jiaqu");
   const event = (eventStr in EVENT_NAMES ? eventStr : "jiaqu") as EventKey;
@@ -473,6 +550,7 @@ function SearchTab() {
   const [pageSizeStr, setPageSizeStr] = useStoredState("pageSize", "10");
   const pageSize = [10, 20, 50].includes(Number(pageSizeStr)) ? Number(pageSizeStr) : 10;
   const [results, setResults] = useState<DayResult[] | null>(null);
+  const [selKey, setSelKey] = useState<string | null>(null);
   const [error, setError] = useState("");
   const [mountain, setMountain] = useStoredState("mountain", "");
   const [jianXiang, setJianXiang] = useStoredState("jianXiang", "");
@@ -516,6 +594,16 @@ function SearchTab() {
     [results, showPing],
   );
   useEffect(() => setPage(0), [results, showPing, pageSize]);
+  useEffect(() => setSelKey(null), [results]);
+  const hourOpts = {
+    femaleZhi: ming === "female" && /^\d{4}$/.test(femaleYear) ? yearZhiOfBirthYear(Number(femaleYear)) : undefined,
+    femaleGan: ming === "female" && /^\d{4}$/.test(femaleYear) ? yearGanOfBirthYear(Number(femaleYear)) : undefined,
+    persons: personsOfYears(parseYears(birthYear)).map((p) => ({ label: `${p.year}（${p.zhi}）命`, zhi: p.zhi, gan: p.gan })),
+    xianMingZhi: isZang && /^\d{4}$/.test(xianMing) ? yearZhiOfBirthYear(Number(xianMing)) : undefined,
+    mountainZhi: isZaoZuo && mountain ? mountain : undefined,
+    jianXiang: isZaoZuo && mountain && jianXiang ? jianXiang : undefined,
+  };
+  const selected = selKey ? (results ?? []).find((r) => dayKey(r) === selKey) ?? null : null;
   const pageCount = Math.max(1, Math.ceil(shown.length / pageSize));
   const pageItems = shown.slice(page * pageSize, (page + 1) * pageSize);
   const sizeChips = (
@@ -700,37 +788,27 @@ function SearchTab() {
               兼列平日
             </label>
           </div>
+          {results.length > 0 && (
+            <CalendarHeatmap results={results} selectedKey={selKey} onSelect={(r) => setSelKey(dayKey(r))} />
+          )}
+          {selected && (
+            <div>
+              <div className="mb-1.5 flex items-center justify-between text-sm text-stone-500">
+                <span>所選之日</span>
+                <button type="button" className="text-stone-400 hover:text-stone-600 dark:hover:text-stone-300" onClick={() => setSelKey(null)}>收起 ✕</button>
+              </div>
+              <DayCard key={`sel-${selKey}`} result={selected} hourOpts={hourOpts} defaultOpen />
+            </div>
+          )}
           {shown.length === 0 && (
             <p className="rounded-lg border border-stone-200 bg-white p-6 text-center text-stone-500 dark:border-stone-700 dark:bg-stone-800">
-              範圍之內無吉日。可展範圍再尋。
+              範圍之內無吉日。可展範圍、兼列平日，或於上圖點日查詳。
             </p>
           )}
           <Pager page={page} pageCount={pageCount} onPage={setPage}>{sizeChips}</Pager>
           <div className="space-y-3">
             {pageItems.map((r) => (
-              <DayCard
-                key={`${r.info.solar.y}-${r.info.solar.m}-${r.info.solar.d}`}
-                result={r}
-                hourOpts={{
-                  femaleZhi:
-                    ming === "female" && /^\d{4}$/.test(femaleYear)
-                      ? yearZhiOfBirthYear(Number(femaleYear))
-                      : undefined,
-                  femaleGan:
-                    ming === "female" && /^\d{4}$/.test(femaleYear)
-                      ? yearGanOfBirthYear(Number(femaleYear))
-                      : undefined,
-                  persons: personsOfYears(parseYears(birthYear)).map((p) => ({
-                    label: `${p.year}（${p.zhi}）命`,
-                    zhi: p.zhi,
-                    gan: p.gan,
-                  })),
-                  xianMingZhi:
-                    isZang && /^\d{4}$/.test(xianMing) ? yearZhiOfBirthYear(Number(xianMing)) : undefined,
-                  mountainZhi: isZaoZuo && mountain ? mountain : undefined,
-                  jianXiang: isZaoZuo && mountain && jianXiang ? jianXiang : undefined,
-                }}
-              />
+              <DayCard key={dayKey(r)} result={r} hourOpts={hourOpts} />
             ))}
           </div>
           <Pager page={page} pageCount={pageCount} onPage={setPage}>{sizeChips}</Pager>
