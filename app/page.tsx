@@ -693,6 +693,8 @@ function SearchTab() {
     jianXiang: isZaoZuo && mountain && jianXiang ? jianXiang : undefined,
   };
   const selected = selKey ? (results ?? []).find((r) => dayKey(r) === selKey) ?? null : null;
+  const pingN = (results ?? []).filter((r) => r.evaluation.rating === "平").length;
+  const extend = (n: number) => { setDaysStr(String(n)); setTimeout(() => runRef.current(), 0); };
   const pageCount = Math.max(1, Math.ceil(shown.length / pageSize));
   const pageItems = shown.slice(page * pageSize, (page + 1) * pageSize);
   const sizeChips = (
@@ -893,9 +895,45 @@ function SearchTab() {
             </div>
           )}
           {shown.length === 0 && (
-            <p className="rounded-lg border border-stone-200 bg-white p-6 text-center text-stone-500 dark:border-stone-700 dark:bg-stone-800">
-              範圍之內無吉日。可展範圍、兼列平日，或於上圖點日查詳。
-            </p>
+            <div className="rounded-lg border border-stone-200 bg-white p-6 text-center dark:border-stone-700 dark:bg-stone-800">
+              <p className="text-stone-600 dark:text-stone-300">
+                {showPing
+                  ? `${results.length}日之內盡是凶日。`
+                  : pingN > 0
+                    ? `${results.length}日之內無吉日，然有平日 ${pingN} 日（吉神不足而無大凶）。`
+                    : `${results.length}日之內無吉日。`}
+              </p>
+              <div className="mt-3 flex flex-wrap justify-center gap-2">
+                {!showPing && pingN > 0 && (
+                  <button
+                    type="button"
+                    className="rounded-lg bg-red-700 px-4 py-1.5 text-sm font-medium text-white hover:bg-red-800"
+                    onClick={() => setShowPing(true)}
+                  >
+                    兼列平日（{pingN}）
+                  </button>
+                )}
+                {days < 180 && (
+                  <button
+                    type="button"
+                    className="rounded-lg border border-stone-300 px-4 py-1.5 text-sm text-stone-600 hover:bg-stone-100 dark:border-stone-600 dark:text-stone-300 dark:hover:bg-stone-700"
+                    onClick={() => extend(180)}
+                  >
+                    展至半年再尋
+                  </button>
+                )}
+                {days < 366 && (
+                  <button
+                    type="button"
+                    className="rounded-lg border border-stone-300 px-4 py-1.5 text-sm text-stone-600 hover:bg-stone-100 dark:border-stone-600 dark:text-stone-300 dark:hover:bg-stone-700"
+                    onClick={() => extend(366)}
+                  >
+                    展至一年再尋
+                  </button>
+                )}
+              </div>
+              <p className="mt-3 text-xs text-stone-400">或於上圖點任一日，查其課詳與避忌之因。</p>
+            </div>
           )}
           <Pager page={page} pageCount={pageCount} onPage={setPage}>{sizeChips}</Pager>
           <div className="space-y-3">
