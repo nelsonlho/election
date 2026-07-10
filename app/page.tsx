@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { findAuspiciousDays, queryDay, personsOfYears, DayResult } from "@/lib/engine";
 import { EventKey, EVENT_NAMES, EVENT_CATEGORIES, eventDef, layersForEvent, isLayerOn, DEFAULT_OFF_LAYERS, MOUNTAIN_WX, MOUNTAINS_24, Rating } from "@/lib/events";
 import { JIANCHU } from "@/lib/jianchu";
@@ -62,6 +62,37 @@ function todayStr(): string {
   const d = new Date();
   const p = (n: number) => String(n).padStart(2, "0");
   return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`;
+}
+
+// 分享固定連結：讀網址參數、建連結、複製鈕
+function urlParams(): URLSearchParams {
+  return new URLSearchParams(typeof window !== "undefined" ? window.location.search : "");
+}
+function buildShareUrl(params: Record<string, string | undefined>): string {
+  const u = new URLSearchParams();
+  for (const [k, v] of Object.entries(params)) if (v) u.set(k, v);
+  return `${window.location.origin}${window.location.pathname}?${u.toString()}`;
+}
+function ShareButton({ url }: { url: () => string }) {
+  const [done, setDone] = useState(false);
+  return (
+    <button
+      type="button"
+      className="inline-flex items-center gap-1 rounded-lg border border-stone-300 px-3 py-1.5 text-sm text-stone-600 transition-colors hover:bg-stone-100 dark:border-stone-600 dark:text-stone-300 dark:hover:bg-stone-700"
+      onClick={async () => {
+        const u = url();
+        try {
+          await navigator.clipboard.writeText(u);
+          setDone(true);
+          setTimeout(() => setDone(false), 1800);
+        } catch {
+          window.prompt("複製此連結分享", u);
+        }
+      }}
+    >
+      {done ? "✓ 已複製連結" : "🔗 複製連結"}
+    </button>
+  );
 }
 
 // 日期工具：ISO 字串加天數、二日相距（含首尾）
@@ -243,7 +274,8 @@ function useDisabledLayers() {
     const token = DEFAULT_OFF_LAYERS.includes(key) ? "enable:" + key : key;
     setRaw(JSON.stringify(off.includes(token) ? off.filter((k) => k !== token) : [...off, token]));
   };
-  return { off, toggle };
+  const setOff = (arr: string[]) => setRaw(JSON.stringify(arr));
+  return { off, toggle, setOff };
 }
 
 function LayerToggles({ event, off, toggle }: { event: EventKey; off: string[]; toggle: (k: string) => void }) {
@@ -590,7 +622,7 @@ function SearchTab() {
   const [xianMing, setXianMing] = useStoredState("xianMing", "");
   const [femaleMonth, setFemaleMonth] = useStoredState("femaleMonth", "");
   const [birthMonth, setBirthMonth] = useStoredState("birthMonth", "");
-  const { off, toggle } = useDisabledLayers();
+  const { off, toggle, setOff } = useDisabledLayers();
   const ming = eventDef(event).mingInput;
   const isZaoZuo = ["dongtu", "xiuzao", "xiufang", "shangliang", "ruzhai", "anzang", "potu", "qizan", "xiufen", "juejing", "zuozao", "anmen", "libei", "kaishengfen", "xietu", "yixi", "qiji", "gaiwu"].includes(event);
   const isZang = ["anzang", "potu", "qizan", "xiufen", "rulian", "yijiu", "libei", "kaishengfen"].includes(event);
@@ -618,6 +650,30 @@ function SearchTab() {
       }),
     );
   };
+
+  // 分享連結：以現況建網址
+  const shareUrl = () =>
+    buildShareUrl({
+      tab: "search", ev: event, f: femaleYear, b: birthYear, s: start, d: daysStr,
+      mt: mountain, jx: jianXiang, xm: xianMing, fm: femaleMonth, bm: birthMonth,
+      off: off.length ? off.join(",") : undefined,
+    });
+
+  // 開啟分享連結：代入諸欄並自動尋日
+  const runRef = useRef(run);
+  runRef.current = run;
+  useEffect(() => {
+    const sp = urlParams();
+    if (sp.get("tab") !== "search") return;
+    const set = (p: string, f: (v: string) => void) => { const v = sp.get(p); if (v !== null) f(v); };
+    set("ev", (v) => { if (v in EVENT_NAMES) setEventStr(v); });
+    set("f", setFemaleYear); set("b", setBirthYear); set("s", setStart);
+    set("d", setDaysStr); set("mt", setMountain); set("jx", setJianXiang);
+    set("xm", setXianMing); set("fm", setFemaleMonth); set("bm", setBirthMonth);
+    const of = sp.get("off"); if (of !== null) setOff(of ? of.split(",") : []);
+    setTimeout(() => runRef.current(), 0);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const shown = useMemo(
     () =>
@@ -816,10 +872,13 @@ function SearchTab() {
               </span>{" "}
               日
             </p>
-            <label className="flex items-center gap-2 text-sm">
-              <input type="checkbox" checked={showPing} onChange={(e) => setShowPing(e.target.checked)} />
-              兼列平日
-            </label>
+            <div className="flex items-center gap-3">
+              <ShareButton url={shareUrl} />
+              <label className="flex items-center gap-2 text-sm">
+                <input type="checkbox" checked={showPing} onChange={(e) => setShowPing(e.target.checked)} />
+                兼列平日
+              </label>
+            </div>
           </div>
           {results.length > 0 && (
             <CalendarHeatmap results={results} selectedKey={selKey} onSelect={(r) => setSelKey(dayKey(r))} />
@@ -863,6 +922,19 @@ function DayTab() {
   const [mountain, setMountain] = useStoredState("mountain", "");
   const [jianXiang, setJianXiang] = useStoredState("jianXiang", "");
   const { off } = useDisabledLayers();
+  useEffect(() => {
+    const sp = urlParams();
+    if (sp.get("tab") !== "day") return;
+    const set = (p: string, f: (v: string) => void) => { const v = sp.get(p); if (v !== null) f(v); };
+    set("s", setDate); set("cat", setDayCat); set("f", setFemaleYear); set("b", setBirthYear);
+    set("xm", setXianMing); set("fm", setFemaleMonth); set("bm", setBirthMonth);
+    set("mt", setMountain); set("jx", setJianXiang);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+  const shareUrl = () => buildShareUrl({
+    tab: "day", s: date, cat: dayCat === "全部" ? undefined : dayCat, f: femaleYear, b: birthYear,
+    xm: xianMing, fm: femaleMonth, bm: birthMonth, mt: mountain, jx: jianXiang,
+  });
   const showFemale = dayCat === "全部" || dayCat === "婚嫁家室";
   const showXian = dayCat === "全部" || dayCat === "造葬";
   const showMountain = dayCat === "全部" || dayCat === "居家造作" || dayCat === "造葬";
@@ -926,6 +998,7 @@ function DayTab() {
             {rt}
           </button>
         ))}
+        <span className="ml-auto"><ShareButton url={shareUrl} /></span>
       </div>
 
       <div className="rounded-lg border border-stone-200 bg-white p-4 shadow-sm dark:border-stone-700 dark:bg-stone-800">
@@ -1116,8 +1189,16 @@ function HexagramFigure({ upper, lower, yaos }: { upper: Gua; lower: Gua; yaos: 
 function HehunTab() {
   const [femaleYear, setFemaleYear] = useStoredState("femaleYear", "");
   const [maleYear, setMaleYear] = useStoredState("hehunMale", "");
+  useEffect(() => {
+    const sp = urlParams();
+    if (sp.get("tab") !== "hehun") return;
+    const f = sp.get("f"); if (f !== null) setFemaleYear(f);
+    const m = sp.get("m"); if (m !== null) setMaleYear(m);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
   const fy = /^\d{4}$/.test(femaleYear) ? Number(femaleYear) : undefined;
   const my = /^\d{4}$/.test(maleYear) ? Number(maleYear) : undefined;
+  const shareUrl = () => buildShareUrl({ tab: "hehun", f: femaleYear, m: maleYear });
   const result =
     fy && my
       ? heHun(yearGanOfBirthYear(fy), yearZhiOfBirthYear(fy), yearGanOfBirthYear(my), yearZhiOfBirthYear(my))
@@ -1165,6 +1246,9 @@ function HehunTab() {
 
       {result && (
         <>
+          <div className="flex justify-end">
+            <ShareButton url={shareUrl} />
+          </div>
           <div
             className={`rounded-lg border p-5 ${
               result.verdict === "吉"
@@ -1314,6 +1398,10 @@ function HoursGrid({
 
 export default function Home() {
   const [tab, setTab] = useState<Tab>("search");
+  useEffect(() => {
+    const t = urlParams().get("tab");
+    if (t === "search" || t === "day" || t === "hehun") setTab(t);
+  }, []);
   const tabs: { key: Tab; label: string }[] = [
     { key: "search", label: "尋吉日" },
     { key: "day", label: "單日查" },
