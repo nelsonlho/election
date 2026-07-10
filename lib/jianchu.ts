@@ -98,7 +98,7 @@ export const JIANCHU: Record<JianChuName, JianChuInfo> = {
 // 事類建除吉凶（依上表宜忌歸納）
 export type JianChuEventKey =
   | "jiaqu" | "nacai" | "anchuang" | "qiusi" | "caiyi" | "guanji"
-  | "ruzhai" | "dongtu" | "xiuzao" | "shangliang" | "zuozao" | "anmen" | "chaixie" | "juejing"
+  | "ruzhai" | "dongtu" | "xiuzao" | "xiufang" | "shangliang" | "zuozao" | "anmen" | "chaixie" | "juejing"
   | "chuxing" | "kaishi" | "liquan" | "furen" | "qiuming" | "nacaifu" | "zaizhong" | "nachu"
   | "jisi" | "jinxiang" | "kaiguang" | "qiuyi" | "anxiang" | "jiechu"
   | "anzang" | "potu" | "qizan" | "xiufen"
@@ -124,6 +124,8 @@ export const JIANCHU_BY_EVENT: Record<
   dongtu: { good: ["定", "成", "執", "平"], bad: ["破", "閉", "建", "開", "收"] },
   // 修造：定成執開吉；破閉忌，危忌登高
   xiuzao: { good: ["定", "成", "執", "開"], bad: ["破", "閉", "危"] },
+  // 修方：同修造之例（定成執開吉；破閉忌，危忌登高）
+  xiufang: { good: ["定", "成", "執", "開"], bad: ["破", "閉", "危"] },
   // 豎柱上樑：定成開吉；破閉忌，危忌登高
   shangliang: { good: ["定", "成", "開"], bad: ["破", "閉", "危"] },
   // 出行：建成開吉；破危閉收執定忌（定執忌出行）

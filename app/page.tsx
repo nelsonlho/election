@@ -481,7 +481,7 @@ function SearchTab() {
   const [birthMonth, setBirthMonth] = useStoredState("birthMonth", "");
   const { off, toggle } = useDisabledLayers();
   const ming = eventDef(event).mingInput;
-  const isZaoZuo = ["dongtu", "xiuzao", "shangliang", "ruzhai", "anzang", "potu", "qizan", "xiufen", "juejing", "zuozao", "anmen", "libei", "kaishengfen", "xietu", "yixi", "qiji", "gaiwu"].includes(event);
+  const isZaoZuo = ["dongtu", "xiuzao", "xiufang", "shangliang", "ruzhai", "anzang", "potu", "qizan", "xiufen", "juejing", "zuozao", "anmen", "libei", "kaishengfen", "xietu", "yixi", "qiji", "gaiwu"].includes(event);
   const isZang = ["anzang", "potu", "qizan", "xiufen", "rulian", "yijiu", "libei", "kaishengfen"].includes(event);
 
   const run = () => {

@@ -6,7 +6,7 @@ import { JIANCHU, JIANCHU_BY_EVENT, JianChuName } from "./jianchu";
 
 export type EventKey =
   | "jiaqu" | "nacai" | "anchuang" | "qiusi" | "caiyi" | "guanji"
-  | "ruzhai" | "dongtu" | "xiuzao" | "shangliang" | "zuozao" | "anmen" | "chaixie" | "juejing"
+  | "ruzhai" | "dongtu" | "xiuzao" | "xiufang" | "shangliang" | "zuozao" | "anmen" | "chaixie" | "juejing"
   | "chuxing" | "kaishi" | "liquan" | "furen" | "qiuming" | "nacaifu" | "zaizhong" | "nachu"
   | "jisi" | "jinxiang" | "kaiguang" | "qiuyi" | "anxiang" | "jiechu"
   | "anzang" | "potu" | "qizan" | "xiufen"
@@ -27,6 +27,7 @@ export const EVENT_NAMES: Record<EventKey, string> = {
   ruzhai: "入宅",
   dongtu: "動土",
   xiuzao: "修造",
+  xiufang: "修方",
   shangliang: "豎柱上樑",
   zuozao: "作灶",
   anmen: "安門",
@@ -113,6 +114,7 @@ export const EVENT_CATEGORIES: { category: string; events: EventDef[] }[] = [
       { key: "ruzhai", name: "入宅", mingInput: "self" },
       { key: "dongtu", name: "動土", mingInput: "self" },
       { key: "xiuzao", name: "修造", mingInput: "self" },
+      { key: "xiufang", name: "修方", mingInput: "self" },
       { key: "shangliang", name: "豎柱上樑", mingInput: "self" },
       { key: "zuozao", name: "作灶", mingInput: "self" },
       { key: "anmen", name: "安門", mingInput: "self" },
@@ -552,6 +554,7 @@ const EVENT_TERMS: Record<EventKey, string[]> = {
   ruzhai: ["入宅"],
   dongtu: ["動土"],
   xiuzao: ["修造", "修造動土"],
+  xiufang: ["修方", "修營"],
   shangliang: ["豎柱上樑", "上樑"],
   zuozao: ["作灶"],
   anmen: ["安門"],
@@ -663,15 +666,16 @@ export const RULE_LAYERS: RuleLayer[] = [
   { key: "caiyiji", name: "裁衣忌例", desc: "長星、短星、天賊、白虎、朱雀、正四廢（原書 92-93）", events: ["caiyi"] },
   { key: "anchuang", name: "安牀忌例", desc: "臥尸、死別、醞巢、天賊、木馬、箭頭、刀砧、天嗣犯沖（原書 109-111）", events: ["anchuang"] },
   { key: "tuwang", name: "土王用事", desc: "四立前十八日忌動土破土穿井修墳", events: ["dongtu", "potu", "juejing", "xiufen", "kaishengfen", "qiji"] },
-  { key: "shan", name: "沖山三殺", desc: "日支沖座山、流年三殺占山（須入座山；造葬以墓之坐山論）", events: ["ruzhai", "dongtu", "xiuzao", "shangliang", "anzang", "potu", "qizan", "xiufen", "juejing", "zuozao", "anmen", "libei", "kaishengfen", "xietu", "yixi", "qiji", "gaiwu"] },
+  { key: "shan", name: "沖山三殺", desc: "日支沖座山、流年三殺占山（須入座山；造葬以墓之坐山論）", events: ["ruzhai", "dongtu", "xiuzao", "xiufang", "shangliang", "anzang", "potu", "qizan", "xiufen", "juejing", "zuozao", "anmen", "libei", "kaishengfen", "xietu", "yixi", "qiji", "gaiwu"] },
   { key: "dongtuji", name: "動土忌例", desc: "土符、土瘟、天瘟、重日、白虎朱雀（原書 548）", events: ["dongtu"] },
   { key: "zhengong", name: "震宮殺", desc: "飛宮月家殺：八節起宮、五虎遁至呼聲泊宮，殺宮三山忌上樑（須入座山；原書第九期）", events: ["shangliang"] },
+  { key: "dayuejian", name: "大月建", desc: "飛宮月家殺：年支起宮、逆佈九宮至本月建，其三山大忌修方修造修灶（須入座山；原書第九期。訣註：凡別事不忌）", events: ["xiufang", "zuozao", "xiuzao"] },
   { key: "zhaizhou", name: "入宅安香周堂", desc: "十六位／八位周堂環，值凶位忌；出火同忌二分二至（原書 459-460）", events: ["ruzhai", "anxiang", "chuhuo"] },
   { key: "kaishizhou", name: "開市周堂", desc: "八位環：債木、爭訟值日忌（原書第七期圈點）", events: ["kaishi"] },
   { key: "yanqin", name: "演禽宿曜", desc: "廿八宿值日吉凶（通行值日歌，非講義——原書 110 註者於宿忌持譏，故預設關）：吉宿十四凶宿十四；角宿忌葬、鬼宿反宜葬", events: undefined },
-  { key: "doushou", name: "斗首化曜", desc: "山斗首五行對年月日干化氣：元辰廉子武財吉、貪官破鬼忌（爐傳斗首，非講義——原書七層斗首註云今已不用）。須入座山，預設關", events: ["ruzhai", "dongtu", "xiuzao", "shangliang", "anzang", "potu", "qizan", "xiufen", "juejing", "zuozao", "anmen", "libei", "kaishengfen", "xietu", "yixi", "qiji", "gaiwu"] },
+  { key: "doushou", name: "斗首化曜", desc: "山斗首五行對年月日干化氣：元辰廉子武財吉、貪官破鬼忌（爐傳斗首，非講義——原書七層斗首註云今已不用）。須入座山，預設關", events: ["ruzhai", "dongtu", "xiuzao", "xiufang", "shangliang", "anzang", "potu", "qizan", "xiufen", "juejing", "zuozao", "anmen", "libei", "kaishengfen", "xietu", "yixi", "qiji", "gaiwu"] },
   { key: "shashi", name: "殺師日", desc: "地師登山之忌（通書俗傳口訣：春辰戌、夏卯酉、秋丑未、冬子午；派別有異，非講義出）——預設關，主事地師者自開", events: ["anzang", "potu", "qizan", "xiufen", "kaishengfen", "dongtu", "qiji", "libei"] },
-  { key: "zuotaisui", name: "坐太歲", desc: "山即流年之方，注「可坐不可向」——不忌此說者可停用", events: ["ruzhai", "dongtu", "xiuzao", "shangliang", "anzang", "potu", "qizan", "xiufen", "juejing", "zuozao", "anmen", "libei", "kaishengfen", "xietu", "yixi", "qiji", "gaiwu"] },
+  { key: "zuotaisui", name: "坐太歲", desc: "山即流年之方，注「可坐不可向」——不忌此說者可停用", events: ["ruzhai", "dongtu", "xiuzao", "xiufang", "shangliang", "anzang", "potu", "qizan", "xiufen", "juejing", "zuozao", "anmen", "libei", "kaishengfen", "xietu", "yixi", "qiji", "gaiwu"] },
   { key: "xianming", name: "仙命諸忌", desc: "日沖仙命、三殺、三刑、旬空（須入亡者生年——原書第八期）", events: ["anzang", "potu", "qizan", "xiufen", "rulian", "yijiu", "libei", "kaishengfen"] },
   { key: "bazuo", name: "八座劍鋒", desc: "年家八座日勿用；八座方、劍鋒方占山制化權用（原書第八期安葬凶神年支表）", events: ["anzang", "potu", "qizan", "xiufen", "rulian", "yijiu", "libei", "kaishengfen"] },
   { key: "diya", name: "地啞年例", desc: "流年逐月地啞日（八日一週期），俗以制重喪三喪之屬（原書第八期）", events: ["anzang", "potu", "qizan", "xiufen", "rulian", "yijiu", "libei", "kaishengfen", "chengfu", "chufu", "dongtu"] },
@@ -693,7 +697,7 @@ export function isLayerOn(key: string, offList: string[]): boolean {
 
 // 造作造葬事類（沖山、三殺以山向論——原書第六期 392-393 頁，
 // 註：「利用甚廣，如豎造、入宅、安葬、修墳、造廟」）
-const ZAO_ZUO_EVENTS: EventKey[] = ["dongtu", "xiuzao", "shangliang", "ruzhai", "anzang", "potu", "qizan", "xiufen", "juejing", "zuozao", "anmen", "libei", "kaishengfen", "xietu", "yixi", "qiji", "gaiwu"];
+const ZAO_ZUO_EVENTS: EventKey[] = ["dongtu", "xiuzao", "xiufang", "shangliang", "ruzhai", "anzang", "potu", "qizan", "xiufen", "juejing", "zuozao", "anmen", "libei", "kaishengfen", "xietu", "yixi", "qiji", "gaiwu"];
 
 // 流年三殺方（依年支三合局）：申子辰年煞南、寅午戌年煞北、巳酉丑年煞東、亥卯未年煞西
 // （時課亦用之——原書 394 三殺例：「四柱中任何一字」成殺方，故輸出）
@@ -966,6 +970,42 @@ function zhenGongSha(info: DayInfo, m: string): Reason[] {
   return [];
 }
 
+// ── 大月建（原書第九期，書 ~623／PDF 340 右頁「大月建」）──────────
+// 飛宮月家殺，大忌修方、修灶、造新（訣註：凡及別事到不忌）。訣：
+//   子午卯酉起艮鄉，辰戌丑未起中宮，寅申巳亥坤位發，逆佈九宮定歲方。
+// 正月泊起宮、餘月逆佈九宮（洛書九→一遞降）至本月建即大月建所泊宮，其三山忌修方。
+// 書證（同頁逐年例）：辰戌丑未年正月中宮、寅申巳亥年正月申（＝坤宮之支）——皆與訣起宮合。
+const DA_YUE_JIAN_START: Record<string, string> = {
+  子: "艮", 午: "艮", 卯: "艮", 酉: "艮",
+  辰: "中", 戌: "中", 丑: "中", 未: "中",
+  寅: "坤", 申: "坤", 巳: "坤", 亥: "坤",
+};
+
+// 大月建所在之宮（依流年支、月建；正月起宮、逆佈九宮）
+function daYueJianPalace(yearZhi: string, monthZhi: string): string | null {
+  const start = DA_YUE_JIAN_START[yearZhi];
+  const mi = ZHI_ORDER_E.indexOf(monthZhi);
+  if (!start || mi < 0) return null;
+  const startNum = PALACE_ORDER.indexOf(start) + 1; // 洛書數 1..9（坎1…離9）
+  const m = ((mi - 2 + 12) % 12) + 1;               // 寅＝1…丑＝12
+  const num = (((startNum - (m - 1) - 1) % 9) + 9) % 9 + 1; // 逆佈：每月遞降一宮
+  return PALACE_ORDER[num - 1];
+}
+
+// 大月建占山（修方營造用）：大月建三山大忌修方
+function daYueJian(info: DayInfo, m: string): Reason[] {
+  const yz = info.yearGanZhi.charAt(1);
+  const gong = daYueJianPalace(yz, info.monthZhi);
+  if (!gong || gong === "中") return []; // 大月建入中宮，無定山
+  const shan = PALACE_SAN_SHAN[gong] ?? [];
+  if (shan.includes(m))
+    return [{
+      kind: "凶",
+      text: `大月建（流年${yz}年${info.monthZhi}月建在${gong}宮，${shan.join("")}三山），大忌修方修造（原書第九期飛宮：年支起宮、逆佈九宮）`,
+    }];
+  return [];
+}
+
 // ── 仙命諸忌（原書第八期 543 頁「仙命諸空沖殺刑刃例」） ──────
 // 日沖仙命大凶；三殺日（真三殺大凶，餘取祿馬貴人可解）；三刑凶日；
 // 六甲旬空（仙命旬之空亡支，冷地空亡之屬，可權用）
@@ -1228,6 +1268,11 @@ export function evaluateDay(info: DayInfo, event: EventKey, opts: EvalOptions = 
   // 震宮殺（原書第九期飛宮）：上樑有座山則判
   if (on("zhengong") && event === "shangliang" && opts.mountainZhi) {
     reasons.push(...zhenGongSha(info, opts.mountainZhi));
+  }
+
+  // 大月建（原書第九期飛宮）：修方修造修灶有座山則判（訣註：凡別事不忌）
+  if (on("dayuejian") && ["xiufang", "zuozao", "xiuzao"].includes(event) && opts.mountainZhi) {
+    reasons.push(...daYueJian(info, opts.mountainZhi));
   }
 
   // 二宅通用：日課流年干之天乙貴人臨日支，吉
