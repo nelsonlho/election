@@ -889,8 +889,8 @@ function SearchTab() {
                   type="button"
                   className="rounded-full bg-stone-100 px-2 py-0.5 text-xs text-stone-600 ring-1 ring-stone-200 transition-colors hover:bg-stone-200 dark:bg-stone-700 dark:text-stone-300 dark:ring-stone-600"
                   onClick={() => {
-                    const end = addDaysStr(start, days - 1);
-                    setStart(addDaysStr(end, -(n - 1)));
+                    // 往前：窗迄起始日、退 N 日（起始前 N 日至起始）
+                    setStart(addDaysStr(start, -(n - 1)));
                     setDaysStr(String(n));
                   }}
                 >
