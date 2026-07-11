@@ -578,6 +578,35 @@ function hunShenSha(info: DayInfo, fGan: string | undefined, fZhi: string): Reas
   return out;
 }
 
+// ── 伐木架馬做梁忌例（原書第六期書326-327，per月/季 定局） ──
+const MONTH_ORDER_E = ["寅", "卯", "辰", "巳", "午", "未", "申", "酉", "戌", "亥", "子", "丑"];
+// 季（0春1夏2秋3冬）
+const LU_BAN_JI = ["子", "卯", "午", "酉"]; // 魯班殺：春子夏卯秋午冬酉
+const FU_SHA_JI = ["辰", "未", "戌", "丑"]; // 斧殺：春辰夏未秋戌冬丑
+const DAO_ZHEN_FM = ["亥", "寅", "巳", "申"]; // 刀砧（伐木表）：春亥夏寅秋巳冬申
+const TIAN_HUO_ZL = ["子", "酉", "午", "卯"]; // 天火做梁：月序%4
+const LONG_HU = ["巳", "亥", "午", "子", "未", "丑", "申", "寅", "酉", "卯", "戌", "辰"]; // 龍虎
+const SHAN_GE = ["未", "巳", "卯", "酉", "亥", "丑"]; // 山隔：月序%6
+const MU_MA_FM = ["巳", "未", "酉", "申", "戌", "子", "亥", "丑", "卯", "寅", "辰", "午"]; // 木馬架馬
+const TIAN_ZEI_FM = ["辰", "酉", "寅", "未", "子", "巳", "戌", "卯", "申", "丑", "午", "亥"]; // 天賊
+
+function famuJi(info: DayInfo): Reason[] {
+  const out: Reason[] = [];
+  const i = MONTH_ORDER_E.indexOf(info.monthZhi);
+  if (i < 0) return out;
+  const ji = Math.floor(i / 3);
+  const dz = info.dayZhi;
+  if (dz === LU_BAN_JI[ji]) out.push({ kind: "凶", text: "魯班殺日，伐木架馬做梁大凶不用（原書第六期書326）" });
+  if (dz === FU_SHA_JI[ji]) out.push({ kind: "凶", text: "斧殺日，伐木架馬大凶不用（原書第六期書326）" });
+  if (dz === DAO_ZHEN_FM[ji]) out.push({ kind: "凶", text: "刀砧殺日，伐木架馬大凶不用（原書第六期書326）" });
+  if (dz === MU_MA_FM[i]) out.push({ kind: "凶", text: "木馬殺日，架馬不用（原書第六期書326）" });
+  if (dz === TIAN_HUO_ZL[i % 4]) out.push({ kind: "凶", text: "天火日，做梁不用（原書第六期書326）" });
+  if (dz === TIAN_ZEI_FM[i]) out.push({ kind: "注", text: "天賊日，伐木忌之，宿時（得明星）或蔞時制之則吉（原書第六期書326）" });
+  if (dz === LONG_HU[i]) out.push({ kind: "注", text: "龍虎日，入山伐木忌之，吉多可用（原書第六期書327）" });
+  if (dz === SHAN_GE[i % 6]) out.push({ kind: "注", text: "山隔日，入山伐木忌之，吉多可用（原書第六期書327）" });
+  return out;
+}
+
 // ── 入宅、安香周堂（原書第七期 459-460 頁，大小月圈點互證） ──
 // 入宅周堂十六位環（大月初一起首位順行、小月初一起「王」位逆行）；
 // 凶位恆為第 4、6、10、14、16（健？亡歸？離？刑——名有漫漶處，圈點兩表互證無誤）
@@ -819,7 +848,8 @@ export const RULE_LAYERS: RuleLayer[] = [
   { key: "anchuang", name: "安牀忌例", desc: "臥尸、死別、醞巢、天賊、木馬、箭頭、刀砧、天嗣犯沖（原書 109-111）", events: ["anchuang"] },
   { key: "tuwang", name: "土王用事", desc: "四立前十八日忌動土破土穿井修墳", events: ["dongtu", "potu", "juejing", "xiufen", "kaishengfen", "qiji"] },
   { key: "shan", name: "沖山三殺", desc: "日支沖座山、流年三殺占山（須入座山；造葬以墓之坐山論）", events: ["ruzhai", "dongtu", "xiuzao", "xiufang", "shangliang", "anzang", "potu", "qizan", "xiufen", "juejing", "zuozao", "anmen", "libei", "kaishengfen", "xietu", "yixi", "qiji", "gaiwu"] },
-  { key: "dongtuji", name: "動土忌例", desc: "土符、土瘟、天瘟、重日、白虎朱雀（原書 548）", events: ["dongtu"] },
+  { key: "dongtuji", name: "動土忌例", desc: "土符、土瘟、天瘟、重日、白虎朱雀、土公死忌、黃帝死（原書 548・第六期333）", events: ["dongtu"] },
+  { key: "famuji", name: "伐木架馬做梁忌例", desc: "魯班殺、斧殺、刀砧、木馬、天火做梁、天賊、龍虎、山隔（原書第六期326-327）", events: ["famu"] },
   { key: "zhengong", name: "震宮殺", desc: "飛宮月家殺：八節起宮、五虎遁至呼聲泊宮，殺宮三山忌上樑（須入座山；原書第九期）", events: ["shangliang"] },
   { key: "dayuejian", name: "大月建", desc: "飛宮月家殺：年支起宮、逆佈九宮至本月建，其三山大忌修方修造修灶（須入座山；原書第九期。訣註：凡別事不忌）", events: ["xiufang", "zuozao", "xiuzao"] },
   { key: "zhaizhou", name: "入宅安香周堂", desc: "十六位／八位周堂環，值凶位忌；出火同忌二分二至（原書 459-460）", events: ["ruzhai", "anxiang", "chuhuo"] },
@@ -1505,6 +1535,10 @@ export function evaluateDay(info: DayInfo, event: EventKey, opts: EvalOptions = 
   // 動土忌例（原書第八期 548 頁）：土符、土瘟、天瘟、重日、白虎朱雀
   if (event === "dongtu" && on("dongtuji")) {
     reasons.push(...getDongTuJi(info));
+  }
+  // 伐木架馬做梁忌例（原書第六期 326-327）
+  if (event === "famu" && on("famuji")) {
+    reasons.push(...famuJi(info));
   }
 
   // 殺師日（通書俗傳，非講義；預設關）：春辰戌、夏卯酉、秋丑未、冬子午
