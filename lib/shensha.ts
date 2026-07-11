@@ -272,6 +272,13 @@ export function getDongTuJi(info: DayInfo): { kind: "凶" | "注"; text: string 
     out.push({ kind: "注", text: "白虎日，動土忌之，麟符制之則吉" });
   if (ZQ_CYCLE[mi % 6] === dz)
     out.push({ kind: "注", text: "朱雀日，動土忌之，鳳凰符制之則吉" });
+  // 土公死・土公忌・黃帝死（第六期書333 動土平基忌例）：固定干支日，逐月皆同，俗忌可用
+  if (info.dayGanZhi === "乙未")
+    out.push({ kind: "注", text: "土公死（乙未日），動土俗忌，吉多可用（原書第六期書333）" });
+  if (info.dayGanZhi === "癸未")
+    out.push({ kind: "注", text: "土公忌（癸未日），動土俗忌，吉多可用（原書第六期書333）" });
+  if (info.dayGanZhi === "戊午")
+    out.push({ kind: "注", text: "黃帝死（戊午日），動土俗忌，吉多可用（原書第六期書333）" });
   return out;
 }
 
