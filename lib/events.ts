@@ -1916,6 +1916,12 @@ export const RULE_LAYERS: RuleLayer[] = [
     ],
   },
   {
+    key: 'huxi',
+    name: '虎系（炉火制）',
+    desc: '安葬逐月虎煞：遊山虎、地中虎、黑道虎、建星虎（皆按月支）、食骨虎（逐日干支）；炉火制化則吉，故注級（原書第八期安葬忌例，瑞成本 416-417）',
+    events: ['anzang'],
+  },
+  {
     key: 'qifu',
     name: '祈福吉日',
     desc: '齋醮諸會吉日：大會小會三元四始五臘節會期會、每月初七北斗辰會（黃籙六十甲子吉凶、傳送功曹吉時暫未錄）（原書第十二期書580-583）',
@@ -3635,6 +3641,36 @@ const ZAO_CHUAN_SHA: Record<string, [string[], string]> = {
     '造船通忌',
   ],
 };
+
+// ── 虎系（安葬忌例，原書第八期書 416-417）───────────────────────────
+// 遊山虎・地中虎・黑道虎・建星虎：皆按月支（正月＝寅＝索引0）取忌日支。
+// 皆炉火制化則吉，故注級（可制）。食骨虎另為逐日干支（月無關）。
+const HU_XI_YUE: Record<string, string[]> = {
+  遊山虎: ['卯', '子', '酉', '午', '卯', '子', '酉', '午', '卯', '子', '酉', '午'],
+  地中虎: ['巳', '辰', '卯', '寅', '丑', '子', '亥', '戌', '酉', '申', '未', '午'],
+  黑道虎: ['午', '申', '戌', '子', '寅', '辰', '午', '申', '戌', '子', '寅', '辰'],
+  建星虎: ['戌', '亥', '子', '丑', '寅', '卯', '辰', '巳', '午', '未', '申', '酉'],
+};
+// 食骨虎：每月逢此等日，炉火制化則吉（逐日干支，不論月）
+const SHI_GU_HU = ['甲午', '乙未', '庚午', '丁未', '戊申'];
+function huXi(info: DayInfo): Reason[] {
+  const zi = ZHI_ORDER_E.indexOf(info.monthZhi);
+  if (zi < 0) return [];
+  const m = (zi - 2 + 12) % 12; // 正月（寅）= 0
+  const out: Reason[] = [];
+  for (const name of Object.keys(HU_XI_YUE))
+    if (HU_XI_YUE[name][m] === info.dayZhi)
+      out.push({
+        kind: '注',
+        text: `${name}（${info.monthZhi}月${info.dayZhi}日），安葬忌之，炉火制化則吉（原書第八期安葬忌例）`,
+      });
+  if (SHI_GU_HU.includes(info.dayGanZhi))
+    out.push({
+      kind: '注',
+      text: `食骨虎（${info.dayGanZhi}日），安葬忌之，炉火制化則吉（原書第八期安葬忌例）`,
+    });
+  return out;
+}
 function zaoChuanSha(info: DayInfo): Reason[] {
   const zi = ZHI_ORDER_E.indexOf(info.monthZhi);
   if (zi < 0) return [];
@@ -4158,6 +4194,11 @@ export function evaluateDay(
   // 祈福吉日（原書第十二期書580-583）：齋醮諸會吉日
   if (on('qifu') && event === 'qifu') {
     reasons.push(...qiFuJi(info));
+  }
+
+  // 虎系（原書第八期安葬忌例書416-417）：逐月虎煞＋食骨虎，炉火制化則吉
+  if (on('huxi') && event === 'anzang') {
+    reasons.push(...huXi(info));
   }
 
   // 二宅通用：日課流年干之天乙貴人臨日支，吉
