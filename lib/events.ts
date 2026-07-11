@@ -381,11 +381,12 @@ function jiXiongShen(info: DayInfo, mingGan: string | undefined, mingZhi: string
   return out;
 }
 
-// ── 婚神煞（原書第四期「六十女總局」歸納之通例） ──────────
-// 胎元＝命干＋2、命支＋6 → 命支之日即沖胎元（干＋2 同干者真沖、干＋8 者正沖，凶）
-// 夫星＝命干＋7、命支＋7 → 命支＋1 之日沖夫星（干＋3 者正沖，凶）
-// 天嗣＝依干表（見 shensha.getTianSiChong），嫁娶亦忌
-// 桃花（咸池）＝三合局沐浴位；天狗＝命支＋10。俱可制，慎用
+// ── 婚神煞（原書第四五期「六十女命行嫁」逐命反推，書192-309清本互證） ──
+// 胎元＝食神干（命干＋2）＋命支局「胎」位（火子木酉金卯水午）→ 真胎元日大凶、沖胎元日凶
+// 夫星＝正官干（剋命干異性）；夫妻宮＝命宮＋6，男女宮＝命宮＋8（命宮＝命干祿）
+// 沖母腹＝沖命支日；滅子胎＝沖男女宮日（命宮＋2）；殺翁＝命支＋1、殺姑＝命支＋7
+// 桃花（咸池）＝三合局沐浴位；天狗＝命支＋10；流霞＝命干表；三殺＝局歲煞
+// （驗：火局甲戌、木局乙未 逐十二日各12/12全合）
 const GAN_ORDER = ["甲", "乙", "丙", "丁", "戊", "己", "庚", "辛", "壬", "癸"];
 const ZHI_ORDER_E = ["子", "丑", "寅", "卯", "辰", "巳", "午", "未", "申", "酉", "戌", "亥"];
 const XIAN_CHI: Record<string, string> = {
@@ -393,6 +394,26 @@ const XIAN_CHI: Record<string, string> = {
   寅: "卯", 午: "卯", 戌: "卯",
   巳: "午", 酉: "午", 丑: "午",
   亥: "子", 卯: "子", 未: "子",
+};
+
+// 三合局五行（命支所屬）
+function juWuXing(zhi: string): "火" | "木" | "金" | "水" {
+  if ("寅午戌".includes(zhi)) return "火";
+  if ("亥卯未".includes(zhi)) return "木";
+  if ("巳酉丑".includes(zhi)) return "金";
+  return "水"; // 申子辰
+}
+// 局「胎」位（局長生＋10）：火子・木酉・金卯・水午。胎元支＝命支局胎位（第四五期逐命互證：甲戌子/庚午子/乙未酉）
+const JU_TAI: Record<string, string> = { 火: "子", 木: "酉", 金: "卯", 水: "午" };
+// 正官（夫星干＝命之正官）：剋命干之異性干
+const ZHENG_GUAN: Record<string, string> = {
+  甲: "辛", 乙: "庚", 丙: "癸", 丁: "壬", 戊: "乙",
+  己: "甲", 庚: "丁", 辛: "丙", 壬: "己", 癸: "戊",
+};
+// 流霞（命干→日支），犯之慎用
+const LIU_XIA: Record<string, string> = {
+  甲: "酉", 乙: "戌", 丙: "未", 丁: "申", 戊: "巳",
+  己: "午", 庚: "辰", 辛: "卯", 壬: "亥", 癸: "寅",
 };
 
 function zhiAdd(zhi: string, n: number): string {
@@ -426,11 +447,16 @@ function hunShenSha(info: DayInfo, fGan: string | undefined, fZhi: string): Reas
   const out: Reason[] = [];
   const dz = info.dayZhi;
   const dg = info.dayGan;
-  // 沖胎元：命支之日
-  if (dz === fZhi) {
-    if (fGan && (dg === ganAdd(fGan, 2) || dg === ganAdd(fGan, 8)))
-      out.push({ kind: "凶", text: `${info.dayGanZhi}日${dg === ganAdd(fGan, 2) ? "真" : "正"}沖胎元，大凶（原書：六十女總局）` });
-    else out.push({ kind: "注", text: "日支同女命，沖胎元，慎用（原書：六十女總局）" });
+  // 胎元（原書第四五期逐命：胎元干＝命食神干＋2、支＝命支局胎位；真胎元日大凶、胎元日慎、沖胎元日凶）
+  if (fGan) {
+    const taiZhi = JU_TAI[juWuXing(fZhi)];
+    const taiGZ = ganAdd(fGan, 2) + taiZhi;
+    if (info.dayGanZhi === taiGZ)
+      out.push({ kind: "凶", text: `${taiGZ}日真胎元，大凶（原書：六十女總局）` });
+    else if (dz === taiZhi)
+      out.push({ kind: "注", text: `日臨胎元（胎元${taiGZ}），慎用——忌真胎元日（原書：六十女總局）` });
+    if (dz === zhiAdd(taiZhi, 6))
+      out.push({ kind: "凶", text: "日支沖胎元，忌用（原書：六十女總局）" });
   }
   // 沖夫星：命支＋1 之日
   if (dz === zhiAdd(fZhi, 1)) {
@@ -455,6 +481,12 @@ function hunShenSha(info: DayInfo, fGan: string | undefined, fZhi: string): Reas
   // 天狗
   if (dz === zhiAdd(fZhi, 10))
     out.push({ kind: "注", text: "犯天狗，慎用（原書：麟陽登貴可制）" });
+  // 流霞（命干→日支）
+  if (fGan && LIU_XIA[fGan] === dz)
+    out.push({ kind: "注", text: "犯流霞，慎用（原書：六十女總局）" });
+  // 沖母腹（沖命支之日；別於沖男女宮之滅子胎）——第四五期逐命：甲戌辰/乙未丑
+  if (dz === zhiAdd(fZhi, 6))
+    out.push({ kind: "凶", text: "日支沖命，犯沖母腹，忌用（原書：六十女總局）" });
   // 命宮盤沖（原書 108 頁）
   if (fGan) out.push(...gongChong(fGan, dz));
   // 紅鸞、天喜（原書 196 頁；註引會海：天喜乃血光之神，紅鸞非吉曜，逢吉神則吉、凶神則凶）
