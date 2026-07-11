@@ -18,7 +18,7 @@ import {
   DEFAULT_OFF_LAYERS,
   MOUNTAIN_WX,
   MOUNTAINS_24,
-  qiLinFang,
+  qiLinFangDetail,
   Rating,
 } from '@/lib/events';
 import { JIANCHU } from '@/lib/jianchu';
@@ -1844,12 +1844,19 @@ function DayTab() {
             <div>胎神占方：{info.taiShen}</div>
             <div>沖：{info.chongDesc}</div>
             <div className="sm:col-span-2">吉神方位：{info.jiFang}</div>
-            <div className="sm:col-span-2">
-              麒麟吉方：{qiLinFang(info.monthZhi)}方
-              <span className="ml-1 text-xs text-stone-400">
-                （原書 160：麟星占宮，貼符利方，制火星日）
-              </span>
-            </div>
+            {(() => {
+              const q = qiLinFangDetail(info.monthZhi);
+              if (!q) return null;
+              return (
+                <div className="sm:col-span-2">
+                  麒麟吉方：{q.ji}方（三合照限{q.zhaoXian.join("")}、六合合限{q.heXian}）；
+                  <span className="text-stone-800 dark:text-stone-200">天狗凶方：{q.tianGou}方</span>
+                  <span className="ml-1 text-xs text-stone-400">
+                    （原書 160-161：麟星占宮，麟星吉方貼符制火星，天狗沖麟星為凶方）
+                  </span>
+                </div>
+              );
+            })()}
             <div className="sm:col-span-2">
               流年方位（{info.yearGanZhi}年）：
               {nianDaFang(info.yearGanZhi.charAt(1))}

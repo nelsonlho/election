@@ -720,6 +720,26 @@ export function qiLinFang(monthZhi: string): string {
   return ZHI_ORDER_E[(10 + 2 * (((i - 2) % 12 + 12) % 12)) % 12];
 }
 
+// 麟星占宮之照限、合限、天狗（原書 161 頁「麟星到宮」表）：皆以麟星宮推——
+// 天狗到宮＝沖麟星（凶方）；照限＝麟星三合局其餘二支（吉照）；合限＝麟星六合（吉照）；
+// 白虎占宮＝麟星本宮（麟星制之故不另忌）。子例：麟星子→白虎子・天狗午・照限申辰・合限丑，全合原表。
+const SAN_HE: Record<string, string[]> = {
+  申: ["子", "辰"], 子: ["申", "辰"], 辰: ["申", "子"],
+  寅: ["午", "戌"], 午: ["寅", "戌"], 戌: ["寅", "午"],
+  巳: ["酉", "丑"], 酉: ["巳", "丑"], 丑: ["巳", "酉"],
+  亥: ["卯", "未"], 卯: ["亥", "未"], 未: ["亥", "卯"],
+};
+export function qiLinFangDetail(monthZhi: string): { ji: string; tianGou: string; zhaoXian: string[]; heXian: string } | null {
+  const ji = qiLinFang(monthZhi);
+  if (!ji) return null;
+  return {
+    ji,
+    tianGou: ZHI_CHONG[ji] ?? "",       // 天狗＝沖麟星（凶方）
+    zhaoXian: SAN_HE[ji] ?? [],         // 照限＝三合其餘二支（吉照）
+    heXian: LIU_HE[ji] ?? "",           // 合限＝六合（吉照）
+  };
+}
+
 // 廿四山：十二支山＋八干山＋四卦山（原書沖山例遍列之）
 export const MOUNTAINS_24 = [
   "壬", "子", "癸", "丑", "艮", "寅", "甲", "卯", "乙", "辰", "巽", "巳",
