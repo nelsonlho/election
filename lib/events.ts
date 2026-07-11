@@ -623,6 +623,7 @@ function kaiShiZhouTang(lunarDay: number, monthDayCount: number): { name: string
 // ── 共同凶煞 ──────────────────────────────────────────────
 // 各神煞所忌之事類
 const WANG_WANG_EVENTS: EventKey[] = ["chuxing", "jiaqu", "ruzhai", "furen", "qiuming", "yixi", "guining"]; // 往亡忌出行、嫁娶、移徙、上任求名
+const JUE_YAN_EVENTS: EventKey[] = ["ruzhai", "yixi", "zuozao", "chuhuo", "anxiang"]; // 絕煙火忌入宅、移徙、作灶、出火、安香
 const GUI_JI_EVENTS: EventKey[] = ["chuxing", "ruzhai", "yixi", "guining"]; // 歸忌忌遠行、歸家、移徙
 const HONG_SHA_EVENTS: EventKey[] = ["jiaqu", "nacai", "wenming", "naxu"]; // 紅沙忌婚事
 const SHOU_SI_EXEMPT: EventKey[] = ["anzang", "potu", "qizan", "rulian", "yijiu"]; // 受死日百事忌，惟葬事可用
@@ -651,6 +652,9 @@ function commonBad(info: DayInfo, event: EventKey): Reason[] {
   if (s.siLi) out.push({ kind: "凶", text: "四離日（二分二至前一日），氣序分離，忌用事" });
   if (s.siJue) out.push({ kind: "凶", text: "四絕日（四立前一日），氣序絕滅，忌用事" });
   if (s.yangGong) out.push({ kind: "凶", text: "楊公忌日，百事忌用" });
+  if (s.yueJi) out.push({ kind: "注", text: "月忌日（初五、十四、廿三），俗忌百事，吉多可用（原書第六期書329）" });
+  if (s.jueYanHuo && JUE_YAN_EVENTS.includes(event))
+    out.push({ kind: "凶", text: "絕煙火日，忌入宅、移徙、作灶、出火（原書第六期書324・329 避宅出火忌例）" });
   if (s.wangWang && WANG_WANG_EVENTS.includes(event))
     out.push({ kind: "凶", text: "往亡日，忌出行、嫁娶、移徙、上任" });
   if (s.guiJi && GUI_JI_EVENTS.includes(event))
@@ -800,7 +804,7 @@ export interface RuleLayer {
 const HUN_EVENTS: EventKey[] = ["jiaqu", "nacai"];
 
 export const RULE_LAYERS: RuleLayer[] = [
-  { key: "yuejia", name: "月家神煞", desc: "月破、受死、往亡、歸忌、紅沙、四離四絕、楊公忌、重日、重喪、三喪" },
+  { key: "yuejia", name: "月家神煞", desc: "月破、受死、往亡、歸忌、紅沙、四離四絕、楊公忌、月忌、絕煙火、重日、重喪、三喪" },
   { key: "jianchu", name: "建除十二神", desc: "建滿平收黑，除危定執黃，成開可用，破閉不用" },
   { key: "tongshu", name: "通書宜忌", desc: "逐日通書宜忌對照" },
   { key: "pengzu", name: "彭祖百忌", desc: "亥不行嫁、申不安牀、巳不遠行、寅不祭祀等" },

@@ -37,6 +37,13 @@ const YANG_GONG: [number, number][] = [
   [7, 1], [7, 29], [8, 27], [9, 25], [10, 23], [11, 21], [12, 19],
 ];
 
+// 絕煙火（第六期書329 避宅出火忌例）：節氣月三合局→干支日
+// 火局寅午戌＝丁卯・木局亥卯未＝甲子・水局申子辰＝癸酉・金局巳酉丑＝庚午
+const JUE_YAN_HUO: Record<string, string> = {
+  寅: "丁卯", 午: "丁卯", 戌: "丁卯", 亥: "甲子", 卯: "甲子", 未: "甲子",
+  申: "癸酉", 子: "癸酉", 辰: "癸酉", 巳: "庚午", 酉: "庚午", 丑: "庚午",
+};
+
 export interface ShenShaHits {
   yuePo: boolean; // 月破（日支沖月建）
   shouSi: boolean; // 受死
@@ -46,6 +53,8 @@ export interface ShenShaHits {
   siLi: boolean; // 四離（二分二至前一日）
   siJue: boolean; // 四絕（四立前一日）
   yangGong: boolean; // 楊公忌
+  yueJi: boolean; // 月忌（初五、十四、廿三）
+  jueYanHuo: boolean; // 絕煙火（忌入宅移徙作灶出火）
 }
 
 export function getShenSha(info: DayInfo): ShenShaHits {
@@ -62,6 +71,8 @@ export function getShenSha(info: DayInfo): ShenShaHits {
     siLi: ["春分", "夏至", "秋分", "冬至"].includes(info.nextDayJieQi),
     siJue: ["立春", "立夏", "立秋", "立冬"].includes(info.nextDayJieQi),
     yangGong: YANG_GONG.some(([m, d]) => m === lunarMonth && d === info.lunarDay),
+    yueJi: [5, 14, 23].includes(info.lunarDay),
+    jueYanHuo: JUE_YAN_HUO[mz] === info.dayGanZhi,
   };
 }
 
