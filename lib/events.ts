@@ -877,6 +877,7 @@ export const RULE_LAYERS: RuleLayer[] = [
   { key: "nianke", name: "年剋山家", desc: "山運納音（山之洪範五行墓庫、年干庫運遁）；年月日納音剋山運則忌，柱中生扶可制（須入座山；原書第十期造葬廿四山總局，瑞成本 487-535）", events: ["ruzhai", "dongtu", "xiuzao", "xiufang", "shangliang", "anzang", "potu", "qizan", "xiufen", "juejing", "zuozao", "anmen", "libei", "kaishengfen", "xietu", "yixi", "qiji", "gaiwu"] },
   { key: "shantou", name: "山頭日忌", desc: "逐山日級凶神：星曜殺、山方殺、冲丁殺、曜殺、文曲旬、流日太歲、消滅殺（須入座山；原書第十期造葬廿四山總局左頁，涵壬至酉二十山，辛戌乾亥屬第十一期未掃故缺）", events: ["ruzhai", "dongtu", "xiuzao", "xiufang", "shangliang", "anzang", "potu", "qizan", "xiufen", "juejing", "zuozao", "anmen", "libei", "kaishengfen", "xietu", "yixi", "qiji", "gaiwu"] },
   { key: "chuling", name: "除靈周堂", desc: "除靈值人（父母孫男婦女客婿）宜避、值亡可用（原書第十二期書593值例）", events: ["chufu"] },
+  { key: "shangguan", name: "上官日凶神", desc: "赴任上官月忌：天牢天刑罪至死別伏罪徒隸天吏天獄牢日獄日刑獄殃敗（皆小忌；月破往亡大忌已在月家層）（原書第十二期書598-599）", events: ["furen"] },
   { key: "huitou", name: "回頭貢殺箭刃", desc: "辰戌丑未命遇四柱三合全局殺之（不能制化）；命干箭刃雙全（原書 56-57，須入生年）" },
 ];
 
@@ -1526,6 +1527,33 @@ function delingZhouTang(lunarDay: number): Reason[] {
   return [{ kind: "凶", text: `除靈周堂值${pos}（值生人之位），除靈宜避（原書第十二期除靈周堂局：如值人宜避）` }];
 }
 
+// ── 上官日凶神（原書第十二期書 598-599；赴任上官之月忌）────────────────────
+// 逐月支忌（正月建寅…十二月建丑）。月破、往亡（大忌）已在月家層，此錄赴任專神十二（皆小忌）。
+const SHANG_GUAN_SHA: Record<string, string[]> = {
+  天牢: ["申", "戌", "子", "寅", "辰", "午", "申", "戌", "子", "寅", "辰", "午"],
+  天刑: ["寅", "辰", "午", "申", "戌", "子", "寅", "辰", "午", "申", "戌", "子"],
+  罪至: ["午", "子", "未", "丑", "申", "寅", "酉", "卯", "戌", "辰", "亥", "巳"],
+  死別: ["戌", "戌", "戌", "丑", "丑", "丑", "辰", "辰", "辰", "未", "未", "未"],
+  伏罪: ["亥", "亥", "亥", "寅", "寅", "寅", "巳", "巳", "巳", "申", "申", "申"],
+  徒隸: ["申", "申", "申", "亥", "亥", "亥", "寅", "寅", "寅", "巳", "巳", "巳"],
+  天吏: ["酉", "午", "卯", "子", "酉", "午", "卯", "子", "酉", "午", "卯", "子"],
+  天獄: ["子", "酉", "午", "卯", "子", "酉", "午", "卯", "子", "酉", "午", "卯"],
+  牢日: ["辰", "辰", "辰", "未", "未", "未", "戌", "戌", "戌", "丑", "丑", "丑"],
+  獄日: ["未", "未", "未", "戌", "戌", "戌", "丑", "丑", "丑", "辰", "辰", "辰"],
+  刑獄: ["丑", "丑", "丑", "辰", "辰", "辰", "未", "未", "未", "戌", "戌", "戌"],
+  殃敗: ["卯", "寅", "丑", "子", "亥", "戌", "酉", "申", "未", "午", "巳", "辰"],
+};
+function shangGuanSha(info: DayInfo): Reason[] {
+  const zi = ZHI_ORDER_E.indexOf(info.monthZhi);
+  if (zi < 0) return [];
+  const m = (zi - 2 + 12) % 12; // 正月（寅）= 0
+  const out: Reason[] = [];
+  for (const name of Object.keys(SHANG_GUAN_SHA))
+    if (SHANG_GUAN_SHA[name][m] === info.dayZhi)
+      out.push({ kind: "凶", text: `${name}日（${info.monthZhi}月忌${info.dayZhi}日，小忌），赴任上官忌之（原書第十二期上官日凶神）` });
+  return out;
+}
+
 // ── 年家八座、劍鋒（原書第八期安葬凶神年支表；訣云「橫天八座不堪留」） ──
 // 八座日：凶神年支對定干支日，「勿用」——子年癸酉、丑年甲戌、寅年丁亥、卯年甲子、
 // 辰年乙丑、巳年甲寅、午年丁卯、未年甲辰、申年己巳、酉年甲午、戌年丁未、亥年甲申
@@ -1726,6 +1754,11 @@ export function evaluateDay(info: DayInfo, event: EventKey, opts: EvalOptions = 
   // 除靈周堂（原書第十二期書593）：除靈事查周堂，值人宜避
   if (on("chuling") && event === "chufu") {
     reasons.push(...delingZhouTang(info.lunarDay));
+  }
+
+  // 上官日凶神（原書第十二期書598-599）：赴任上官之月忌
+  if (on("shangguan") && event === "furen") {
+    reasons.push(...shangGuanSha(info));
   }
 
   // 二宅通用：日課流年干之天乙貴人臨日支，吉
