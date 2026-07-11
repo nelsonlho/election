@@ -1044,6 +1044,14 @@ function xianMingJi(info: DayInfo, xGan: string | undefined, xZhi: string): Reas
           out.push({ kind: "注", text: `仙命旬空日（${kong.join("、")}為空亡），冷地空亡之屬，葬課慎用` });
       }
     }
+    // 人梯地空亡（六十仙命諸空亡表，瑞成本書 420-429）：命干定局，干恆庚、支＝(6−2·命干序)mod12
+    //   甲庚午·乙庚辰·丙庚寅·丁庚子·戊庚戌·己庚申·庚庚午·辛庚辰·壬庚寅·癸庚子（三命驗合）
+    const gi2 = GAN_ORDER.indexOf(xGan);
+    if (gi2 >= 0) {
+      const rentiZhi = ZHI_ORDER_E[((6 - 2 * gi2) % 12 + 12) % 12];
+      if (info.dayGanZhi === "庚" + rentiZhi)
+        out.push({ kind: "注", text: `人梯地空亡日（仙命${xGan}干，庚${rentiZhi}日），空亡之屬，葬課慎用（原書：六十仙命諸空亡）` });
+    }
   }
   return out;
 }
