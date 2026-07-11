@@ -882,7 +882,7 @@ export const RULE_LAYERS: RuleLayer[] = [
   { key: "diya", name: "地啞年例", desc: "流年逐月地啞日（八日一週期），俗以制重喪三喪之屬（原書第八期）", events: ["anzang", "potu", "qizan", "xiufen", "rulian", "yijiu", "libei", "kaishengfen", "chengfu", "chufu", "dongtu"] },
   { key: "dikong", name: "地空年例", desc: "流年逐月地空亡日（八日一週期），空亡凶日，金火日或三合可制（原書第八期，瑞成本 418-419）", events: ["anzang", "potu", "qizan", "xiufen", "rulian", "yijiu", "libei", "kaishengfen"] },
   { key: "nianke", name: "年剋山家", desc: "山運納音（山之洪範五行墓庫、年干庫運遁）；年月日納音剋山運則忌，柱中生扶可制（須入座山；原書第十期造葬廿四山總局，瑞成本 487-535）", events: ["ruzhai", "dongtu", "xiuzao", "xiufang", "shangliang", "anzang", "potu", "qizan", "xiufen", "juejing", "zuozao", "anmen", "libei", "kaishengfen", "xietu", "yixi", "qiji", "gaiwu"] },
-  { key: "shantou", name: "山頭日忌", desc: "逐山日級凶神：星曜殺、山方殺、冲丁殺、曜殺、文曲旬、流日太歲、消滅殺（須入座山；原書第十期造葬廿四山總局左頁，涵壬至酉二十山，辛戌乾亥屬第十一期未掃故缺）", events: ["ruzhai", "dongtu", "xiuzao", "xiufang", "shangliang", "anzang", "potu", "qizan", "xiufen", "juejing", "zuozao", "anmen", "libei", "kaishengfen", "xietu", "yixi", "qiji", "gaiwu"] },
+  { key: "shantou", name: "山頭日忌", desc: "逐山日級凶神：星曜殺、山方殺、冲丁殺、曜殺、文曲旬、流日太歲、消滅殺（須入座山；原書第十期造葬廿四山總局左頁，涵廿四山全（壬至酉第十期、辛戌乾亥第十一期））", events: ["ruzhai", "dongtu", "xiuzao", "xiufang", "shangliang", "anzang", "potu", "qizan", "xiufen", "juejing", "zuozao", "anmen", "libei", "kaishengfen", "xietu", "yixi", "qiji", "gaiwu"] },
   { key: "chuling", name: "除靈周堂", desc: "除靈值人（父母孫男婦女客婿）宜避、值亡可用（原書第十二期書593值例）", events: ["chufu"] },
   { key: "shangguan", name: "上官日凶神", desc: "赴任上官月忌：天牢天刑罪至死別伏罪徒隸天吏天獄牢日獄日刑獄殃敗（皆小忌；月破往亡大忌已在月家層）（原書第十二期書598-599）", events: ["furen"] },
   { key: "zaochuan", name: "造船日凶神", desc: "造船通忌：河伯、危星（惟忌進水）、天火（月破月建受死往亡已在通用層；火星忌掛帆等繁冷暫未錄）（原書第十二期書606-615）", events: ["zaochuan"] },
@@ -1410,7 +1410,7 @@ function nianKeShanJia(info: DayInfo, mountain: string): Reason[] {
 
 // ── 山頭日級凶神（原書第十期造葬廿四山吉凶總局·左頁；瑞成本 487-533）──────────────
 // 逐山定局，照錄原書左頁星曜殺／山方殺／冲丁殺／曜殺／消滅殺／文曲／流日太歲諸欄。
-// 本表涵壬…酉二十山（艮巽坤各兼二向，兼向異者取聯集，寧誤毋漏）；辛戌乾亥在第十一期（另卷未掃），
+// 本表涵廿四山全（壬…酉原書第十期、辛戌乾亥第十一期；艮巽坤各兼二向，兼向異者取聯集，寧誤毋漏）。
 // 另卷未載，故缺。星曜殺＝剋山正體五行同氣之干支；曜殺＝八卦曜殺；文曲＝旬（十日）；
 // 消滅殺＝節氣月內逢定干支日（DayInfo 無節氣週期，以月建近節氣界，故略寬）；流日太歲＝值日。
 interface ShanTouRi {
@@ -1456,13 +1456,18 @@ const SHAN_TOU_RI: Record<string, ShanTouRi> = {
   申: { xingyao: XY_金, shanfang: SF_金, chongding: ["丙寅", "庚寅"], yao: "乙卯", wenqu: ["甲戌"], liuri: "己未", xiaomie: [["冬至", "庚子"], ["春分", "庚午"], ["大寒", "丁卯"], ["谷雨", "丁酉"]] },
   庚: { xingyao: XY_金, shanfang: SF_金, chongding: ["丙寅", "庚寅"], yao: "丁巳", wenqu: ["甲戌"], liuri: "己酉", xiaomie: [["大寒", "丁卯"], ["谷雨", "丁酉"]] },
   酉: { xingyao: XY_金, shanfang: SF_金, chongding: ["丁卯", "辛卯"], yao: "丁巳", wenqu: ["甲戌"], liuri: "己酉", xiaomie: [["雨水", "甲辰"], ["小滿", "壬戌"]] },
+  // 辛戌乾亥（原書第十一期續造葬廿四山，書 2 起）。戌乾亥曜殺皆壬午（乾卦）。
+  辛: { xingyao: XY_金, shanfang: SF_金, chongding: ["丁卯", "辛卯"], yao: "丁巳", wenqu: ["甲戌"], liuri: "己酉", xiaomie: [["大暑", "丙午"], ["霜降", "丙子"]] },
+  戌: { xingyao: XY_土, shanfang: SF_甲, chongding: ["丙辰", "庚辰"], yao: "壬午", wenqu: ["甲子"], liuri: "戊戌", xiaomie: [["霜降", "丙子"], ["大暑", "丙午"]] },
+  乾: { xingyao: XY_金, shanfang: SF_甲, chongding: ["丙辰", "庚辰"], yao: "壬午", wenqu: ["甲子"], liuri: "戊戌", xiaomie: [["夏至", "辛丑"], ["秋分", "辛未"]] },
+  亥: { xingyao: XY_水, shanfang: SF_甲, chongding: ["丁巳", "辛巳"], yao: "壬午", wenqu: ["甲子"], liuri: "戊戌", xiaomie: [["夏至", "辛丑"], ["秋分", "辛未"]] },
 };
 // 干山之支級冲山（原書山頭冲山兼X忌其對沖支）：`shan` 層於干山僅判日干沖（壬↔丙），
 // 未及日支沖（壬山兼亥忌巳、兼子忌午之屬）；此補之。兼向異者聯集。支山／卦山之支級冲山
-// 已在 `shan` 層（日支沖山／對宮沖），故不重出。辛山屬第十一期未載。
+// 已在 `shan` 層（日支沖山／對宮沖），故不重出。辛山亦已載（第十一期）。
 const GAN_SHAN_CHONG_ZHI: Record<string, string[]> = {
   壬: ["巳", "午"], 癸: ["午", "未"], 甲: ["申", "酉"], 乙: ["酉", "戌"],
-  丙: ["亥", "子"], 丁: ["子", "丑"], 庚: ["寅", "卯"],
+  丙: ["亥", "子"], 丁: ["子", "丑"], 庚: ["寅", "卯"], 辛: ["卯", "辰"],
 };
 // 箭射（弓箭煞，原書山頭箭射欄「值＋沖」axis，依山鄰之單位）：
 //   干山＝鄰支之沖axis（支pair）；四正支山（子午卯酉）＝陽鄰干＋其沖（干pair）；
@@ -1476,6 +1481,7 @@ const JIAN_SHE: Record<string, { unit: "支" | "干"; pair: string[] }> = {
   子: { unit: "干", pair: ["壬", "丙"] }, 午: { unit: "干", pair: ["壬", "丙"] },
   卯: { unit: "干", pair: ["甲", "庚"] }, 酉: { unit: "干", pair: ["甲", "庚"] },
   艮: { unit: "支", pair: ["丑", "未", "寅", "申"] }, 巽: { unit: "支", pair: ["巳", "亥"] }, 坤: { unit: "支", pair: ["寅", "申"] },
+  辛: { unit: "支", pair: ["辰", "戌"] }, 戌: { unit: "干", pair: ["乙", "辛"] }, 乾: { unit: "支", pair: ["巳", "亥"] },
 };
 // 節氣 → 月建（消滅殺以此近節氣界）
 const JIE_QI_YUE: Record<string, string> = {
@@ -1492,29 +1498,29 @@ function shanTouRiJi(info: DayInfo, mountain: string): Reason[] {
   const gz = info.dayGanZhi;
   const gsc = GAN_SHAN_CHONG_ZHI[mountain];
   if (gsc?.includes(info.dayZhi))
-    out.push({ kind: "凶", text: `冲山（${mountain}山忌${info.dayZhi}日，兼向本支之對沖），造葬大凶（原書第十期山頭凶神；干山之支級沖，別於日干沖）` });
+    out.push({ kind: "凶", text: `冲山（${mountain}山忌${info.dayZhi}日，兼向本支之對沖），造葬大凶（原書造葬廿四山山頭凶神；干山之支級沖，別於日干沖）` });
   const js = JIAN_SHE[mountain];
   if (js && (js.unit === "支" ? js.pair.includes(info.dayZhi) : js.pair.includes(info.dayGan)))
-    out.push({ kind: "凶", text: `箭射（${mountain}山忌${js.pair.join("")}${js.unit}日之弓箭煞），造葬忌之（原書第十期山頭凶神）` });
+    out.push({ kind: "凶", text: `箭射（${mountain}山忌${js.pair.join("")}${js.unit}日之弓箭煞），造葬忌之（原書造葬廿四山山頭凶神）` });
   if (d.xingyao.includes(gz))
-    out.push({ kind: "凶", text: `星曜殺（${mountain}山忌${gz}日，剋山正體五行之曜），日犯大忌、時犯小忌（原書第十期山頭凶神）` });
+    out.push({ kind: "凶", text: `星曜殺（${mountain}山忌${gz}日，剋山正體五行之曜），日犯大忌、時犯小忌（原書造葬廿四山山頭凶神）` });
   if (d.shanfang.includes(gz))
-    out.push({ kind: "凶", text: `山方殺（${mountain}山忌${gz}日），日犯大忌、時犯小忌，吉難抵制（原書第十期山頭凶神）` });
+    out.push({ kind: "凶", text: `山方殺（${mountain}山忌${gz}日），日犯大忌、時犯小忌，吉難抵制（原書造葬廿四山山頭凶神）` });
   if (d.chongding.includes(gz))
-    out.push({ kind: "凶", text: `冲丁殺（${mountain}山忌${gz}日，即冲分金），修方更重、造葬亦凶（原書第十期山頭凶神）` });
+    out.push({ kind: "凶", text: `冲丁殺（${mountain}山忌${gz}日，即冲分金），修方更重、造葬亦凶（原書造葬廿四山山頭凶神）` });
   if (d.yao === gz)
-    out.push({ kind: "凶", text: `曜殺（${mountain}山八卦曜殺${gz}日），日犯大忌、時犯小忌，吉不抵制（原書第十期山頭凶神）` });
+    out.push({ kind: "凶", text: `曜殺（${mountain}山八卦曜殺${gz}日），日犯大忌、時犯小忌，吉不抵制（原書造葬廿四山山頭凶神）` });
   const xi = ganZhiCycleIndex(gz);
   if (xi >= 0) {
     const xunHead = "甲" + ZHI_ORDER_E[(xi - (xi % 10)) % 12];
     if (d.wenqu.includes(xunHead))
-      out.push({ kind: "注", text: `文曲逢${xunHead}旬（${mountain}山，旬內十日），支山如犯須辦陰陽、金火填實（原書第十期山頭凶神）` });
+      out.push({ kind: "注", text: `文曲逢${xunHead}旬（${mountain}山，旬內十日），支山如犯須辦陰陽、金火填實（原書造葬廿四山山頭凶神）` });
   }
   if (d.liuri === gz)
-    out.push({ kind: "凶", text: `流日太歲（${mountain}山值${gz}日），太陽到山或木局取用可解（原書第十期山頭凶神；原標旬，此取值日）` });
+    out.push({ kind: "凶", text: `流日太歲（${mountain}山值${gz}日），太陽到山或木局取用可解（原書造葬廿四山山頭凶神；原標旬，此取值日）` });
   for (const [jq, g] of d.xiaomie) {
     if (JIE_QI_YUE[jq] === info.monthZhi && gz === g)
-      out.push({ kind: "凶", text: `消滅殺（${mountain}山，${jq}節內逢${g}日），造葬立向、修方大凶（原書第十期山頭凶神）` });
+      out.push({ kind: "凶", text: `消滅殺（${mountain}山，${jq}節內逢${g}日），造葬立向、修方大凶（原書造葬廿四山山頭凶神）` });
   }
   return out;
 }
