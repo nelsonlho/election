@@ -710,6 +710,16 @@ export const SAN_SHA_FANG: Record<string, string[]> = {
   亥: ["申", "酉", "戌"], 卯: ["申", "酉", "戌"], 未: ["申", "酉", "戌"],
 };
 
+// 麒麟星方（原書第四期 160 頁「麒麟星方」，瑞成本）：逐節麟星占宮，六陽支循環。
+// 立春戌、驚蟄子、清明寅、立夏辰、芒種午、小暑申、立秋戌……（(10＋2·(月建支−寅))mod12）。
+// 麟星到方為吉，貼麒麟符於此方可制火星日（原書 92-93 火星日符制）。以月建（節氣月支）取節。
+// 十二節與原表全合。
+export function qiLinFang(monthZhi: string): string {
+  const i = ZHI_ORDER_E.indexOf(monthZhi);
+  if (i < 0) return "";
+  return ZHI_ORDER_E[(10 + 2 * (((i - 2) % 12 + 12) % 12)) % 12];
+}
+
 // 廿四山：十二支山＋八干山＋四卦山（原書沖山例遍列之）
 export const MOUNTAINS_24 = [
   "壬", "子", "癸", "丑", "艮", "寅", "甲", "卯", "乙", "辰", "巽", "巳",
