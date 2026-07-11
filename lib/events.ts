@@ -875,7 +875,7 @@ export const RULE_LAYERS: RuleLayer[] = [
   { key: "diya", name: "地啞年例", desc: "流年逐月地啞日（八日一週期），俗以制重喪三喪之屬（原書第八期）", events: ["anzang", "potu", "qizan", "xiufen", "rulian", "yijiu", "libei", "kaishengfen", "chengfu", "chufu", "dongtu"] },
   { key: "dikong", name: "地空年例", desc: "流年逐月地空亡日（八日一週期），空亡凶日，金火日或三合可制（原書第八期，瑞成本 418-419）", events: ["anzang", "potu", "qizan", "xiufen", "rulian", "yijiu", "libei", "kaishengfen"] },
   { key: "nianke", name: "年剋山家", desc: "山運納音（山之洪範五行墓庫、年干庫運遁）；年月日納音剋山運則忌，柱中生扶可制（須入座山；原書第十期造葬廿四山總局，瑞成本 487-535）", events: ["ruzhai", "dongtu", "xiuzao", "xiufang", "shangliang", "anzang", "potu", "qizan", "xiufen", "juejing", "zuozao", "anmen", "libei", "kaishengfen", "xietu", "yixi", "qiji", "gaiwu"] },
-  { key: "shantou", name: "山頭日忌", desc: "逐山日級凶神：星曜殺、山方殺、冲丁殺、曜殺、文曲旬、流日太歲、消滅殺（須入座山；原書第十期造葬廿四山總局左頁，涵壬至酉二十山，辛戌乾亥屬第十二期未載）", events: ["ruzhai", "dongtu", "xiuzao", "xiufang", "shangliang", "anzang", "potu", "qizan", "xiufen", "juejing", "zuozao", "anmen", "libei", "kaishengfen", "xietu", "yixi", "qiji", "gaiwu"] },
+  { key: "shantou", name: "山頭日忌", desc: "逐山日級凶神：星曜殺、山方殺、冲丁殺、曜殺、文曲旬、流日太歲、消滅殺（須入座山；原書第十期造葬廿四山總局左頁，涵壬至酉二十山，辛戌乾亥屬第十一期未掃故缺）", events: ["ruzhai", "dongtu", "xiuzao", "xiufang", "shangliang", "anzang", "potu", "qizan", "xiufen", "juejing", "zuozao", "anmen", "libei", "kaishengfen", "xietu", "yixi", "qiji", "gaiwu"] },
   { key: "chuling", name: "除靈周堂", desc: "除靈值人（父母孫男婦女客婿）宜避、值亡可用（原書第十二期書593值例）", events: ["chufu"] },
   { key: "huitou", name: "回頭貢殺箭刃", desc: "辰戌丑未命遇四柱三合全局殺之（不能制化）；命干箭刃雙全（原書 56-57，須入生年）" },
 ];
@@ -1400,7 +1400,7 @@ function nianKeShanJia(info: DayInfo, mountain: string): Reason[] {
 
 // ── 山頭日級凶神（原書第十期造葬廿四山吉凶總局·左頁；瑞成本 487-533）──────────────
 // 逐山定局，照錄原書左頁星曜殺／山方殺／冲丁殺／曜殺／消滅殺／文曲／流日太歲諸欄。
-// 本表涵壬…酉二十山（艮巽坤各兼二向，兼向異者取聯集，寧誤毋漏）；辛戌乾亥在第十二期，
+// 本表涵壬…酉二十山（艮巽坤各兼二向，兼向異者取聯集，寧誤毋漏）；辛戌乾亥在第十一期（另卷未掃），
 // 另卷未載，故缺。星曜殺＝剋山正體五行同氣之干支；曜殺＝八卦曜殺；文曲＝旬（十日）；
 // 消滅殺＝節氣月內逢定干支日（DayInfo 無節氣週期，以月建近節氣界，故略寬）；流日太歲＝值日。
 interface ShanTouRi {
@@ -1449,7 +1449,7 @@ const SHAN_TOU_RI: Record<string, ShanTouRi> = {
 };
 // 干山之支級冲山（原書山頭冲山兼X忌其對沖支）：`shan` 層於干山僅判日干沖（壬↔丙），
 // 未及日支沖（壬山兼亥忌巳、兼子忌午之屬）；此補之。兼向異者聯集。支山／卦山之支級冲山
-// 已在 `shan` 層（日支沖山／對宮沖），故不重出。辛山屬第十二期未載。
+// 已在 `shan` 層（日支沖山／對宮沖），故不重出。辛山屬第十一期未載。
 const GAN_SHAN_CHONG_ZHI: Record<string, string[]> = {
   壬: ["巳", "午"], 癸: ["午", "未"], 甲: ["申", "酉"], 乙: ["酉", "戌"],
   丙: ["亥", "子"], 丁: ["子", "丑"], 庚: ["寅", "卯"],
