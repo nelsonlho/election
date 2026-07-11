@@ -885,6 +885,7 @@ export const RULE_LAYERS: RuleLayer[] = [
   { key: "shantou", name: "山頭日忌", desc: "逐山日級凶神：星曜殺、山方殺、冲丁殺、曜殺、文曲旬、流日太歲、消滅殺（須入座山；原書第十期造葬廿四山總局左頁，涵壬至酉二十山，辛戌乾亥屬第十一期未掃故缺）", events: ["ruzhai", "dongtu", "xiuzao", "xiufang", "shangliang", "anzang", "potu", "qizan", "xiufen", "juejing", "zuozao", "anmen", "libei", "kaishengfen", "xietu", "yixi", "qiji", "gaiwu"] },
   { key: "chuling", name: "除靈周堂", desc: "除靈值人（父母孫男婦女客婿）宜避、值亡可用（原書第十二期書593值例）", events: ["chufu"] },
   { key: "shangguan", name: "上官日凶神", desc: "赴任上官月忌：天牢天刑罪至死別伏罪徒隸天吏天獄牢日獄日刑獄殃敗（皆小忌；月破往亡大忌已在月家層）（原書第十二期書598-599）", events: ["furen"] },
+  { key: "zaochuan", name: "造船日凶神", desc: "造船通忌：河伯、危星（惟忌進水）、天火（月破月建受死往亡已在通用層；火星忌掛帆等繁冷暫未錄）（原書第十二期書606-615）", events: ["zaochuan"] },
   { key: "huitou", name: "回頭貢殺箭刃", desc: "辰戌丑未命遇四柱三合全局殺之（不能制化）；命干箭刃雙全（原書 56-57，須入生年）" },
 ];
 
@@ -1561,6 +1562,28 @@ function shangGuanSha(info: DayInfo): Reason[] {
   return out;
 }
 
+// ── 造船日凶神（原書第十二期書 606-615；造船通忌之月凶神）─────────────────
+// 逐月支忌（正月建寅…）。月破、月建、受死、往亡已在通用層，此錄造船通忌三神。
+// （火星日忌掛帆＝逐月多干支八十餘、真滅沒＝宿法、大退＝逐農曆日、氣往亡＝節後日數，
+//   繁而至冷，暫未錄。）
+const ZAO_CHUAN_SHA: Record<string, [string[], string]> = {
+  河伯: [["亥", "子", "丑", "寅", "卯", "辰", "巳", "午", "未", "申", "酉", "戌"], "造船通忌"],
+  危星: [["酉", "戌", "亥", "子", "丑", "寅", "卯", "辰", "巳", "午", "未", "申"], "惟忌進水"],
+  天火: [["子", "酉", "午", "卯", "子", "酉", "午", "卯", "子", "酉", "午", "卯"], "造船通忌"],
+};
+function zaoChuanSha(info: DayInfo): Reason[] {
+  const zi = ZHI_ORDER_E.indexOf(info.monthZhi);
+  if (zi < 0) return [];
+  const m = (zi - 2 + 12) % 12; // 正月（寅）= 0
+  const out: Reason[] = [];
+  for (const name of Object.keys(ZAO_CHUAN_SHA)) {
+    const [arr, note] = ZAO_CHUAN_SHA[name];
+    if (arr[m] === info.dayZhi)
+      out.push({ kind: "凶", text: `${name}日（${info.monthZhi}月忌${info.dayZhi}日，${note}），造船忌之（原書第十二期造船日凶神）` });
+  }
+  return out;
+}
+
 // ── 年家八座、劍鋒（原書第八期安葬凶神年支表；訣云「橫天八座不堪留」） ──
 // 八座日：凶神年支對定干支日，「勿用」——子年癸酉、丑年甲戌、寅年丁亥、卯年甲子、
 // 辰年乙丑、巳年甲寅、午年丁卯、未年甲辰、申年己巳、酉年甲午、戌年丁未、亥年甲申
@@ -1766,6 +1789,11 @@ export function evaluateDay(info: DayInfo, event: EventKey, opts: EvalOptions = 
   // 上官日凶神（原書第十二期書598-599）：赴任上官之月忌
   if (on("shangguan") && event === "furen") {
     reasons.push(...shangGuanSha(info));
+  }
+
+  // 造船日凶神（原書第十二期書606-615）：造船通忌之月凶神
+  if (on("zaochuan") && event === "zaochuan") {
+    reasons.push(...zaoChuanSha(info));
   }
 
   // 二宅通用：日課流年干之天乙貴人臨日支，吉
