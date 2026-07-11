@@ -875,6 +875,7 @@ export const RULE_LAYERS: RuleLayer[] = [
   { key: "diya", name: "地啞年例", desc: "流年逐月地啞日（八日一週期），俗以制重喪三喪之屬（原書第八期）", events: ["anzang", "potu", "qizan", "xiufen", "rulian", "yijiu", "libei", "kaishengfen", "chengfu", "chufu", "dongtu"] },
   { key: "dikong", name: "地空年例", desc: "流年逐月地空亡日（八日一週期），空亡凶日，金火日或三合可制（原書第八期，瑞成本 418-419）", events: ["anzang", "potu", "qizan", "xiufen", "rulian", "yijiu", "libei", "kaishengfen"] },
   { key: "nianke", name: "年剋山家", desc: "山運納音（山之洪範五行墓庫、年干庫運遁）；年月日納音剋山運則忌，柱中生扶可制（須入座山；原書第十期造葬廿四山總局，瑞成本 487-535）", events: ["ruzhai", "dongtu", "xiuzao", "xiufang", "shangliang", "anzang", "potu", "qizan", "xiufen", "juejing", "zuozao", "anmen", "libei", "kaishengfen", "xietu", "yixi", "qiji", "gaiwu"] },
+  { key: "shantou", name: "山頭日忌", desc: "逐山日級凶神：星曜殺、山方殺、冲丁殺、曜殺、文曲旬、流日太歲、消滅殺（須入座山；原書第十期造葬廿四山總局左頁，涵壬至酉二十山，辛戌乾亥屬第十二期未載）", events: ["ruzhai", "dongtu", "xiuzao", "xiufang", "shangliang", "anzang", "potu", "qizan", "xiufen", "juejing", "zuozao", "anmen", "libei", "kaishengfen", "xietu", "yixi", "qiji", "gaiwu"] },
   { key: "huitou", name: "回頭貢殺箭刃", desc: "辰戌丑未命遇四柱三合全局殺之（不能制化）；命干箭刃雙全（原書 56-57，須入生年）" },
 ];
 
@@ -1396,6 +1397,91 @@ function nianKeShanJia(info: DayInfo, mountain: string): Reason[] {
   return [{ kind: "凶", text: `年剋山家（${mountain}山山運納音屬${w}，${kePillars}剋山運，柱中無生扶之納音制化），造葬忌之（原書第十期造葬廿四山總局）` }];
 }
 
+// ── 山頭日級凶神（原書第十期造葬廿四山吉凶總局·左頁；瑞成本 487-533）──────────────
+// 逐山定局，照錄原書左頁星曜殺／山方殺／冲丁殺／曜殺／消滅殺／文曲／流日太歲諸欄。
+// 本表涵壬…酉二十山（艮巽坤各兼二向，兼向異者取聯集，寧誤毋漏）；辛戌乾亥在第十二期，
+// 另卷未載，故缺。星曜殺＝剋山正體五行同氣之干支；曜殺＝八卦曜殺；文曲＝旬（十日）；
+// 消滅殺＝節氣月內逢定干支日（DayInfo 無節氣週期，以月建近節氣界，故略寬）；流日太歲＝值日。
+interface ShanTouRi {
+  xingyao: string[]; // 星曜殺日
+  shanfang: string[]; // 山方殺日
+  chongding: string[]; // 冲丁殺日（兼向聯集）
+  yao: string; // 曜殺日（八卦曜殺，一干支）
+  wenqu: string[]; // 文曲旬首（兼向聯集）
+  liuri: string; // 流日太歲值日
+  xiaomie: [string, string][]; // 消滅殺 [節氣, 干支]
+}
+// 星曜殺（剋山正體五行同氣干支）
+const XY_水 = ["戊辰", "戊戌", "己丑", "己未"];
+const XY_土 = ["甲寅", "乙卯"];
+const XY_木 = ["庚申", "辛酉"];
+const XY_火 = ["壬子", "癸亥"];
+const XY_金 = ["丙午", "丁巳"];
+// 山方殺（逐五行方組）
+const SF_水 = ["乙卯", "丁巳"]; // 壬子癸
+const SF_艮 = ["庚申", "壬午"]; // 丑艮寅
+const SF_甲 = ["己亥", "丙寅"]; // 甲卯乙
+const SF_巽 = ["乙卯", "丁巳"]; // 辰巽巳
+const SF_火 = ["壬午", "庚申"]; // 丙午丁
+const SF_金 = ["辛酉", "戊辰"]; // 未坤申庚酉
+const SHAN_TOU_RI: Record<string, ShanTouRi> = {
+  壬: { xingyao: XY_水, shanfang: SF_水, chongding: ["丁巳", "辛巳"], yao: "戊辰", wenqu: ["甲子", "甲寅"], liuri: "戊子", xiaomie: [] },
+  子: { xingyao: XY_水, shanfang: SF_水, chongding: ["丙午", "庚午"], yao: "戊辰", wenqu: ["甲寅"], liuri: "戊子", xiaomie: [] },
+  癸: { xingyao: XY_水, shanfang: SF_水, chongding: ["丙午", "庚午"], yao: "戊辰", wenqu: ["甲寅"], liuri: "戊子", xiaomie: [] },
+  丑: { xingyao: XY_土, shanfang: SF_艮, chongding: ["丁未", "辛未"], yao: "丙寅", wenqu: ["甲寅"], liuri: "戊寅", xiaomie: [["處暑", "乙卯"], ["小雪", "癸酉"]] },
+  艮: { xingyao: XY_土, shanfang: SF_艮, chongding: ["丁未", "辛未"], yao: "丙寅", wenqu: ["甲寅", "甲辰"], liuri: "戊寅", xiaomie: [["處暑", "乙卯"], ["小雪", "癸酉"]] },
+  寅: { xingyao: XY_木, shanfang: SF_艮, chongding: ["丙申", "庚申"], yao: "丙寅", wenqu: ["甲辰"], liuri: "戊寅", xiaomie: [["夏至", "辛丑"], ["處暑", "乙卯"], ["秋分", "辛未"], ["小雪", "癸酉"]] },
+  甲: { xingyao: XY_木, shanfang: SF_甲, chongding: ["丙申", "庚申"], yao: "庚申", wenqu: ["甲辰"], liuri: "己卯", xiaomie: [["夏至", "辛丑"], ["秋分", "辛未"]] },
+  卯: { xingyao: XY_木, shanfang: SF_甲, chongding: ["丁酉", "辛酉"], yao: "庚申", wenqu: ["甲辰"], liuri: "己卯", xiaomie: [["大寒", "丁卯"], ["谷雨", "丁酉"]] },
+  乙: { xingyao: XY_木, shanfang: SF_甲, chongding: ["丁酉", "辛酉"], yao: "庚申", wenqu: ["甲辰", "甲午"], liuri: "己卯", xiaomie: [["冬至", "庚子"], ["春分", "庚午"]] },
+  辰: { xingyao: XY_土, shanfang: SF_巽, chongding: ["丙戌", "庚戌"], yao: "辛酉", wenqu: ["甲午"], liuri: "戊辰", xiaomie: [["霜降", "丙子"], ["大暑", "丙午"], ["冬至", "庚子"], ["春分", "庚午"]] },
+  巽: { xingyao: XY_木, shanfang: SF_巽, chongding: ["丙戌", "庚戌"], yao: "辛酉", wenqu: ["甲午"], liuri: "戊辰", xiaomie: [["大暑", "丙子"], ["霜降", "丙午"]] },
+  巳: { xingyao: XY_火, shanfang: SF_巽, chongding: ["丁亥", "辛亥"], yao: "辛酉", wenqu: ["甲午"], liuri: "戊辰", xiaomie: [["霜降", "丙子"], ["處暑", "乙卯"], ["大暑", "丙午"], ["小暑", "癸酉"]] },
+  丙: { xingyao: XY_火, shanfang: SF_火, chongding: ["丁亥", "辛亥"], yao: "己亥", wenqu: ["甲午", "甲申"], liuri: "戊午", xiaomie: [["處暑", "乙卯"], ["小雪", "癸酉"]] },
+  午: { xingyao: XY_火, shanfang: SF_火, chongding: ["丙子", "庚子"], yao: "己亥", wenqu: ["甲申"], liuri: "戊午", xiaomie: [["處暑", "乙卯"], ["小雪", "癸酉"], ["雨水", "甲辰"], ["小滿", "壬戌"]] },
+  丁: { xingyao: XY_火, shanfang: SF_火, chongding: ["丙子", "庚子"], yao: "己亥", wenqu: ["甲申"], liuri: "戊午", xiaomie: [["雨水", "甲辰"], ["小滿", "壬戌"]] },
+  未: { xingyao: XY_土, shanfang: SF_金, chongding: ["丁丑", "辛丑"], yao: "乙卯", wenqu: ["甲申"], liuri: "己未", xiaomie: [["冬至", "庚子"], ["春分", "庚午"], ["雨水", "甲辰"], ["小滿", "壬戌"]] },
+  坤: { xingyao: XY_土, shanfang: SF_金, chongding: ["丁丑", "辛丑"], yao: "乙卯", wenqu: ["甲申", "甲戌"], liuri: "己未", xiaomie: [["冬至", "庚子"], ["春分", "庚午"]] },
+  申: { xingyao: XY_金, shanfang: SF_金, chongding: ["丙寅", "庚寅"], yao: "乙卯", wenqu: ["甲戌"], liuri: "己未", xiaomie: [["冬至", "庚子"], ["春分", "庚午"], ["大寒", "丁卯"], ["谷雨", "丁酉"]] },
+  庚: { xingyao: XY_金, shanfang: SF_金, chongding: ["丙寅", "庚寅"], yao: "丁巳", wenqu: ["甲戌"], liuri: "己酉", xiaomie: [["大寒", "丁卯"], ["谷雨", "丁酉"]] },
+  酉: { xingyao: XY_金, shanfang: SF_金, chongding: ["丁卯", "辛卯"], yao: "丁巳", wenqu: ["甲戌"], liuri: "己酉", xiaomie: [["雨水", "甲辰"], ["小滿", "壬戌"]] },
+};
+// 節氣 → 月建（消滅殺以此近節氣界）
+const JIE_QI_YUE: Record<string, string> = {
+  冬至: "子", 小寒: "丑", 大寒: "丑", 立春: "寅", 雨水: "寅", 驚蟄: "卯", 春分: "卯",
+  清明: "辰", 穀雨: "辰", 谷雨: "辰", 立夏: "巳", 小滿: "巳", 芒種: "午", 夏至: "午",
+  小暑: "未", 大暑: "未", 立秋: "申", 處暑: "申", 白露: "酉", 秋分: "酉",
+  寒露: "戌", 霜降: "戌", 立冬: "亥", 小雪: "亥",
+};
+// 山頭日級凶神：入座山，判是日之星曜殺／山方殺／冲丁殺／曜殺／文曲／流日太歲／消滅殺
+function shanTouRiJi(info: DayInfo, mountain: string): Reason[] {
+  const d = SHAN_TOU_RI[mountain];
+  if (!d) return [];
+  const out: Reason[] = [];
+  const gz = info.dayGanZhi;
+  if (d.xingyao.includes(gz))
+    out.push({ kind: "凶", text: `星曜殺（${mountain}山忌${gz}日，剋山正體五行之曜），日犯大忌、時犯小忌（原書第十期山頭凶神）` });
+  if (d.shanfang.includes(gz))
+    out.push({ kind: "凶", text: `山方殺（${mountain}山忌${gz}日），日犯大忌、時犯小忌，吉難抵制（原書第十期山頭凶神）` });
+  if (d.chongding.includes(gz))
+    out.push({ kind: "凶", text: `冲丁殺（${mountain}山忌${gz}日，即冲分金），修方更重、造葬亦凶（原書第十期山頭凶神）` });
+  if (d.yao === gz)
+    out.push({ kind: "凶", text: `曜殺（${mountain}山八卦曜殺${gz}日），日犯大忌、時犯小忌，吉不抵制（原書第十期山頭凶神）` });
+  const xi = ganZhiCycleIndex(gz);
+  if (xi >= 0) {
+    const xunHead = "甲" + ZHI_ORDER_E[(xi - (xi % 10)) % 12];
+    if (d.wenqu.includes(xunHead))
+      out.push({ kind: "注", text: `文曲逢${xunHead}旬（${mountain}山，旬內十日），支山如犯須辦陰陽、金火填實（原書第十期山頭凶神）` });
+  }
+  if (d.liuri === gz)
+    out.push({ kind: "凶", text: `流日太歲（${mountain}山值${gz}日），太陽到山或木局取用可解（原書第十期山頭凶神；原標旬，此取值日）` });
+  for (const [jq, g] of d.xiaomie) {
+    if (JIE_QI_YUE[jq] === info.monthZhi && gz === g)
+      out.push({ kind: "凶", text: `消滅殺（${mountain}山，${jq}節內逢${g}日），造葬立向、修方大凶（原書第十期山頭凶神）` });
+  }
+  return out;
+}
+
 // ── 年家八座、劍鋒（原書第八期安葬凶神年支表；訣云「橫天八座不堪留」） ──
 // 八座日：凶神年支對定干支日，「勿用」——子年癸酉、丑年甲戌、寅年丁亥、卯年甲子、
 // 辰年乙丑、巳年甲寅、午年丁卯、未年甲辰、申年己巳、酉年甲午、戌年丁未、亥年甲申
@@ -1586,6 +1672,11 @@ export function evaluateDay(info: DayInfo, event: EventKey, opts: EvalOptions = 
   // 年剋山家（原書第十期造葬廿四山總局）：造葬有座山則判山運納音
   if (on("nianke") && (ZAO_ZUO_EVENTS.includes(event) || ZANG_EVENTS.includes(event)) && opts.mountainZhi) {
     reasons.push(...nianKeShanJia(info, opts.mountainZhi));
+  }
+
+  // 山頭日級凶神（原書第十期造葬廿四山總局左頁）：造葬有座山則判日級凶神
+  if (on("shantou") && (ZAO_ZUO_EVENTS.includes(event) || ZANG_EVENTS.includes(event)) && opts.mountainZhi) {
+    reasons.push(...shanTouRiJi(info, opts.mountainZhi));
   }
 
   // 二宅通用：日課流年干之天乙貴人臨日支，吉
