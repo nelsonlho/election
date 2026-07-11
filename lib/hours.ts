@@ -39,6 +39,16 @@ const LIU_HE: Record<string, string> = {
   辰: "酉", 酉: "辰", 巳: "申", 申: "巳", 午: "未", 未: "午",
 };
 const SAN_HE = ["申子辰", "巳酉丑", "寅午戌", "亥卯未"];
+// 傳送吉時、功曹吉時（原書第十二期書583祈福章；貴神到時，宜齋醮祈福）
+// 傳送（申神）：陽日支＋7、陰日支−1；功曹（寅神）：陽日支＋1、陰日支＋5。
+const CHUAN_SONG: Record<string, string> = {
+  子: "未", 丑: "子", 寅: "酉", 卯: "寅", 辰: "亥", 巳: "辰",
+  午: "丑", 未: "午", 申: "卯", 酉: "申", 戌: "巳", 亥: "戌",
+};
+const GONG_CAO: Record<string, string> = {
+  子: "丑", 丑: "午", 寅: "卯", 卯: "申", 辰: "巳", 巳: "戌",
+  午: "未", 未: "子", 申: "酉", 酉: "寅", 戌: "亥", 亥: "辰",
+};
 const GAN_WX: Record<string, string> = {
   甲: "木", 乙: "木", 丙: "火", 丁: "火", 戊: "土",
   己: "土", 庚: "金", 辛: "金", 壬: "水", 癸: "水",
@@ -109,6 +119,8 @@ export function evaluateHours(info: DayInfo, opts: HourOptions = {}): HourEval[]
     if (TIAN_YI[info.dayGan]?.includes(hz)) reasons.push({ kind: "吉", text: "天乙貴人時" });
     if (YI_MA[dz] === hz) reasons.push({ kind: "吉", text: "驛馬時" });
     if (LIU_HE[dz] === hz) reasons.push({ kind: "吉", text: "時與日支六合" });
+    if (CHUAN_SONG[dz] === hz) reasons.push({ kind: "吉", text: "傳送吉時（祈福貴神到時，原書第十二期583）" });
+    if (GONG_CAO[dz] === hz) reasons.push({ kind: "吉", text: "功曹吉時（祈福貴神到時，原書第十二期583）" });
     if (sanHeGroup.includes(hz) && hz !== dz) reasons.push({ kind: "吉", text: "時與日支三合" });
     if (ZHI_CHONG[dz] === hz) reasons.push({ kind: "凶", text: "日時相沖（時破），大凶" });
     if (
