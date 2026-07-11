@@ -680,6 +680,7 @@ export const RULE_LAYERS: RuleLayer[] = [
   { key: "bazuo", name: "八座劍鋒", desc: "年家八座日勿用；八座方、劍鋒方占山制化權用（原書第八期安葬凶神年支表）", events: ["anzang", "potu", "qizan", "xiufen", "rulian", "yijiu", "libei", "kaishengfen"] },
   { key: "diya", name: "地啞年例", desc: "流年逐月地啞日（八日一週期），俗以制重喪三喪之屬（原書第八期）", events: ["anzang", "potu", "qizan", "xiufen", "rulian", "yijiu", "libei", "kaishengfen", "chengfu", "chufu", "dongtu"] },
   { key: "dikong", name: "地空年例", desc: "流年逐月地空亡日（八日一週期），空亡凶日，金火日或三合可制（原書第八期，瑞成本 418-419）", events: ["anzang", "potu", "qizan", "xiufen", "rulian", "yijiu", "libei", "kaishengfen"] },
+  { key: "nianke", name: "年剋山家", desc: "山運納音（山之洪範五行墓庫、年干庫運遁）；年月日納音剋山運則忌，柱中生扶可制（須入座山；原書第十期造葬廿四山總局，瑞成本 487-535）", events: ["ruzhai", "dongtu", "xiuzao", "xiufang", "shangliang", "anzang", "potu", "qizan", "xiufen", "juejing", "zuozao", "anmen", "libei", "kaishengfen", "xietu", "yixi", "qiji", "gaiwu"] },
   { key: "huitou", name: "回頭貢殺箭刃", desc: "辰戌丑未命遇四柱三合全局殺之（不能制化）；命干箭刃雙全（原書 56-57，須入生年）" },
 ];
 
@@ -1111,6 +1112,58 @@ function isDiKong(yearZhi: string, lunarMonth: number, lunarDay: number): boolea
   return ((lunarDay - (g - (m - 1))) % 8 + 8) % 8 === 0;
 }
 
+// ── 年剋山家（山運納音——原書第十期造葬廿四山吉凶總局，瑞成清本書 487-535）──
+// 每山以洪範五行定墓庫（火墓戌／水土墓辰／木墓未／金墓丑），年干立春後庫運遁至庫支
+// 得山運納音；年月日時四柱之納音剋山運納音則忌，就柱中取生山運之納音制化。
+// 洪範五行（口訣：甲寅辰巽戌坎辛申水、震艮巳木、離壬丙乙火、兌丁乾亥金、丑癸坤庚未土）。
+// 山運納音五行逐庫×年干組，照錄原書（壬山甲己甲戌火…酉山甲己乙丑金，八山驗合）：
+// 六十甲子納音五行（每二干支一納音，序＝甲子乙丑金…壬戌癸亥水）：
+const NAYIN_WX = [
+  "金", "火", "木", "土", "金", "火", "水", "土", "金", "木",
+  "水", "土", "火", "木", "水", "金", "火", "木", "土", "金",
+  "火", "水", "土", "金", "木", "水", "土", "火", "木", "水",
+];
+function naYinWx(ganZhi: string): string {
+  const i = ganZhiCycleIndex(ganZhi);
+  return i < 0 ? "" : NAYIN_WX[Math.floor(i / 2)];
+}
+// 廿四山墓庫（洪範五行之墓）：火→戌、水／土→辰、木→未、金→丑
+const MOUNTAIN_KU: Record<string, string> = {
+  壬: "戌", 子: "辰", 癸: "辰", 丑: "辰", 艮: "未", 寅: "辰", 甲: "辰", 卯: "未",
+  乙: "戌", 辰: "辰", 巽: "辰", 巳: "未", 丙: "戌", 午: "戌", 丁: "丑", 未: "辰",
+  坤: "辰", 申: "辰", 庚: "辰", 酉: "丑", 辛: "辰", 戌: "辰", 乾: "丑", 亥: "丑",
+};
+// 山運納音五行：庫支 → [甲己, 乙庚, 丙辛, 丁壬, 戊癸] 年干組之納音五行（照錄原書四庫序）
+const SHAN_YUN_WX: Record<string, string[]> = {
+  戌: ["火", "土", "木", "金", "水"],
+  辰: ["木", "金", "水", "火", "土"],
+  未: ["土", "木", "金", "水", "火"],
+  丑: ["金", "水", "火", "土", "木"],
+};
+// 山運納音五行（依座山、流年干）
+function shanYunWx(mountain: string, yearGan: string): string | null {
+  const ku = MOUNTAIN_KU[mountain];
+  const gi = GAN_ORDER.indexOf(yearGan);
+  if (!ku || gi < 0) return null;
+  return SHAN_YUN_WX[ku]?.[gi % 5] ?? null;
+}
+// 年剋山家：四柱納音剋山運則忌，柱中有生山運之納音則可制
+function nianKeShanJia(info: DayInfo, mountain: string): Reason[] {
+  const w = shanYunWx(mountain, info.yearGanZhi.charAt(0));
+  if (!w) return [];
+  const pillars: [string, string][] = [
+    ["年", info.yearGanZhi], ["月", info.monthGanZhi], ["日", info.dayGanZhi],
+  ];
+  const keNeeded = Object.keys(WX_KE).find((e) => WX_KE[e] === w); // 剋山運之五行
+  const ke = pillars.filter(([, gz]) => naYinWx(gz) === keNeeded);
+  if (ke.length === 0) return [];
+  const zhi = pillars.filter(([, gz]) => naYinWx(gz) === w || WX_SHENG[naYinWx(gz)] === w); // 生扶山運
+  const kePillars = ke.map(([n, gz]) => `${n}柱${gz}(${keNeeded}納音)`).join("、");
+  if (zhi.length > 0)
+    return [{ kind: "注", text: `年剋山家（${mountain}山山運納音屬${w}，${kePillars}剋山運）——柱中有${zhi.map(([n]) => n).join("")}柱納音生扶，可制權用（原書第十期造葬廿四山總局）` }];
+  return [{ kind: "凶", text: `年剋山家（${mountain}山山運納音屬${w}，${kePillars}剋山運，柱中無生扶之納音制化），造葬忌之（原書第十期造葬廿四山總局）` }];
+}
+
 // ── 年家八座、劍鋒（原書第八期安葬凶神年支表；訣云「橫天八座不堪留」） ──
 // 八座日：凶神年支對定干支日，「勿用」——子年癸酉、丑年甲戌、寅年丁亥、卯年甲子、
 // 辰年乙丑、巳年甲寅、午年丁卯、未年甲辰、申年己巳、酉年甲午、戌年丁未、亥年甲申
@@ -1292,6 +1345,11 @@ export function evaluateDay(info: DayInfo, event: EventKey, opts: EvalOptions = 
   // 大月建（原書第九期飛宮）：修方修造修灶有座山則判（訣註：凡別事不忌）
   if (on("dayuejian") && ["xiufang", "zuozao", "xiuzao"].includes(event) && opts.mountainZhi) {
     reasons.push(...daYueJian(info, opts.mountainZhi));
+  }
+
+  // 年剋山家（原書第十期造葬廿四山總局）：造葬有座山則判山運納音
+  if (on("nianke") && (ZAO_ZUO_EVENTS.includes(event) || ZANG_EVENTS.includes(event)) && opts.mountainZhi) {
+    reasons.push(...nianKeShanJia(info, opts.mountainZhi));
   }
 
   // 二宅通用：日課流年干之天乙貴人臨日支，吉
