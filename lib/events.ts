@@ -876,6 +876,7 @@ export const RULE_LAYERS: RuleLayer[] = [
   { key: "dikong", name: "地空年例", desc: "流年逐月地空亡日（八日一週期），空亡凶日，金火日或三合可制（原書第八期，瑞成本 418-419）", events: ["anzang", "potu", "qizan", "xiufen", "rulian", "yijiu", "libei", "kaishengfen"] },
   { key: "nianke", name: "年剋山家", desc: "山運納音（山之洪範五行墓庫、年干庫運遁）；年月日納音剋山運則忌，柱中生扶可制（須入座山；原書第十期造葬廿四山總局，瑞成本 487-535）", events: ["ruzhai", "dongtu", "xiuzao", "xiufang", "shangliang", "anzang", "potu", "qizan", "xiufen", "juejing", "zuozao", "anmen", "libei", "kaishengfen", "xietu", "yixi", "qiji", "gaiwu"] },
   { key: "shantou", name: "山頭日忌", desc: "逐山日級凶神：星曜殺、山方殺、冲丁殺、曜殺、文曲旬、流日太歲、消滅殺（須入座山；原書第十期造葬廿四山總局左頁，涵壬至酉二十山，辛戌乾亥屬第十二期未載）", events: ["ruzhai", "dongtu", "xiuzao", "xiufang", "shangliang", "anzang", "potu", "qizan", "xiufen", "juejing", "zuozao", "anmen", "libei", "kaishengfen", "xietu", "yixi", "qiji", "gaiwu"] },
+  { key: "chuling", name: "除靈周堂", desc: "除靈值人（父母孫男婦女客婿）宜避、值亡可用（原書第十二期書593值例）", events: ["chufu"] },
   { key: "huitou", name: "回頭貢殺箭刃", desc: "辰戌丑未命遇四柱三合全局殺之（不能制化）；命干箭刃雙全（原書 56-57，須入生年）" },
 ];
 
@@ -1508,6 +1509,23 @@ function shanTouRiJi(info: DayInfo, mountain: string): Reason[] {
   return out;
 }
 
+// ── 除靈周堂局（原書第十二期書 593 值例；註 592「除靈之例必須查周堂局，如值人宜避」）──
+// 喪事除靈：值人（父母／孫男／婦女／客婿／女婦／婿客）則凶宜避，值亡則可用
+// （喪事故，與嫁娶周堂之值人乃吉相反）。逐農曆日定位，大小月同值；非純週期，照錄三十日。
+const DELING_ZHOU = [
+  "父母", "亡", "孫男", "亡", "孫男", "亡", "父母", "亡", // 初一–初八
+  "婦女", "亡", "客婿", "婿客", "亡", "亡", "女婦", "亡", // 初九–十六
+  "父母", "亡", "孫男", "亡", "孫男", "亡", "父母", "亡", // 十七–廿四
+  "婦女", "亡", "客婿", "亡", "婿客", "亡", //             廿五–三十
+];
+function delingZhouTang(lunarDay: number): Reason[] {
+  const pos = DELING_ZHOU[lunarDay - 1];
+  if (!pos) return [];
+  if (pos === "亡")
+    return [{ kind: "注", text: `除靈周堂值亡（農曆${lunarDay}日），此位可用（原書第十二期除靈周堂局）` }];
+  return [{ kind: "凶", text: `除靈周堂值${pos}（值生人之位），除靈宜避（原書第十二期除靈周堂局：如值人宜避）` }];
+}
+
 // ── 年家八座、劍鋒（原書第八期安葬凶神年支表；訣云「橫天八座不堪留」） ──
 // 八座日：凶神年支對定干支日，「勿用」——子年癸酉、丑年甲戌、寅年丁亥、卯年甲子、
 // 辰年乙丑、巳年甲寅、午年丁卯、未年甲辰、申年己巳、酉年甲午、戌年丁未、亥年甲申
@@ -1703,6 +1721,11 @@ export function evaluateDay(info: DayInfo, event: EventKey, opts: EvalOptions = 
   // 山頭日級凶神（原書第十期造葬廿四山總局左頁）：造葬有座山則判日級凶神
   if (on("shantou") && (ZAO_ZUO_EVENTS.includes(event) || ZANG_EVENTS.includes(event)) && opts.mountainZhi) {
     reasons.push(...shanTouRiJi(info, opts.mountainZhi));
+  }
+
+  // 除靈周堂（原書第十二期書593）：除靈事查周堂，值人宜避
+  if (on("chuling") && event === "chufu") {
+    reasons.push(...delingZhouTang(info.lunarDay));
   }
 
   // 二宅通用：日課流年干之天乙貴人臨日支，吉
