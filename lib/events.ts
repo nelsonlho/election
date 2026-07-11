@@ -1906,6 +1906,16 @@ export const RULE_LAYERS: RuleLayer[] = [
     ],
   },
   {
+    key: 'dutian',
+    name: '戊己都天夾都',
+    desc: '流年干五虎遁之戊己月建二支為都天、其間一山為五黃夾都，造葬修方大凶（須入座山；原書造葬廿四山年家方位）',
+    events: [
+      'ruzhai', 'dongtu', 'xiuzao', 'xiufang', 'shangliang', 'anzang', 'potu',
+      'qizan', 'xiufen', 'juejing', 'zuozao', 'anmen', 'libei', 'kaishengfen',
+      'xietu', 'yixi', 'qiji', 'gaiwu',
+    ],
+  },
+  {
     key: 'qifu',
     name: '祈福吉日',
     desc: '齋醮諸會吉日：大會小會三元四始五臘節會期會、每月初七北斗辰會（黃籙六十甲子吉凶、傳送功曹吉時暫未錄）（原書第十二期書580-583）',
@@ -3735,6 +3745,28 @@ function maQianZhiTui(info: DayInfo, mountain: string): Reason[] {
   return [];
 }
 
+// ── 戊己都天、五黃夾都（原書造葬廿四山年家方位；逐流年占三山）─────────────────
+// 戊己都天＝流年干五虎遁之戊、己月建二支；夾都＝二者之間一山（干或卦）。造葬修方大凶。
+// 甲己年辰巳夾巽、乙庚年寅卯夾甲、丙辛年戌亥夾乾、丁壬年申酉夾庚、戊癸年午未夾丁。
+const DU_TIAN: Record<string, { wu: string; ji: string; jia: string }> = {
+  甲: { wu: "辰", ji: "巳", jia: "巽" }, 己: { wu: "辰", ji: "巳", jia: "巽" },
+  乙: { wu: "寅", ji: "卯", jia: "甲" }, 庚: { wu: "寅", ji: "卯", jia: "甲" },
+  丙: { wu: "戌", ji: "亥", jia: "乾" }, 辛: { wu: "戌", ji: "亥", jia: "乾" },
+  丁: { wu: "申", ji: "酉", jia: "庚" }, 壬: { wu: "申", ji: "酉", jia: "庚" },
+  戊: { wu: "午", ji: "未", jia: "丁" }, 癸: { wu: "午", ji: "未", jia: "丁" },
+};
+function duTianSha(info: DayInfo, mountain: string): Reason[] {
+  const d = DU_TIAN[info.yearGanZhi.charAt(0)];
+  if (!d) return [];
+  const yg = info.yearGanZhi;
+  if (mountain === d.jia)
+    return [{ kind: "凶", text: `五黃夾都（流年${yg}戊己都天夾${d.jia}山），造葬修方大凶（原書造葬廿四山年家方位）` }];
+  const zset = shanZhiSet(mountain);
+  if (zset.includes(d.wu) || zset.includes(d.ji))
+    return [{ kind: "凶", text: `戊己都天（流年${yg}都天占${d.wu}${d.ji}方，坐${mountain}山在焉），造葬修方大凶（原書造葬廿四山年家方位）` }];
+  return [];
+}
+
 // ── 年家八座、劍鋒（原書第八期安葬凶神年支表；訣云「橫天八座不堪留」） ──
 // 八座日：凶神年支對定干支日，「勿用」——子年癸酉、丑年甲戌、寅年丁亥、卯年甲子、
 // 辰年乙丑、巳年甲寅、午年丁卯、未年甲辰、申年己巳、酉年甲午、戌年丁未、亥年甲申
@@ -4093,6 +4125,15 @@ export function evaluateDay(
     opts.mountainZhi
   ) {
     reasons.push(...maQianZhiTui(info, opts.mountainZhi));
+  }
+
+  // 戊己都天、五黃夾都（原書造葬廿四山年家方位）：造葬修方有座山則判
+  if (
+    on('dutian') &&
+    (ZAO_ZUO_EVENTS.includes(event) || ZANG_EVENTS.includes(event)) &&
+    opts.mountainZhi
+  ) {
+    reasons.push(...duTianSha(info, opts.mountainZhi));
   }
 
   // 除靈周堂（原書第十二期書593）：除靈事查周堂，值人宜避
