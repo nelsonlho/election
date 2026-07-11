@@ -679,6 +679,7 @@ export const RULE_LAYERS: RuleLayer[] = [
   { key: "xianming", name: "仙命諸忌", desc: "日沖仙命、三殺、三刑、旬空（須入亡者生年——原書第八期）", events: ["anzang", "potu", "qizan", "xiufen", "rulian", "yijiu", "libei", "kaishengfen"] },
   { key: "bazuo", name: "八座劍鋒", desc: "年家八座日勿用；八座方、劍鋒方占山制化權用（原書第八期安葬凶神年支表）", events: ["anzang", "potu", "qizan", "xiufen", "rulian", "yijiu", "libei", "kaishengfen"] },
   { key: "diya", name: "地啞年例", desc: "流年逐月地啞日（八日一週期），俗以制重喪三喪之屬（原書第八期）", events: ["anzang", "potu", "qizan", "xiufen", "rulian", "yijiu", "libei", "kaishengfen", "chengfu", "chufu", "dongtu"] },
+  { key: "dikong", name: "地空年例", desc: "流年逐月地空亡日（八日一週期），空亡凶日，金火日或三合可制（原書第八期，瑞成本 418-419）", events: ["anzang", "potu", "qizan", "xiufen", "rulian", "yijiu", "libei", "kaishengfen"] },
   { key: "huitou", name: "回頭貢殺箭刃", desc: "辰戌丑未命遇四柱三合全局殺之（不能制化）；命干箭刃雙全（原書 56-57，須入生年）" },
 ];
 
@@ -1092,6 +1093,24 @@ function isDiYa(yearZhi: string, lunarMonth: number, lunarDay: number): boolean 
   return ((lunarDay - (g - (m - 1))) % 8 + 8) % 8 === 0;
 }
 
+// ── 地空年例（原書第八期，安葬忌例／六十仙命空亡前——瑞成清本書 418-419）───
+// 流年年支分八組（同地啞），農曆日號八日一週期：組值 g——子7、丑寅0、卯7、辰巳6、
+// 午5、未申4、酉3、戌亥2；某月地空日＝日號 d 合 d ≡ g−(月−1)（mod 8）。
+// 逐格與此式合（子年正月初七十五廿三、二月初六十四廿二三十……戌亥年正月初二……）。
+// 表首註「地空日如是金火日、或三合便可用也」——故作注（可制），葬事值之權用。
+// 注意：g 與地啞僅子異（地啞子1、地空子7），餘七組同——已三驗子年正月為{7,15,23}非{1,9,17,25}。
+const DI_KONG_G: Record<string, number> = {
+  子: 7, 丑: 0, 寅: 0, 卯: 7, 辰: 6, 巳: 6,
+  午: 5, 未: 4, 申: 4, 酉: 3, 戌: 2, 亥: 2,
+};
+
+function isDiKong(yearZhi: string, lunarMonth: number, lunarDay: number): boolean {
+  const g = DI_KONG_G[yearZhi];
+  if (g === undefined) return false;
+  const m = Math.abs(lunarMonth);
+  return ((lunarDay - (g - (m - 1))) % 8 + 8) % 8 === 0;
+}
+
 // ── 年家八座、劍鋒（原書第八期安葬凶神年支表；訣云「橫天八座不堪留」） ──
 // 八座日：凶神年支對定干支日，「勿用」——子年癸酉、丑年甲戌、寅年丁亥、卯年甲子、
 // 辰年乙丑、巳年甲寅、午年丁卯、未年甲辰、申年己巳、酉年甲午、戌年丁未、亥年甲申
@@ -1305,6 +1324,9 @@ export function evaluateDay(info: DayInfo, event: EventKey, opts: EvalOptions = 
   }
 
   // 地啞年例（原書第八期）：喪葬課值地啞日，俗以制重喪三喪之屬
+  if (on("dikong") && ZANG_EVENTS.includes(event) && isDiKong(info.yearGanZhi.charAt(1), info.lunarMonth, info.lunarDay)) {
+    reasons.push({ kind: "注", text: "地空日（原書：地空年例）——空亡凶日，惟金火日或三合可制權用（葬事）" });
+  }
   if (on("diya") && SAN_SANG_EVENTS.includes(event) && isDiYa(info.yearGanZhi.charAt(1), info.lunarMonth, info.lunarDay)) {
     reasons.push({ kind: "注", text: "地啞日（原書：地啞年例）——俗以制重喪、三喪之屬，喪葬課可權用" });
   }
