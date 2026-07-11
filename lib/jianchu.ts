@@ -106,7 +106,8 @@ export type JianChuEventKey =
   | "wenming" | "naxu" | "guining" | "jinrenkou" | "huiqinyou"
   | "yixi" | "qiji" | "gaiwu" | "chuhuo" | "zaocang" | "buyuan" | "famu"
   | "kaicang" | "zhichan" | "yunniang" | "jingluo" | "buzhuo" | "quyu"
-  | "suhui" | "choushen" | "muyu" | "titou";
+  | "suhui" | "choushen" | "muyu" | "titou"
+  | "qifu" | "zaochuan";
 
 export const JIANCHU_BY_EVENT: Record<
   JianChuEventKey,
@@ -227,6 +228,10 @@ export const JIANCHU_BY_EVENT: Record<
   jisi: { good: ["除", "滿", "定", "危", "成", "開"], bad: ["破"] },
   // 進香祈福：同祭祀之例
   jinxiang: { good: ["除", "滿", "定", "危", "成", "開"], bad: ["破"] },
+  // 祈福齋醮：同祭祀之例
+  qifu: { good: ["除", "滿", "定", "危", "成", "開"], bad: ["破"] },
+  // 造船：造作之例（定成執開吉；破閉危忌）
+  zaochuan: { good: ["定", "成", "執", "開"], bad: ["破", "閉", "危"] },
   // 安香：同祭祀之例
   anxiang: { good: ["除", "滿", "定", "危", "成", "開"], bad: ["破"] },
   // 開光：除危成開吉；破閉忌

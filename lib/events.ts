@@ -14,7 +14,8 @@ export type EventKey =
   | "wenming" | "naxu" | "guining" | "jinrenkou" | "huiqinyou"
   | "yixi" | "qiji" | "gaiwu" | "chuhuo" | "zaocang" | "buyuan" | "famu"
   | "kaicang" | "zhichan" | "yunniang" | "jingluo" | "buzhuo" | "quyu"
-  | "suhui" | "choushen" | "muyu" | "titou";
+  | "suhui" | "choushen" | "muyu" | "titou"
+  | "qifu" | "zaochuan";
 export type Rating = "吉" | "平" | "凶";
 
 export const EVENT_NAMES: Record<EventKey, string> = {
@@ -81,6 +82,8 @@ export const EVENT_NAMES: Record<EventKey, string> = {
   choushen: "酬神",
   muyu: "沐浴",
   titou: "剃頭整甲",
+  qifu: "祈福",
+  zaochuan: "造船",
 };
 
 // 事類分科（UI 選單自動生成；新事類入既有科，首層以四五科為限）
@@ -146,6 +149,7 @@ export const EVENT_CATEGORIES: { category: string; events: EventDef[] }[] = [
       { key: "jingluo", name: "經絡安機", mingInput: "self" },
       { key: "buzhuo", name: "捕捉畋獵", mingInput: "self" },
       { key: "quyu", name: "取漁結網", mingInput: "self" },
+      { key: "zaochuan", name: "造船", mingInput: "self" },
     ],
   },
   {
@@ -156,6 +160,7 @@ export const EVENT_CATEGORIES: { category: string; events: EventDef[] }[] = [
       { key: "kaiguang", name: "開光", mingInput: "self" },
       { key: "anxiang", name: "安香", mingInput: "self" },
       { key: "jiechu", name: "解除禳災", mingInput: "self" },
+      { key: "qifu", name: "祈福", mingInput: "self" },
       { key: "suhui", name: "塑繪", mingInput: "self" },
       { key: "choushen", name: "酬神", mingInput: "self" },
       { key: "muyu", name: "沐浴", mingInput: "self" },
@@ -763,6 +768,8 @@ const EVENT_TERMS: Record<EventKey, string[]> = {
   nachu: ["納畜", "牧養"],
   jisi: ["祭祀"],
   jinxiang: ["祈福", "齋醮"],
+  qifu: ["祈福", "齋醮"],
+  zaochuan: ["造船"],
   kaiguang: ["開光"],
   anxiang: ["安香"],
   jiechu: ["解除", "掃舍宇"],
