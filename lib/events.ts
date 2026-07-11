@@ -251,14 +251,50 @@ function sanDe(info: DayInfo): string[] {
   return out;
 }
 
-// ── 嫁娶周堂 ──────────────────────────────────────────────
-// 周堂圖八位（順序）：夫、姑、堂、翁、第、竈、婦、廚
-// 大月（三十日）初一起「夫」順行；小月（廿九日）初一起「婦」逆行
-const ZHOU_TANG = ["夫", "姑", "堂", "翁", "第", "竈", "婦", "廚"];
+// ── 嫁娶周堂局（原書第四期 書136-137，瑞成清本大小月例互證） ──
+// 周堂八位（順序）：夫、姑、堂、翁、第、竈、婦、廚。值夫、值婦＝大凶最忌。
+// 大月（三十日）初一起「夫」順行；小月（廿九日）初一起「婦」逆行。
+// 白虎值、麟符貼繫「日位」（非周堂神），大小月各自成環（小月序為大月之反）。
+export type ZhouTangSlot = {
+  name: string;        // 周堂神
+  ji: "凶" | "吉" | "注"; // 值夫婦凶；堂第吉；翁姑竈廚注（遮掩勿登可用）
+  note: string;        // 原書按語
+  baihu: string;       // 白虎值（灶/堂/床/死/睡/門/路/廚）
+  linfu: string;       // 麟符貼（貼X／免用）
+};
 
+// 大月例（index＝(lunarDay-1)%8）
+const ZHOU_TANG_BIG: ZhouTangSlot[] = [
+  { name: "夫", ji: "凶", note: "此日大凶，最忌不用", baihu: "灶", linfu: "貼灶" },
+  { name: "姑", ji: "注", note: "是日姑人勿登堂（無姑或從權則吉）", baihu: "堂", linfu: "貼堂" },
+  { name: "堂", ji: "吉", note: "新人候三朝登堂，吉", baihu: "床", linfu: "貼床" },
+  { name: "翁", ji: "注", note: "新人進門翁勿登堂（無翁或從權則可用）", baihu: "死", linfu: "免用" },
+  { name: "第", ji: "吉", note: "士家之第，非女弟也，吉", baihu: "睡", linfu: "貼床" },
+  { name: "竈", ji: "注", note: "新人進門竈門遮掩即可用", baihu: "門", linfu: "貼門" },
+  { name: "婦", ji: "凶", note: "此日大凶，最忌不用", baihu: "路", linfu: "貼簪" },
+  { name: "廚", ji: "注", note: "新人進門竈門遮掩即可用", baihu: "廚", linfu: "貼灶" },
+];
+
+// 小月例（index＝(lunarDay-1)%8）
+const ZHOU_TANG_SMALL: ZhouTangSlot[] = [
+  { name: "婦", ji: "凶", note: "此日大凶，最忌不用", baihu: "廚", linfu: "貼灶" },
+  { name: "竈", ji: "注", note: "新人進門竈門遮掩即可用", baihu: "路", linfu: "貼簪" },
+  { name: "第", ji: "吉", note: "士家門第，非女弟也，吉", baihu: "門", linfu: "貼門" },
+  { name: "翁", ji: "注", note: "是日翁人勿登堂（無翁或從權則吉）", baihu: "睡", linfu: "貼床" },
+  { name: "堂", ji: "吉", note: "新人候三朝登堂，吉", baihu: "死", linfu: "免用" },
+  { name: "姑", ji: "注", note: "是日姑人勿登堂（無姑或從權則吉）", baihu: "床", linfu: "貼床" },
+  { name: "夫", ji: "凶", note: "此日大凶，最忌不用", baihu: "堂", linfu: "貼堂" },
+  { name: "廚", ji: "注", note: "新人進門竈門遮掩即可用", baihu: "灶", linfu: "貼灶" },
+];
+
+export function jiaQuZhouTang(lunarDay: number, monthDayCount: number): ZhouTangSlot {
+  const arr = monthDayCount >= 30 ? ZHOU_TANG_BIG : ZHOU_TANG_SMALL;
+  return arr[(lunarDay - 1 + 800) % 8];
+}
+
+// 舊接口：僅返周堂神名（兼容既有呼叫）
 export function zhouTang(lunarDay: number, monthDayCount: number): string {
-  if (monthDayCount >= 30) return ZHOU_TANG[(lunarDay - 1) % 8];
-  return ZHOU_TANG[(6 - (lunarDay - 1) + 800) % 8];
+  return jiaQuZhouTang(lunarDay, monthDayCount).name;
 }
 
 // ── 女命十二地支日吉凶論（原書 86-89 頁，以女命三合局定局） ──
@@ -1499,21 +1535,11 @@ export function evaluateDay(info: DayInfo, event: EventKey, opts: EvalOptions = 
         reasons.push({ kind: "凶", text: "本月妨夫月，原書：不利不用" });
       else reasons.push({ kind: "凶", text: "本月妨婦月，原書：不利不用" });
     }
-    const zt = on("zhoutang") ? zhouTang(info.lunarDay, info.lunarMonthDayCount) : "";
-    if (zt === "") {
-      // 周堂層停用
-    } else if (zt === "夫" || zt === "婦")
-      reasons.push({ kind: "凶", text: `嫁娶周堂值「${zt}」，原書：此日大凶，最忌不用` });
-    else if (zt === "翁")
-      reasons.push({ kind: "注", text: "周堂值翁，新人進門翁勿相見（無翁或從權則可用）" });
-    else if (zt === "姑")
-      reasons.push({ kind: "注", text: "周堂值姑，新人進門姑勿登堂（無姑或從權則可用）" });
-    else if (zt === "堂")
-      reasons.push({ kind: "吉", text: "周堂值堂，新人候三朝登堂，吉" });
-    else if (zt === "第")
-      reasons.push({ kind: "吉", text: "周堂值第（士家之第，非女弟也），吉" });
-    else
-      reasons.push({ kind: "注", text: `周堂值${zt}，新人進門${zt}門遮掩即可用` });
+    if (on("zhoutang")) {
+      const zt = jiaQuZhouTang(info.lunarDay, info.lunarMonthDayCount);
+      reasons.push({ kind: zt.ji, text: `嫁娶周堂值「${zt.name}」，原書：${zt.note}` });
+      reasons.push({ kind: "注", text: `是日白虎值「${zt.baihu}」，麟符${zt.linfu === "免用" ? "免用" : `${zt.linfu}以制`}` });
+    }
   }
 
   // 建除十二神
