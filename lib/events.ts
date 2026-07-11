@@ -1446,6 +1446,13 @@ const SHAN_TOU_RI: Record<string, ShanTouRi> = {
   庚: { xingyao: XY_金, shanfang: SF_金, chongding: ["丙寅", "庚寅"], yao: "丁巳", wenqu: ["甲戌"], liuri: "己酉", xiaomie: [["大寒", "丁卯"], ["谷雨", "丁酉"]] },
   酉: { xingyao: XY_金, shanfang: SF_金, chongding: ["丁卯", "辛卯"], yao: "丁巳", wenqu: ["甲戌"], liuri: "己酉", xiaomie: [["雨水", "甲辰"], ["小滿", "壬戌"]] },
 };
+// 干山之支級冲山（原書山頭冲山兼X忌其對沖支）：`shan` 層於干山僅判日干沖（壬↔丙），
+// 未及日支沖（壬山兼亥忌巳、兼子忌午之屬）；此補之。兼向異者聯集。支山／卦山之支級冲山
+// 已在 `shan` 層（日支沖山／對宮沖），故不重出。辛山屬第十二期未載。
+const GAN_SHAN_CHONG_ZHI: Record<string, string[]> = {
+  壬: ["巳", "午"], 癸: ["午", "未"], 甲: ["申", "酉"], 乙: ["酉", "戌"],
+  丙: ["亥", "子"], 丁: ["子", "丑"], 庚: ["寅", "卯"],
+};
 // 節氣 → 月建（消滅殺以此近節氣界）
 const JIE_QI_YUE: Record<string, string> = {
   冬至: "子", 小寒: "丑", 大寒: "丑", 立春: "寅", 雨水: "寅", 驚蟄: "卯", 春分: "卯",
@@ -1459,6 +1466,9 @@ function shanTouRiJi(info: DayInfo, mountain: string): Reason[] {
   if (!d) return [];
   const out: Reason[] = [];
   const gz = info.dayGanZhi;
+  const gsc = GAN_SHAN_CHONG_ZHI[mountain];
+  if (gsc?.includes(info.dayZhi))
+    out.push({ kind: "凶", text: `冲山（${mountain}山忌${info.dayZhi}日，兼向本支之對沖），造葬大凶（原書第十期山頭凶神；干山之支級沖，別於日干沖）` });
   if (d.xingyao.includes(gz))
     out.push({ kind: "凶", text: `星曜殺（${mountain}山忌${gz}日，剋山正體五行之曜），日犯大忌、時犯小忌（原書第十期山頭凶神）` });
   if (d.shanfang.includes(gz))
