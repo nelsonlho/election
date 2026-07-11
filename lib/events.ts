@@ -591,6 +591,9 @@ const MU_MA_FM = ["巳", "未", "酉", "申", "戌", "子", "亥", "丑", "卯",
 const TIAN_ZEI_FM = ["辰", "酉", "寅", "未", "子", "巳", "戌", "卯", "申", "丑", "午", "亥"]; // 天賊
 // 朱雀巽（忌入山，鳳凰符制可用）：固定干支日，干支序每+9（乙丑#2起，書327原註「此六日」）
 const ZHU_QUE_XUN = new Set(["乙丑", "甲戌", "癸未", "壬辰", "辛丑", "庚戌", "己未"]);
+// 離巢日（避宅出火忌例，書328；per月，忌入宅出火移徙，吉多可用）
+const LI_CHAO = ["辰", "丑", "戌", "未", "卯", "子", "酉", "午", "寅", "亥", "申", "巳"];
+const LI_CHAO_EVENTS: EventKey[] = ["ruzhai", "chuhuo", "yixi"];
 
 function famuJi(info: DayInfo): Reason[] {
   const out: Reason[] = [];
@@ -687,6 +690,12 @@ function commonBad(info: DayInfo, event: EventKey): Reason[] {
   if (s.yueJi) out.push({ kind: "注", text: "月忌日（初五、十四、廿三），俗忌百事，吉多可用（原書第六期書329）" });
   if (s.jueYanHuo && JUE_YAN_EVENTS.includes(event))
     out.push({ kind: "凶", text: "絕煙火日，忌入宅、移徙、作灶、出火（原書第六期書324・329 避宅出火忌例）" });
+  if (LI_CHAO_EVENTS.includes(event) && LI_CHAO[MONTH_ORDER_E.indexOf(info.monthZhi)] === info.dayZhi)
+    out.push({ kind: "注", text: "離巢日，入宅出火移徙忌之，吉多可用（原書第六期書328 避宅出火忌例）" });
+  if (event === "shangliang" && info.lunarDay === 9)
+    out.push({ kind: "凶", text: "橫天日（每月初九），忌上樑（原書第六期書325）" });
+  if (event === "yixi" && info.lunarDay === 25)
+    out.push({ kind: "凶", text: "橫天日（每月廿五），忌移徙（原書第六期書325）" });
   if (s.wangWang && WANG_WANG_EVENTS.includes(event))
     out.push({ kind: "凶", text: "往亡日，忌出行、嫁娶、移徙、上任" });
   if (s.guiJi && GUI_JI_EVENTS.includes(event))
