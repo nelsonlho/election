@@ -436,6 +436,24 @@ const HONG_YAN: Record<string, string> = {
   甲: "午", 乙: "申", 丙: "寅", 丁: "未", 戊: "辰",
   己: "辰", 庚: "戌", 辛: "酉", 壬: "子", 癸: "申",
 };
+// 五行長生墓／死／絕位（陽干順、陰干逆）——夫星（正官干）・天嗣（食神干）之墓死絕
+const WX_MU: Record<string, string> = {
+  甲: "未", 乙: "戌", 丙: "戌", 丁: "丑", 戊: "戌",
+  己: "丑", 庚: "丑", 辛: "辰", 壬: "辰", 癸: "未",
+};
+const WX_SI: Record<string, string> = {
+  甲: "午", 乙: "亥", 丙: "酉", 丁: "寅", 戊: "酉",
+  己: "寅", 庚: "子", 辛: "巳", 壬: "卯", 癸: "申",
+};
+const WX_JUE: Record<string, string> = {
+  甲: "申", 乙: "酉", 丙: "亥", 丁: "子", 戊: "亥",
+  己: "子", 庚: "寅", 辛: "卯", 壬: "巳", 癸: "午",
+};
+// 食神干（天嗣干＝命干＋2）
+const SHI_SHEN: Record<string, string> = {
+  甲: "丙", 乙: "丁", 丙: "戊", 丁: "己", 戊: "庚",
+  己: "辛", 庚: "壬", 辛: "癸", 壬: "甲", 癸: "乙",
+};
 // 孤辰・寡宿（命支三會→孤・寡）
 function guChenGuaSu(zhi: string): { gu: string; gua: string } {
   if ("亥子丑".includes(zhi)) return { gu: "寅", gua: "戌" };
@@ -515,12 +533,17 @@ function hunShenSha(info: DayInfo, fGan: string | undefined, fZhi: string): Reas
   // 沖母腹（沖命支之日；別於沖男女宮之滅子胎）——第四五期逐命：甲戌辰/乙未丑
   if (dz === zhiAdd(fZhi, 6))
     out.push({ kind: "凶", text: "日支沖命，犯沖母腹，忌用（原書：六十女總局）" });
-  // ── 墓煞層（第四五期左頁 per命忌支；甲戌·乙未二命反推）──
-  // 夫星墓＝夫星支（五虎遁正官）＋9（墓庫）
+  // ── 墓煞層（第四五期左頁 per命忌支；甲戌·庚午·乙未三命反推）──
+  // 夫星墓／死／絕＝正官干五行（陽順陰逆）之墓／死／絕；天嗣墓／死／絕＝食神干同理
   if (fGan) {
-    const fuXingZhi = wuHuZhi(fGan, ZHENG_GUAN[fGan]);
-    if (dz === zhiAdd(fuXingZhi, 9))
-      out.push({ kind: "注", text: "犯夫星墓，慎用（原書：六十女總局左局）" });
+    const guan = ZHENG_GUAN[fGan];
+    const si = SHI_SHEN[fGan];
+    if (dz === WX_MU[guan]) out.push({ kind: "注", text: "犯夫星墓，慎用（原書：六十女總局左局）" });
+    else if (dz === WX_SI[guan]) out.push({ kind: "注", text: "犯夫星死，慎用（原書：六十女總局左局）" });
+    else if (dz === WX_JUE[guan]) out.push({ kind: "注", text: "犯夫星絕，慎用（原書：六十女總局左局）" });
+    if (dz === WX_MU[si]) out.push({ kind: "注", text: "犯天嗣墓，慎用（原書：六十女總局左局）" });
+    else if (dz === WX_SI[si]) out.push({ kind: "注", text: "犯天嗣死，慎用（原書：六十女總局左局）" });
+    else if (dz === WX_JUE[si]) out.push({ kind: "注", text: "犯天嗣絕，慎用（原書：六十女總局左局）" });
   }
   // 孤辰・寡宿
   const { gu, gua } = guChenGuaSu(fZhi);
