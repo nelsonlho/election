@@ -886,6 +886,7 @@ export const RULE_LAYERS: RuleLayer[] = [
   { key: "chuling", name: "除靈周堂", desc: "除靈值人（父母孫男婦女客婿）宜避、值亡可用（原書第十二期書593值例）", events: ["chufu"] },
   { key: "shangguan", name: "上官日凶神", desc: "赴任上官月忌：天牢天刑罪至死別伏罪徒隸天吏天獄牢日獄日刑獄殃敗（皆小忌；月破往亡大忌已在月家層）（原書第十二期書598-599）", events: ["furen"] },
   { key: "zaochuan", name: "造船日凶神", desc: "造船通忌：河伯、危星（惟忌進水）、天火（月破月建受死往亡已在通用層；火星忌掛帆等繁冷暫未錄）（原書第十二期書606-615）", events: ["zaochuan"] },
+  { key: "qifu", name: "祈福吉日", desc: "齋醮諸會吉日：大會小會三元四始五臘節會期會、每月初七北斗辰會（黃籙六十甲子吉凶、傳送功曹吉時暫未錄）（原書第十二期書580-583）", events: ["qifu"] },
   { key: "huitou", name: "回頭貢殺箭刃", desc: "辰戌丑未命遇四柱三合全局殺之（不能制化）；命干箭刃雙全（原書 56-57，須入生年）" },
 ];
 
@@ -1584,6 +1585,32 @@ function zaoChuanSha(info: DayInfo): Reason[] {
   return out;
 }
 
+// ── 祈福吉日（原書第十二期書 580-583；齋醮諸會吉日）─────────────────────
+// 特定農曆日期之會（月,日,會名）＋干支日之會。皆吉，宜齋醮祈福。
+// （黃籙六十甲子吉凶雙標繁，傳送／功曹吉時屬時課，暫未錄。）
+const QIFU_DATE: [number, number, string][] = [
+  [1, 1, "大會天曹遷賞會／四始／天臘"], [7, 7, "大會地府慶生會／道德臘"], [10, 15, "大會水府建生會／三元水官解厄"],
+  [1, 15, "三元天官賜福"], [7, 15, "三元地官赦罪"],
+  [4, 1, "四始"], [7, 1, "四始"], [10, 1, "四始／民歲臘"], [5, 5, "地臘"],
+];
+const QIFU_GZ: Record<string, string> = {
+  甲子: "小會太乙簡閱神祇會／人節會", 庚申: "小會三尸白人罪會／月期會", 甲申: "地節會", 甲戌: "五行會",
+  甲午: "天節會", 甲辰: "四時會", 丁卯: "真僊會", 辛酉: "星辰會", 壬午: "地期會", 庚午: "日期會",
+  丙午: "天期會", 壬子: "人期會",
+};
+function qiFuJi(info: DayInfo): Reason[] {
+  const out: Reason[] = [];
+  for (const [m, d, name] of QIFU_DATE)
+    if (info.lunarMonth === m && info.lunarDay === d)
+      out.push({ kind: "吉", text: `祈福吉日（${name}），宜齋醮祈福（原書第十二期祈福章）` });
+  if (info.lunarDay === 7)
+    out.push({ kind: "吉", text: `祈福吉日（每月初七北斗辰會），宜祈福（原書第十二期四始吉日）` });
+  const g = QIFU_GZ[info.dayGanZhi];
+  if (g)
+    out.push({ kind: "吉", text: `祈福吉日（${info.dayGanZhi}日${g}），宜齋醮祈福（原書第十二期）` });
+  return out;
+}
+
 // ── 年家八座、劍鋒（原書第八期安葬凶神年支表；訣云「橫天八座不堪留」） ──
 // 八座日：凶神年支對定干支日，「勿用」——子年癸酉、丑年甲戌、寅年丁亥、卯年甲子、
 // 辰年乙丑、巳年甲寅、午年丁卯、未年甲辰、申年己巳、酉年甲午、戌年丁未、亥年甲申
@@ -1794,6 +1821,11 @@ export function evaluateDay(info: DayInfo, event: EventKey, opts: EvalOptions = 
   // 造船日凶神（原書第十二期書606-615）：造船通忌之月凶神
   if (on("zaochuan") && event === "zaochuan") {
     reasons.push(...zaoChuanSha(info));
+  }
+
+  // 祈福吉日（原書第十二期書580-583）：齋醮諸會吉日
+  if (on("qifu") && event === "qifu") {
+    reasons.push(...qiFuJi(info));
   }
 
   // 二宅通用：日課流年干之天乙貴人臨日支，吉
