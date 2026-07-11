@@ -47,6 +47,7 @@ export interface DayInfo {
   ji: string[]; // 通書忌
   jieQi: string; // 當日節氣（無則空）
   nextDayJieQi: string; // 翌日節氣（判四離四絕）
+  jieOffset: number; // 距當月節（節＝0）之整日數，氣往亡用
 }
 
 export function getDayInfo(y: number, m: number, d: number): DayInfo {
@@ -79,7 +80,17 @@ export function getDayInfo(y: number, m: number, d: number): DayInfo {
     ji: lunar.getDayJi().map(toTraditional),
     jieQi: toTraditional(lunar.getJieQi()),
     nextDayJieQi: toTraditional(next.getJieQi()),
+    jieOffset: jieOffsetOf(solar, lunar),
   };
+}
+
+// 距當月節之整日數（節當日＝0）：氣往亡「節後第N日」用
+function jieOffsetOf(solar: Solar, lunar: Lunar): number {
+  const prevJie = (lunar as unknown as { getPrevJie(wholeDay?: boolean): { getSolar(): Solar } }).getPrevJie(true);
+  const js = prevJie.getSolar();
+  const jieMidnight = Solar.fromYmd(js.getYear(), js.getMonth(), js.getDay());
+  const dayMidnight = Solar.fromYmd(solar.getYear(), solar.getMonth(), solar.getDay());
+  return Math.round(dayMidnight.getJulianDay() - jieMidnight.getJulianDay());
 }
 
 // 流年凶方（原書 106 頁安床凶方年，兩行對勘定式）：

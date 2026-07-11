@@ -1871,13 +1871,13 @@ export const RULE_LAYERS: RuleLayer[] = [
   {
     key: 'shangguan',
     name: '上官日凶神',
-    desc: '赴任上官月忌：天牢天刑罪至死別伏罪徒隸天吏天獄牢日獄日刑獄殃敗（皆小忌；月破往亡大忌已在月家層）（原書第十二期書598-599）',
+    desc: '赴任上官月忌：天牢天刑罪至死別伏罪徒隸天吏天獄牢日獄日刑獄殃敗、氣往亡（節後第N日）（皆小忌；月破往亡大忌已在月家層）（原書第十二期書598-599）',
     events: ['furen'],
   },
   {
     key: 'zaochuan',
     name: '造船日凶神',
-    desc: '造船通忌：河伯、危星（惟忌進水）、天火（月破月建受死往亡已在通用層；火星忌掛帆等繁冷暫未錄）（原書第十二期書606-615）',
+    desc: '造船通忌：河伯、危星（惟忌進水）、天火、真滅沒、氣往亡（節後第N日忌出行）（月破月建受死往亡已在通用層；火星忌掛帆等繁冷暫未錄）（原書第十二期書606-615）',
     events: ['zaochuan'],
   },
   {
@@ -3653,6 +3653,27 @@ const HU_XI_YUE: Record<string, string[]> = {
 };
 // 食骨虎：每月逢此等日，炉火制化則吉（逐日干支，不論月）
 const SHI_GU_HU = ['甲午', '乙未', '庚午', '丁未', '戊申'];
+
+// ── 氣往亡（節後第N日，忌出行；原書第十二期造船書615、上官書599）───────
+// 節後日數（節當日之後第N日；月支＝節）：立春7驚蟄14清明21立夏8芒種16小暑24
+// 立秋9白露18寒露27立冬10大雪20小寒30。造船・上官皆用同表。
+const QI_WANG_WANG: Record<string, number> = {
+  寅: 7, // 立春
+  卯: 14, // 驚蟄
+  辰: 21, // 清明
+  巳: 8, // 立夏
+  午: 16, // 芒種
+  未: 24, // 小暑
+  申: 9, // 立秋
+  酉: 18, // 白露
+  戌: 27, // 寒露
+  亥: 10, // 立冬
+  子: 20, // 大雪
+  丑: 30, // 小寒
+};
+function isQiWangWang(info: DayInfo): boolean {
+  return QI_WANG_WANG[info.monthZhi] === info.jieOffset;
+}
 function huXi(info: DayInfo): Reason[] {
   const zi = ZHI_ORDER_E.indexOf(info.monthZhi);
   if (zi < 0) return [];
@@ -4180,6 +4201,9 @@ export function evaluateDay(
   // 上官日凶神（原書第十二期書598-599）：赴任上官之月忌
   if (on('shangguan') && event === 'furen') {
     reasons.push(...shangGuanSha(info));
+    // 氣往亡（書599）：節後第N日，小忌
+    if (isQiWangWang(info))
+      reasons.push({ kind: '凶', text: `氣往亡（${info.monthZhi}月節後第${info.jieOffset}日），赴任上官小忌（原書第十二期書599）` });
   }
 
   // 造船日凶神（原書第十二期書606-615）：造船通忌之月凶神
@@ -4189,6 +4213,9 @@ export function evaluateDay(
     const mm = getMieMo(info);
     if (mm)
       reasons.push({ kind: '凶', text: `真滅沒日（${mm}），造船大忌勿用（原書第十二期造船日凶神）` });
+    // 氣往亡（書615）：節後第N日，忌出行
+    if (isQiWangWang(info))
+      reasons.push({ kind: '凶', text: `氣往亡（${info.monthZhi}月節後第${info.jieOffset}日），忌出行，造船忌之（原書第十二期書615）` });
   }
 
   // 祈福吉日（原書第十二期書580-583）：齋醮諸會吉日
