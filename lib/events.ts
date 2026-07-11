@@ -454,6 +454,8 @@ const SHI_SHEN: Record<string, string> = {
   甲: "丙", 乙: "丁", 丙: "戊", 丁: "己", 戊: "庚",
   己: "辛", 庚: "壬", 辛: "癸", 壬: "甲", 癸: "乙",
 };
+// 命支三合局墓庫（火戌木未金丑水辰）——白虎吞胎年＝沖局墓
+const JU_MU: Record<string, string> = { 火: "戌", 木: "未", 金: "丑", 水: "辰" };
 // 孤辰・寡宿（命支三會→孤・寡）
 function guChenGuaSu(zhi: string): { gu: string; gua: string } {
   if ("亥子丑".includes(zhi)) return { gu: "寅", gua: "戌" };
@@ -558,6 +560,9 @@ function hunShenSha(info: DayInfo, fGan: string | undefined, fZhi: string): Reas
   // 河上翁煞（＝咸池位，同桃花支——另名並列）
   if (XIAN_CHI[fZhi] === dz)
     out.push({ kind: "注", text: "犯河上翁煞（與桃花同位），慎用（原書：六十女總局左局）" });
+  // 白虎吞胎（年支＝沖命局墓）——四局全證：火辰木丑金未水戌
+  if (info.yearGanZhi.charAt(1) === zhiAdd(JU_MU[juWuXing(fZhi)], 6))
+    out.push({ kind: "注", text: "本年白虎吞胎（原書：六十女總局左局），婚事慎之" });
   // 命宮盤沖（原書 108 頁）
   if (fGan) out.push(...gongChong(fGan, dz));
   // 紅鸞、天喜（原書 196 頁；註引會海：天喜乃血光之神，紅鸞非吉曜，逢吉神則吉、凶神則凶）
