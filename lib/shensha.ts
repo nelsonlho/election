@@ -262,6 +262,8 @@ export function getDongTuJi(info: DayInfo): { kind: "凶" | "注"; text: string 
   const dz = info.dayZhi;
   if (TU_FU[mi] === dz)
     out.push({ kind: "凶", text: "土符日，動土大忌勿用（原書：動土忌例）" });
+  if (dz === info.monthZhi)
+    out.push({ kind: "凶", text: "土府日（值月建），動土大凶不用（原書第六期書332）" });
   if (TU_WEN[mi] === dz)
     out.push({ kind: "注", text: "土瘟日，動土俗忌勿用（原書：動土忌例）" });
   if (TIAN_WEN[mi] === dz)
