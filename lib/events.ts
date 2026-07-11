@@ -589,6 +589,8 @@ const LONG_HU = ["巳", "亥", "午", "子", "未", "丑", "申", "寅", "酉", 
 const SHAN_GE = ["未", "巳", "卯", "酉", "亥", "丑"]; // 山隔：月序%6
 const MU_MA_FM = ["巳", "未", "酉", "申", "戌", "子", "亥", "丑", "卯", "寅", "辰", "午"]; // 木馬架馬
 const TIAN_ZEI_FM = ["辰", "酉", "寅", "未", "子", "巳", "戌", "卯", "申", "丑", "午", "亥"]; // 天賊
+// 朱雀巽（忌入山，鳳凰符制可用）：固定干支日，干支序每+9（乙丑#2起，書327原註「此六日」）
+const ZHU_QUE_XUN = new Set(["乙丑", "甲戌", "癸未", "壬辰", "辛丑", "庚戌", "己未"]);
 
 function famuJi(info: DayInfo): Reason[] {
   const out: Reason[] = [];
@@ -604,6 +606,7 @@ function famuJi(info: DayInfo): Reason[] {
   if (dz === TIAN_ZEI_FM[i]) out.push({ kind: "注", text: "天賊日，伐木忌之，宿時（得明星）或蔞時制之則吉（原書第六期書326）" });
   if (dz === LONG_HU[i]) out.push({ kind: "注", text: "龍虎日，入山伐木忌之，吉多可用（原書第六期書327）" });
   if (dz === SHAN_GE[i % 6]) out.push({ kind: "注", text: "山隔日，入山伐木忌之，吉多可用（原書第六期書327）" });
+  if (ZHU_QUE_XUN.has(info.dayGanZhi)) out.push({ kind: "注", text: "朱雀巽日，入山忌之，鳳凰符制之則吉（原書第六期書327）" });
   return out;
 }
 
