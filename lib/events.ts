@@ -4149,6 +4149,10 @@ export function evaluateDay(
   // 造船日凶神（原書第十二期書606-615）：造船通忌之月凶神
   if (on('zaochuan') && event === 'zaochuan') {
     reasons.push(...zaoChuanSha(info));
+    // 真滅沒（書614造船日凶神列「忌勿用」，即書92真滅沒；盈日逢牛因盈日義未注而闕）
+    const mm = getMieMo(info);
+    if (mm)
+      reasons.push({ kind: '凶', text: `真滅沒日（${mm}），造船大忌勿用（原書第十二期造船日凶神）` });
   }
 
   // 祈福吉日（原書第十二期書580-583）：齋醮諸會吉日
