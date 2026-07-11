@@ -255,6 +255,9 @@ export function getCaiYiJi(info: DayInfo): { kind: "凶" | "注"; text: string }
 const TU_FU = ["丑", "巳", "酉", "寅", "午", "戌", "卯", "未", "亥", "辰", "申", "子"];
 const TU_WEN = ["辰", "巳", "午", "未", "申", "酉", "戌", "亥", "子", "丑", "寅", "卯"];
 const TIAN_WEN = ["未", "戌", "辰", "寅", "午", "子", "酉", "申", "巳", "亥", "丑", "卯"];
+// 地囊日（第六期書333，逐月二干支，凶大忌）——清本二欄照錄（正〜十二月）
+const DI_NANG_A = ["庚子", "癸丑", "壬午", "己酉", "壬戌", "丙辰", "丁巳", "丙申", "辛未", "戊申", "辛卯", "癸酉"];
+const DI_NANG_B = ["庚午", "乙未", "甲子", "己卯", "甲辰", "丙戌", "丁亥", "丙寅", "辛丑", "戊寅", "辛酉", "乙卯"];
 
 export function getDongTuJi(info: DayInfo): { kind: "凶" | "注"; text: string }[] {
   const out: { kind: "凶" | "注"; text: string }[] = [];
@@ -264,6 +267,8 @@ export function getDongTuJi(info: DayInfo): { kind: "凶" | "注"; text: string 
     out.push({ kind: "凶", text: "土符日，動土大忌勿用（原書：動土忌例）" });
   if (dz === info.monthZhi)
     out.push({ kind: "凶", text: "土府日（值月建），動土大凶不用（原書第六期書332）" });
+  if (info.dayGanZhi === DI_NANG_A[mi] || info.dayGanZhi === DI_NANG_B[mi])
+    out.push({ kind: "凶", text: "地囊日，動土大凶勿用（原書第六期書333）" });
   if (TU_WEN[mi] === dz)
     out.push({ kind: "注", text: "土瘟日，動土俗忌勿用（原書：動土忌例）" });
   if (TIAN_WEN[mi] === dz)
