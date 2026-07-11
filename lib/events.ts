@@ -1453,6 +1453,19 @@ const GAN_SHAN_CHONG_ZHI: Record<string, string[]> = {
   壬: ["巳", "午"], 癸: ["午", "未"], 甲: ["申", "酉"], 乙: ["酉", "戌"],
   丙: ["亥", "子"], 丁: ["子", "丑"], 庚: ["寅", "卯"],
 };
+// 箭射（弓箭煞，原書山頭箭射欄「值＋沖」axis，依山鄰之單位）：
+//   干山＝鄰支之沖axis（支pair）；四正支山（子午卯酉）＝陽鄰干＋其沖（干pair）；
+//   卦山＝兼支值＋沖（支pair，兼向聯集）；四孟支山（寅巳申亥）鄰卦無干，原書作○○空，不錄。
+//   干山之沖支與上冲山共午等支則並見（原書分列二煞）；四正支山干pair別於 `shan` 之支沖，為淨增。
+const JIAN_SHE: Record<string, { unit: "支" | "干"; pair: string[] }> = {
+  壬: { unit: "支", pair: ["子", "午"] }, 癸: { unit: "支", pair: ["丑", "未"] },
+  甲: { unit: "支", pair: ["卯", "酉"] }, 乙: { unit: "支", pair: ["辰", "戌"] },
+  丙: { unit: "支", pair: ["子", "午"] }, 丁: { unit: "支", pair: ["丑", "未"] },
+  庚: { unit: "支", pair: ["卯", "酉"] },
+  子: { unit: "干", pair: ["壬", "丙"] }, 午: { unit: "干", pair: ["壬", "丙"] },
+  卯: { unit: "干", pair: ["甲", "庚"] }, 酉: { unit: "干", pair: ["甲", "庚"] },
+  艮: { unit: "支", pair: ["丑", "未", "寅", "申"] }, 巽: { unit: "支", pair: ["巳", "亥"] }, 坤: { unit: "支", pair: ["寅", "申"] },
+};
 // 節氣 → 月建（消滅殺以此近節氣界）
 const JIE_QI_YUE: Record<string, string> = {
   冬至: "子", 小寒: "丑", 大寒: "丑", 立春: "寅", 雨水: "寅", 驚蟄: "卯", 春分: "卯",
@@ -1469,6 +1482,9 @@ function shanTouRiJi(info: DayInfo, mountain: string): Reason[] {
   const gsc = GAN_SHAN_CHONG_ZHI[mountain];
   if (gsc?.includes(info.dayZhi))
     out.push({ kind: "凶", text: `冲山（${mountain}山忌${info.dayZhi}日，兼向本支之對沖），造葬大凶（原書第十期山頭凶神；干山之支級沖，別於日干沖）` });
+  const js = JIAN_SHE[mountain];
+  if (js && (js.unit === "支" ? js.pair.includes(info.dayZhi) : js.pair.includes(info.dayGan)))
+    out.push({ kind: "凶", text: `箭射（${mountain}山忌${js.pair.join("")}${js.unit}日之弓箭煞），造葬忌之（原書第十期山頭凶神）` });
   if (d.xingyao.includes(gz))
     out.push({ kind: "凶", text: `星曜殺（${mountain}山忌${gz}日，剋山正體五行之曜），日犯大忌、時犯小忌（原書第十期山頭凶神）` });
   if (d.shanfang.includes(gz))
