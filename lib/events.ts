@@ -563,6 +563,10 @@ function hunShenSha(info: DayInfo, fGan: string | undefined, fZhi: string): Reas
   // 白虎吞胎（年支＝沖命局墓）——四局全證：火辰木丑金未水戌
   if (info.yearGanZhi.charAt(1) === zhiAdd(JU_MU[juWuXing(fZhi)], 6))
     out.push({ kind: "注", text: "本年白虎吞胎（原書：六十女總局左局），婚事慎之" });
+  // 四柱六神吉凶（頭欄）：日干與命干異陰陽為吉、同陰陽為凶（偏神：比食偏殺梟）
+  // 甲戌命驗：丙庚壬（陽）凶・己辛癸（陰）吉；乙丑命驗：甲庚（陽）吉・乙（陰）凶
+  if (fGan && GAN_ORDER.indexOf(fGan) % 2 === GAN_ORDER.indexOf(dg) % 2)
+    out.push({ kind: "注", text: "日干與女命同陰陽（四柱六神值偏神），力弱慎用（原書：六十女總局頭欄）" });
   // 命宮盤沖（原書 108 頁）
   if (fGan) out.push(...gongChong(fGan, dz));
   // 紅鸞、天喜（原書 196 頁；註引會海：天喜乃血光之神，紅鸞非吉曜，逢吉神則吉、凶神則凶）
