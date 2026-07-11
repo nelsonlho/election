@@ -270,14 +270,14 @@ export function getDongTuJi(info: DayInfo): { kind: "凶" | "注"; text: string 
 // 干以祿位對厭分前後（祿臨厭對之位作「前」——原書乙丑二月不將可證）。
 // 干前支後＝不將（嫁娶大吉）；干前支前＝陽將（妨夫）；
 // 干後支後＝陰將（妨婦）；干後支前＝俱將（俱妨）。
-// 注：戊不用祿巳而用長生寅（寄甲組作「干後」）——瑞成清本將神名目證：戊寅/戊子/戊申/戊午
-//   正二月皆判陰/俱（干後），非丙之陽/不（干前）；戊四格（正月）六格（二月）全合。
+// 注：戊恆作「干後」（不隨祿移）——瑞成清本將神名目證：戊日僅判陰/俱/壓/對，永無不/陽
+//   （不＝干前支後、陽＝干前支前，皆干前；戊無此二），正二三月戊六格皆合。餘九干用祿位。
 const YUE_YAN: Record<string, string> = {
   寅: "戌", 卯: "酉", 辰: "申", 巳: "未", 午: "午", 未: "巳",
   申: "辰", 酉: "卯", 戌: "寅", 亥: "丑", 子: "子", 丑: "亥",
 };
 const LU_ZHI: Record<string, string> = {
-  甲: "寅", 乙: "卯", 丙: "巳", 戊: "寅", 丁: "午", 己: "午",
+  甲: "寅", 乙: "卯", 丙: "巳", 戊: "巳", 丁: "午", 己: "午",
   庚: "申", 辛: "酉", 壬: "亥", 癸: "子",
 };
 const ZHI_ORDER = ["子", "丑", "寅", "卯", "辰", "巳", "午", "未", "申", "酉", "戌", "亥"];
@@ -294,7 +294,8 @@ export function getJiangShen(info: DayInfo): JiangShen {
   const zhiHou = dd >= 1 && dd <= 5; // 支在厭後
   const lu = ZHI_ORDER.indexOf(LU_ZHI[info.dayGan]);
   const dl = ((lu - e) % 12 + 12) % 12;
-  const ganHou = dl >= 1 && dl <= 5; // 干（祿）在厭後；dl=0 作後、dl=6 作前
+  // 干（祿）在厭後；dl=0 作後、dl=6 作前。戊恆作「干後」（將神名目證：戊無不/陽）。
+  const ganHou = info.dayGan === "戊" ? true : dl >= 1 && dl <= 5;
   const ganQian = !ganHou;
   if (ganQian && zhiHou) return "不將";
   if (ganQian && !zhiHou) return "陽將";
