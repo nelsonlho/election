@@ -415,6 +415,34 @@ const LIU_XIA: Record<string, string> = {
   甲: "酉", 乙: "戌", 丙: "未", 丁: "申", 戊: "巳",
   己: "午", 庚: "辰", 辛: "卯", 壬: "亥", 癸: "寅",
 };
+// 五虎遁：年（命）干→寅月干
+const WU_HU: Record<string, string> = {
+  甲: "丙", 己: "丙", 乙: "戊", 庚: "戊", 丙: "庚",
+  辛: "庚", 丁: "壬", 壬: "壬", 戊: "甲", 癸: "甲",
+};
+// 五虎遁定某干所臨之支（命干起遁，尋 targetGan 之月支）——夫星/天嗒支之由來
+function wuHuZhi(mingGan: string, targetGan: string): string {
+  const x = GAN_ORDER.indexOf(WU_HU[mingGan]);
+  const g = GAN_ORDER.indexOf(targetGan);
+  return zhiAdd("寅", ((g - x) % 10 + 10) % 10);
+}
+// 羊刃（命干→支）；飛刃＝沖羊刃。箭刃忌＝羊刃＋飛刃全
+const YANG_REN: Record<string, string> = {
+  甲: "卯", 乙: "辰", 丙: "午", 丁: "未", 戊: "午",
+  己: "未", 庚: "酉", 辛: "戌", 壬: "子", 癸: "丑",
+};
+// 紅艷煞（命干→時支）
+const HONG_YAN: Record<string, string> = {
+  甲: "午", 乙: "申", 丙: "寅", 丁: "未", 戊: "辰",
+  己: "辰", 庚: "戌", 辛: "酉", 壬: "子", 癸: "申",
+};
+// 孤辰・寡宿（命支三會→孤・寡）
+function guChenGuaSu(zhi: string): { gu: string; gua: string } {
+  if ("亥子丑".includes(zhi)) return { gu: "寅", gua: "戌" };
+  if ("寅卯辰".includes(zhi)) return { gu: "巳", gua: "丑" };
+  if ("巳午未".includes(zhi)) return { gu: "申", gua: "辰" };
+  return { gu: "亥", gua: "未" }; // 申酉戌
+}
 
 function zhiAdd(zhi: string, n: number): string {
   return ZHI_ORDER_E[(ZHI_ORDER_E.indexOf(zhi) + n + 120) % 12];
@@ -487,6 +515,26 @@ function hunShenSha(info: DayInfo, fGan: string | undefined, fZhi: string): Reas
   // 沖母腹（沖命支之日；別於沖男女宮之滅子胎）——第四五期逐命：甲戌辰/乙未丑
   if (dz === zhiAdd(fZhi, 6))
     out.push({ kind: "凶", text: "日支沖命，犯沖母腹，忌用（原書：六十女總局）" });
+  // ── 墓煞層（第四五期左頁 per命忌支；甲戌·乙未二命反推）──
+  // 夫星墓＝夫星支（五虎遁正官）＋9（墓庫）
+  if (fGan) {
+    const fuXingZhi = wuHuZhi(fGan, ZHENG_GUAN[fGan]);
+    if (dz === zhiAdd(fuXingZhi, 9))
+      out.push({ kind: "注", text: "犯夫星墓，慎用（原書：六十女總局左局）" });
+  }
+  // 孤辰・寡宿
+  const { gu, gua } = guChenGuaSu(fZhi);
+  if (dz === gu) out.push({ kind: "注", text: "犯孤辰，慎用（原書：六十女總局左局）" });
+  if (dz === gua) out.push({ kind: "注", text: "犯寡宿，慎用（原書：六十女總局左局）" });
+  // 箭刃（羊刃＋飛刃全）
+  if (fGan && (dz === YANG_REN[fGan] || dz === zhiAdd(YANG_REN[fGan], 6)))
+    out.push({ kind: "注", text: "犯箭刃，慎用（原書：六十女總局左局）" });
+  // 反目煞（命支±3全）
+  if (dz === zhiAdd(fZhi, 3) || dz === zhiAdd(fZhi, -3))
+    out.push({ kind: "注", text: "犯反目煞，慎用（原書：六十女總局左局）" });
+  // 河上翁煞（＝咸池位，同桃花支——另名並列）
+  if (XIAN_CHI[fZhi] === dz)
+    out.push({ kind: "注", text: "犯河上翁煞（與桃花同位），慎用（原書：六十女總局左局）" });
   // 命宮盤沖（原書 108 頁）
   if (fGan) out.push(...gongChong(fGan, dz));
   // 紅鸞、天喜（原書 196 頁；註引會海：天喜乃血光之神，紅鸞非吉曜，逢吉神則吉、凶神則凶）
