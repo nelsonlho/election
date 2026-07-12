@@ -105,6 +105,10 @@ function buildShareUrl(params: Record<string, string | undefined>): string {
   for (const [k, v] of Object.entries(params)) if (v) u.set(k, v);
   return `${window.location.origin}${window.location.pathname}?${u.toString()}`;
 }
+// 即時同步網址：選擇一變則瀏覽器 URL 隨變（不入歷史堆疊）
+function syncUrl(url: string) {
+  if (typeof window !== 'undefined') window.history.replaceState(null, '', url);
+}
 function ShareButton({ url }: { url: () => string }) {
   const [done, setDone] = useState(false);
   return (
@@ -1188,6 +1192,29 @@ function SearchTab() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  // 選擇變則網址隨變（首次載入略過，免覆入站連結）
+  const firstSync = useRef(true);
+  useEffect(() => {
+    if (firstSync.current) {
+      firstSync.current = false;
+      return;
+    }
+    syncUrl(shareUrl());
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [
+    event,
+    femaleYear,
+    birthYear,
+    start,
+    daysStr,
+    mountain,
+    jianXiang,
+    xianMing,
+    femaleMonth,
+    birthMonth,
+    off,
+  ]);
+
   const shown = useMemo(
     () =>
       (results ?? []).filter((r) =>
@@ -1660,6 +1687,26 @@ function DayTab() {
       mt: mountain,
       jx: jianXiang,
     });
+  // 選擇變則網址隨變（首次載入略過）
+  const firstSync = useRef(true);
+  useEffect(() => {
+    if (firstSync.current) {
+      firstSync.current = false;
+      return;
+    }
+    syncUrl(shareUrl());
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [
+    date,
+    dayCat,
+    femaleYear,
+    birthYear,
+    xianMing,
+    femaleMonth,
+    birthMonth,
+    mountain,
+    jianXiang,
+  ]);
   const showFemale = dayCat === '全部' || dayCat === '婚嫁家室';
   const showXian = dayCat === '全部' || dayCat === '造葬';
   const showMountain =
@@ -2051,6 +2098,16 @@ function HehunTab() {
   const my = /^\d{4}$/.test(maleYear) ? Number(maleYear) : undefined;
   const shareUrl = () =>
     buildShareUrl({ tab: 'hehun', f: femaleYear, m: maleYear });
+  // 選擇變則網址隨變（首次載入略過）
+  const firstSync = useRef(true);
+  useEffect(() => {
+    if (firstSync.current) {
+      firstSync.current = false;
+      return;
+    }
+    syncUrl(shareUrl());
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [femaleYear, maleYear]);
   const result =
     fy && my
       ? heHun(
@@ -2311,6 +2368,11 @@ export default function Home() {
     const t = urlParams().get('tab');
     if (t === 'search' || t === 'day' || t === 'hehun') setTab(t);
   }, []);
+  // 使用者切換分頁：即改網址（各分頁內欄位由各分頁 effect 自行同步）
+  const switchTab = (t: Tab) => {
+    setTab(t);
+    syncUrl(buildShareUrl({ tab: t }));
+  };
   const tabs: { key: Tab; label: string }[] = [
     { key: 'search', label: '尋吉日' },
     { key: 'day', label: '單日查' },
@@ -2335,7 +2397,7 @@ export default function Home() {
                 ? 'bg-red-700 text-white'
                 : 'text-stone-600 hover:bg-stone-100 dark:text-stone-300 dark:hover:bg-stone-700'
             }`}
-            onClick={() => setTab(t.key)}
+            onClick={() => switchTab(t.key)}
           >
             {t.label}
           </button>
